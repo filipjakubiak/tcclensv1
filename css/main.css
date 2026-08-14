@@ -157,3 +157,205 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
   font-size: var(--micro); font-weight: 600; text-transform: uppercase;
   letter-spacing: var(--track-micro); color: var(--support);
 }
+
+/* ==========================================================================
+   Sections (Task 7) — thirteen-section content layer, appended in page
+   order. Shared primitives first, then one block per section id.
+   ========================================================================== */
+
+/* ---- Shared primitives ---- */
+/* Masked line reveal target — Task 8 animates the inner <span>; today it
+   just needs to sit flush, so overflow is hidden with no transform yet. */
+.line { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.line > span { display: inline-block; }
+
+/* Focal-word accent — the only sanctioned use of --accent as text (HARD
+   CONSTRAINT 3). Never applied to a full line or a body paragraph. */
+.focus-word { color: var(--accent); }
+
+/* Generic card surface. Not in Task 6's component list — added here
+   because several sections (fork, insights, careers, capabilities) need a
+   bordered surface and none existed yet. */
+.card { background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-card); overflow: clip; }
+.theme-dark .card { background: var(--chamber); border-color: var(--hairline-inv); }
+
+.pullquote {
+  font-size: var(--subheading); font-weight: 700; letter-spacing: var(--track-tight);
+  line-height: 1.2; max-width: 24ch; margin: clamp(3rem, 7vh, 5rem) 0 0;
+}
+.pullquote::before { content: ''; display: block; width: 44px; height: 3px; background: var(--accent); margin-bottom: 1.25rem; }
+
+/* ---- 1 · Hero ---- */
+#hero {
+  min-height: 100vh; padding-block: 0;
+  display: flex; align-items: flex-end;
+  padding-top: calc(var(--nav-h) + 4rem);
+  padding-bottom: clamp(2rem, 5vh, 4rem);
+}
+.hero__content { width: 100%; }
+#hero .lead { max-width: 40ch; margin-top: 1.5rem; }
+.hero__ctas { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: clamp(2rem, 4vh, 3rem); }
+
+/* ---- 2 · Thesis ---- */
+.thesis__heading { margin-top: 1.25rem; max-width: 18ch; }
+.thesis__lede {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1.5rem, 4vw, 3.5rem); max-width: 70ch;
+  margin: clamp(2.5rem, 6vh, 4rem) 0 0 auto;
+}
+
+/* ---- 3 · Proof / stat wall ---- */
+.stats__head { display: grid; grid-template-columns: 1.15fr 1fr; gap: clamp(1.5rem, 4vw, 4rem); align-items: end; margin-bottom: clamp(3rem, 7vh, 5rem); }
+.stats__intro { max-width: 46ch; }
+.stats__grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 3rem; }
+.stat { border-top: 1px solid var(--hairline); padding-block: 2rem 2.75rem; display: flex; flex-direction: column; gap: .5rem; }
+.stat__num { display: block; font-weight: 700; font-size: clamp(3rem, 6vw, 5rem); line-height: 1; letter-spacing: var(--track-display); }
+.stat__label { display: block; font-size: 1.0625rem; font-weight: 600; margin-top: .25rem; }
+.stat__cap { display: block; color: var(--ink-3); font-size: .875rem; line-height: 1.5; max-width: 34ch; margin-top: .35rem; }
+
+/* ---- 4 · Brand film ---- */
+#film { position: relative; min-height: 100vh; display: grid; align-items: center; overflow: clip; padding-block: 0; }
+.film__word {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-weight: 700; font-size: clamp(5rem, 15vw, 13rem); letter-spacing: var(--track-display);
+  color: color-mix(in srgb, var(--canvas) 6%, transparent);
+  white-space: nowrap; user-select: none;
+}
+.film__inner { position: relative; width: 100%; }
+.film__frame { border-radius: var(--r-card); overflow: clip; border: 1px solid var(--hairline-inv); aspect-ratio: 16 / 9; max-height: 68vh; margin-inline: auto; }
+.film__frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.film__quote { margin-top: 2rem; text-align: center; }
+.film__quote blockquote { margin: 0; font-weight: 700; font-size: clamp(1.125rem, 2vw, 1.5rem); max-width: 44ch; margin-inline: auto; }
+.film__quote figcaption { margin-top: .75rem; color: var(--support); font-size: var(--micro); }
+
+/* ---- 5 · Fork ---- */
+.fork__intro { max-width: 60ch; margin-bottom: clamp(2.5rem, 6vh, 4rem); }
+.fork__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.fork__panel { display: flex; flex-direction: column; }
+.fork__img { aspect-ratio: 16 / 10; overflow: clip; }
+.fork__img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.fork__body { padding: clamp(1.5rem, 3vw, 2.25rem); display: flex; flex-direction: column; gap: .9rem; flex: 1; }
+.fork__body .eyebrow { margin-bottom: 0; }
+.fork__body h3 { font-size: clamp(1.5rem, 2.4vw, 2rem); }
+.fork__body > p { color: var(--ink-2); max-width: 48ch; }
+.fork__points { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.fork__points li { position: relative; padding-left: 1.4rem; font-size: .9375rem; }
+.fork__points li::before { content: ''; position: absolute; left: 0; top: .5em; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.fork__body .link { margin-top: auto; padding-top: .5rem; align-self: flex-start; }
+
+/* ---- 6 · How it works ---- */
+.howworks__head { max-width: 62ch; }
+.howworks__intro { margin-top: 1.5rem; }
+.howworks__steps { list-style: none; margin: clamp(3rem, 8vh, 5.5rem) 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(1.5rem, 4vw, 3rem); }
+.howworks__step { border-top: 1px solid var(--hairline); padding-top: 1.5rem; display: flex; flex-direction: column; gap: .6rem; }
+.howworks__step .eyebrow { margin: 0; }
+.howworks__idx { font-size: var(--micro); font-weight: 600; letter-spacing: var(--track-micro); color: var(--accent); }
+.howworks__step h3 { font-size: clamp(1.75rem, 3vw, 2.5rem); }
+.howworks__step > p:last-child { color: var(--ink-2); font-size: .9375rem; line-height: 1.55; margin: 0; }
+.howworks__quote { margin: clamp(3rem, 7vh, 5rem) auto 0; text-align: center; }
+.howworks__quote::before { margin-inline: auto; }
+
+/* ---- 7 · Capabilities spectrum ----
+   Structure and data-gradient only — Task 15 paints each band. Cards stay
+   on the plain canvas surface (RULING 2) until then. */
+.spectrum { list-style: none; margin: clamp(2.5rem, 6vh, 4rem) 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
+.capability { padding: 1.75rem; display: flex; flex-direction: column; gap: .75rem; }
+.capability picture, .capability img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: calc(var(--r-card) - 8px); }
+.capability h3 { font-size: 1.375rem; }
+.capability p { color: var(--ink-2); font-size: .9375rem; margin: 0; }
+.capability .pill { align-self: flex-start; }
+
+/* ---- 8 · Loyalty Monitor ---- */
+#loyalty-monitor { min-height: 100vh; display: grid; align-items: center; overflow: clip; padding-block: 0; }
+.monitor__inner { text-align: center; }
+.monitor__inner .heading { margin-inline: auto; max-width: 20ch; }
+.monitor__stage { position: relative; margin-top: 2rem; min-height: clamp(16rem, 40vh, 24rem); }
+.monitor__state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; }
+.monitor__state--b { opacity: 0; visibility: hidden; }
+.monitor__num { display: block; font-weight: 700; font-size: clamp(6rem, 18vw, 13rem); line-height: .9; letter-spacing: var(--track-display); }
+.monitor__caption { color: var(--support); font-size: var(--lead); max-width: 34ch; margin: 0; }
+.monitor__meter { width: min(520px, 80%); height: 4px; margin: 2.5rem auto 0; border-radius: var(--r-pill); background: var(--hairline-inv); overflow: clip; }
+.monitor__fill { display: block; height: 100%; width: 57%; border-radius: inherit; background: var(--grad-core); }
+.monitor__note { margin: 2rem auto 0; max-width: 54ch; }
+.monitor__cta { margin-top: 2.5rem; }
+
+/* ---- 9 · Clients ---- */
+.clients__intro { max-width: 58ch; margin-bottom: clamp(2rem, 5vh, 3rem); }
+.marquee {
+  overflow: clip;
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+          mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+.marquee__track { display: flex; width: max-content; animation: marquee 38s linear infinite; }
+.marquee__group { display: flex; align-items: center; gap: 4rem; padding-right: 4rem; }
+.marquee__group img { display: block; height: 28px; width: auto; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+.clients__sub { color: var(--ink-2); margin: 3.5rem 0 1.5rem; font-size: .9375rem; }
+.partners { display: flex; align-items: center; flex-wrap: wrap; gap: 2.25rem 2.75rem; }
+.partners img { display: block; height: 24px; width: auto; opacity: .8; }
+
+/* ---- 10 · Global ---- */
+.global__grid { display: grid; grid-template-columns: 5fr 7fr; gap: 4rem; align-items: end; }
+.global__num { display: block; font-weight: 700; font-size: clamp(8rem, 20vw, 16rem); line-height: .85; letter-spacing: var(--track-display); margin-top: 1rem; }
+.global__label { font-size: var(--lead); font-weight: 600; color: var(--ink-2); margin-top: 1rem; }
+.global__para { margin-bottom: clamp(2rem, 5vh, 3rem); }
+.global__offices { list-style: none; margin: 0; padding: 0; }
+.global__offices li { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--hairline); padding-block: 1.1rem; font-weight: 600; font-size: 1.25rem; }
+.global__meta { color: var(--ink-3); font-weight: 400; font-size: .875rem; }
+
+/* ---- 11 · Insights ---- */
+.insights__intro { max-width: 58ch; margin-bottom: clamp(2.5rem, 6vh, 4rem); }
+.insights__grid { display: grid; grid-template-columns: 5fr 3.5fr 3.5fr; gap: 1.25rem; align-items: start; }
+.insight { display: block; color: inherit; text-decoration: none; }
+.insight__img { aspect-ratio: 4 / 3; }
+.insight:first-child .insight__img { aspect-ratio: 16 / 10; }
+.insight__img img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 600ms var(--ease-out-strong); }
+@media (hover: hover) and (pointer: fine) { .insight:hover .insight__img img { transform: scale(1.04); } }
+.insight .insight__meta { display: block; margin: 1.1rem 1.25rem 0; }
+.insight h3 { font-size: 1.25rem; margin: .4rem 1.25rem 0; max-width: 24ch; }
+.insight > p { margin: .5rem 1.25rem 1.25rem; color: var(--ink-2); font-size: .9375rem; }
+
+/* ---- 12 · Careers ---- */
+.careers__grid { display: grid; grid-template-columns: 7fr 5fr; gap: 4rem; align-items: center; }
+.careers__sub { max-width: 40ch; margin-bottom: 2.5rem; }
+.careers__values { list-style: none; margin: 0 0 2.75rem; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem 3rem; }
+.careers__values .value h3 { font-size: 1.125rem; margin-bottom: .35rem; }
+.careers__values .value p { color: var(--ink-3); font-size: .875rem; line-height: 1.55; margin: 0; }
+.careers__img { aspect-ratio: 4 / 5; }
+.careers__img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ---- 13 · Contact + footer ---- */
+#contact { padding-bottom: 0; }
+#contact .heading { max-width: 14ch; }
+.contact__lede { margin-top: 1.5rem; }
+.contact__row { display: flex; align-items: center; gap: 3rem; flex-wrap: wrap; margin-top: 2.5rem; }
+.contact__address { color: var(--ink-2); font-size: .9375rem; line-height: 1.7; margin: 0; }
+
+.footer { border-top: 1px solid var(--hairline); }
+.footer__inner { display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap; padding-block: 2rem; }
+.footer__logo { display: block; height: 20px; width: auto; }
+.footer__tag { color: var(--ink-2); font-size: .875rem; margin: 0; }
+.footer__links { list-style: none; display: flex; gap: 1.75rem; margin: 0; padding: 0; font-size: .875rem; }
+.footer__legal { color: var(--ink-3); font-size: var(--micro); }
+
+/* ---- Responsive collapse ---- */
+@media (max-width: 860px) {
+  .thesis__lede { grid-template-columns: 1fr; margin-left: 0; }
+  .stats__head { grid-template-columns: 1fr; align-items: start; gap: 1.5rem; }
+  .stats__grid { grid-template-columns: 1fr 1fr; }
+  .fork__grid { grid-template-columns: 1fr; }
+  .howworks__steps { grid-template-columns: 1fr; }
+  .global__grid, .careers__grid { grid-template-columns: 1fr; gap: 2.5rem; align-items: start; }
+  .insights__grid { grid-template-columns: 1fr; }
+  .insight:first-child .insight__img { aspect-ratio: 4 / 3; }
+}
+@media (max-width: 560px) {
+  .stats__grid { grid-template-columns: 1fr; }
+  .careers__values { grid-template-columns: 1fr; }
+}
+
+/* ---- Reduced motion (marquee only — Task 8 owns the reveal system) ---- */
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track { animation: none; }
+  .insight:hover .insight__img img { transform: none; }
+}
