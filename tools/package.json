@@ -1,0 +1,13 @@
+{
+  "name": "tcc-lens-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "serve": "node serve.mjs 4192"
+  },
+  "dependencies": {
+    "playwright": "^1.47.0",
+    "sharp": "^0.33.0"
+  }
+}
