@@ -174,10 +174,22 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
    ========================================================================== */
 
 /* ---- Shared primitives ---- */
-/* Masked line reveal target — Task 8 animates the inner <span>; today it
-   just needs to sit flush, so overflow is hidden with no transform yet. */
+/* Masked line reveal target. */
 .line { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
-.line > span { display: inline-block; }
+.line > span { display: inline-block; will-change: transform; }
+
+[data-focus-pull] { will-change: filter, opacity, transform; }
+
+/* Settled fallback: if JS never runs, or motion is off, nothing stays
+   hidden. Default state is visible; only html.motion-on (added by JS once
+   GSAP/ScrollTrigger are wired up) hides things for reveal. */
+html.motion-on [data-focus-pull] { opacity: 0; filter: blur(14px); transform: scale(1.03); }
+html.motion-on .line > span      { transform: translateY(110%); }
+
+/* Quieter body-copy reveal (RULING 1) — a short rise and fade, no blur.
+   The headline focus-pull is the event; body copy should not compete. */
+[data-reveal] { will-change: transform, opacity; }
+html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 
 /* Focal-word accent — the only sanctioned use of --accent as text (HARD
    CONSTRAINT 3). Never applied to a full line or a body paragraph.
