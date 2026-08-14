@@ -28,7 +28,7 @@ export function startServer(port = 4192) {
     const urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     let filePath = path.join(ROOT, urlPath === '/' ? 'index.html' : urlPath);
 
-    if (!filePath.startsWith(ROOT)) {
+    if (filePath !== ROOT && !filePath.startsWith(ROOT + path.sep)) {
       res.writeHead(403).end('Forbidden');
       return;
     }
