@@ -404,6 +404,31 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
   .careers__values { grid-template-columns: 1fr; }
 }
 
+/* ---- Cursor (Task 9) — blend-difference dot, fine pointers only ---- */
+/* Swell is done with transform: scale, not width/height/margin, so it
+   never triggers layout — .cursor is a fixed 12px dot GPU-transformed up
+   to ~44px visually (44/12 ≈ 3.667). */
+.cursor {
+  position: fixed; top: 0; left: 0; width: 12px; height: 12px; margin: -6px 0 0 -6px;
+  border-radius: 50%; background: var(--canvas); mix-blend-mode: difference;
+  pointer-events: none; z-index: 100;
+  transition: transform var(--dur-ui) var(--ease-out-strong);
+}
+.cursor--swell { transform: scale(3.667); }
+@media (pointer: coarse) { .cursor { display: none; } }
+
+/* Chromatic hover — ties DOM interaction back to the glass thread.
+   RULING 3: color-mix, not hand-spelled rgba, so --accent/--support stay
+   single-sourced from tokens.css. */
+@media (pointer: fine) {
+  .link:hover, picture:hover img {
+    text-shadow: -1px 0 color-mix(in srgb, var(--accent) 50%, transparent),
+                  1px 0 color-mix(in srgb, var(--support) 50%, transparent);
+  }
+  picture img { transition: transform var(--dur-ui) var(--ease-out-strong); }
+  picture:hover img { transform: scale(1.03); }
+}
+
 /* ---- Reduced motion (marquee only — Task 8 owns the reveal system) ---- */
 @media (prefers-reduced-motion: reduce) {
   .marquee__track { animation: none; }
