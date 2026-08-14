@@ -434,3 +434,11 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
   .marquee__track { animation: none; }
   .insight:hover .insight__img img { transform: none; }
 }
+
+/* ---- Stage (Task 10) — hero background only goes transparent once the
+   WebGL renderer is confirmed running. scene.background paints --chamber
+   underneath, so this swap is invisible until Task 13 puts geometry on
+   screen. With no JS / no WebGL / a failed renderer, html never gets
+   .stage-live and #hero keeps its var(--chamber) background from rule
+   .theme-dark above — correctly dark and readable without the canvas. */
+html.stage-live #hero { background: transparent; }
