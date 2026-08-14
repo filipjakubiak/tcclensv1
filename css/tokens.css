@@ -10,6 +10,10 @@
   --hairline:     rgba(0, 0, 0, 0.10);
   --hairline-inv: rgba(252, 252, 252, 0.14);
   --accent-shadow: rgba(148, 44, 181, 0.38);
+  /* Darkened brand purple for focal-word text on light surfaces — --accent
+     alone sits ~2:1 against --canvas, below the 3:1 large-text threshold.
+     62% keeps it recognisably purple while clearing the bar (measured). */
+  --accent-strong: color-mix(in srgb, var(--accent) 62%, var(--ink));
 
   /* ---- Gradients. One per section. Never combined. ---- */
   --grad-core:           linear-gradient(105deg, #D380EB, #B1BDCE);

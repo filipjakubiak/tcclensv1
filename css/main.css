@@ -7,7 +7,12 @@
 
 /* ---- Reset ---- */
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Fixed nav would otherwise hide the top of every anchor target's
+     heading on jump-to-section. */
+  scroll-padding-top: var(--nav-h);
+}
 body {
   margin: 0;
   background: var(--canvas);
@@ -92,6 +97,11 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
               backdrop-filter: blur(14px); color: var(--ink);
               border-bottom: 1px solid var(--hairline); }
 .nav__inner { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+/* logo-text.svg is baked black-on-transparent (fill="black" per path, not
+   currentColor), so `color` on .nav does nothing to it — it's an <img>,
+   not inline SVG. Invert it while the nav sits over the dark hero; the
+   filter drops away the moment .nav--solid's light chip is behind it. */
+.nav:not(.nav--solid) .nav__logo img { filter: invert(1); }
 .nav__links { display: flex; gap: 2rem; list-style: none; margin: 0; padding: 0;
               font-size: var(--micro); font-weight: 600; text-transform: uppercase;
               letter-spacing: var(--track-micro); }
@@ -170,8 +180,20 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
 .line > span { display: inline-block; }
 
 /* Focal-word accent — the only sanctioned use of --accent as text (HARD
-   CONSTRAINT 3). Never applied to a full line or a body paragraph. */
-.focus-word { color: var(--accent); }
+   CONSTRAINT 3). Never applied to a full line or a body paragraph.
+   --accent alone sits ~2:1 against --canvas on light sections (below the
+   3:1 large-text threshold), so light sections use the darkened
+   --accent-strong instead; dark (.theme-dark) sections keep the true
+   brand purple, which already has enough contrast against --chamber. */
+.focus-word { color: var(--accent-strong); }
+/* Brief's literal prescription (`:not(.theme-dark) .focus-word`) does not
+   work: :not(.theme-dark) also matches <body>/<html> as an ancestor of
+   every .focus-word (they never carry that class either), so it wins
+   everywhere — including inside .theme-dark sections — via specificity,
+   verified with a Playwright probe. Scoping the dark override on
+   `.theme-dark` directly is the correct equivalent of "dark sections keep
+   --accent". */
+.theme-dark .focus-word { color: var(--accent); }
 
 /* Generic card surface. Not in Task 6's component list — added here
    because several sections (fork, insights, careers, capabilities) need a
@@ -193,6 +215,12 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
   padding-bottom: clamp(2rem, 5vh, 4rem);
 }
 .hero__content { width: 100%; }
+/* --display (up to 18.4rem) is sized for shorter single-word/short-phrase
+   uses elsewhere; at hero's actual phrase lengths ("Inspiring loyalty.",
+   "Creating value.") it force-wraps each into two visual lines inside one
+   masked .line box, breaking the one-line reveal contract Task 8 needs.
+   Scoped override only — the shared --display token is untouched. */
+#hero .display { font-size: clamp(3.25rem, 8.6vw, 10.5rem); }
 #hero .lead { max-width: 40ch; margin-top: 1.5rem; }
 .hero__ctas { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: clamp(2rem, 4vh, 3rem); }
 
@@ -260,7 +288,13 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
    on the plain canvas surface (RULING 2) until then. */
 .spectrum { list-style: none; margin: clamp(2.5rem, 6vh, 4rem) 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
 .capability { padding: 1.75rem; display: flex; flex-direction: column; gap: .75rem; }
-.capability picture, .capability img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: calc(var(--r-card) - 8px); }
+/* Uniform equal-weight visual slot for all five cards — only LoyaltyQuest
+   has a photo today; the other four sit empty and neutral until Task 15
+   paints each band from data-gradient. Without this, one image card ran
+   ~880px tall against ~260px copy-only cards. */
+.capability__visual { aspect-ratio: 16 / 9; border-radius: calc(var(--r-card) - 8px); overflow: clip; background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.theme-dark .capability__visual { background: color-mix(in srgb, var(--canvas) 6%, transparent); }
+.capability__visual picture, .capability__visual img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .capability h3 { font-size: 1.375rem; }
 .capability p { color: var(--ink-2); font-size: .9375rem; margin: 0; }
 .capability .pill { align-self: flex-start; }
@@ -269,9 +303,13 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
 #loyalty-monitor { min-height: 100vh; display: grid; align-items: center; overflow: clip; padding-block: 0; }
 .monitor__inner { text-align: center; }
 .monitor__inner .heading { margin-inline: auto; max-width: 20ch; }
-.monitor__stage { position: relative; margin-top: 2rem; min-height: clamp(16rem, 40vh, 24rem); }
-.monitor__state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; }
-.monitor__state--b { opacity: 0; visibility: hidden; }
+/* Both statistics show concurrently, stacked — matching the stat-wall
+   pattern used elsewhere on the page. No task defines a toggle for
+   --a/--b, so a hidden --b was permanently unreachable (and stripped from
+   the accessibility tree by visibility:hidden). Task 9's counters count
+   both independently in place. */
+.monitor__stage { position: relative; margin-top: 2rem; display: flex; flex-direction: column; gap: clamp(2rem, 5vh, 3.5rem); }
+.monitor__state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; }
 .monitor__num { display: block; font-weight: 700; font-size: clamp(6rem, 18vw, 13rem); line-height: .9; letter-spacing: var(--track-display); }
 .monitor__caption { color: var(--support); font-size: var(--lead); max-width: 34ch; margin: 0; }
 .monitor__meter { width: min(520px, 80%); height: 4px; margin: 2.5rem auto 0; border-radius: var(--r-pill); background: var(--hairline-inv); overflow: clip; }
