@@ -34,12 +34,21 @@ export function createStage() {
 
   const clock = new THREE.Clock();
   const updaters = [];
+  const disposers = [];
   let raf = 0;
 
-  const stage = { THREE, scene, camera, renderer, clock, frames: 0, addUpdater, dispose };
+  const stage = { THREE, scene, camera, renderer, clock, frames: 0, addUpdater, addDisposer, dispose };
 
   function addUpdater(fn) {
     updaters.push(fn);
+  }
+
+  // Extension hook mirroring addUpdater: anything built off the scene graph
+  // (PMREM environment maps and their render targets, in particular) is
+  // invisible to scene.traverse() below, so callers register their own
+  // teardown here instead of relying on dispose() to find it.
+  function addDisposer(fn) {
+    disposers.push(fn);
   }
 
   function frame() {
@@ -81,15 +90,35 @@ export function createStage() {
   }
   window.addEventListener('resize', onResize, { passive: true });
 
+  // Material.dispose() does not cascade to its texture maps (by design —
+  // textures are often shared across materials), so walk each material's
+  // known map slots and dispose those textures explicitly.
+  const TEXTURE_SLOTS = [
+    'map', 'alphaMap', 'aoMap', 'bumpMap', 'clearcoatMap', 'clearcoatNormalMap',
+    'clearcoatRoughnessMap', 'displacementMap', 'emissiveMap', 'envMap',
+    'iridescenceMap', 'iridescenceThicknessMap', 'lightMap', 'metalnessMap',
+    'normalMap', 'roughnessMap', 'sheenColorMap', 'sheenRoughnessMap',
+    'specularColorMap', 'specularIntensityMap', 'thicknessMap',
+    'transmissionMap',
+  ];
+
+  function disposeMaterial(material) {
+    for (const slot of TEXTURE_SLOTS) material[slot]?.dispose?.();
+    material.dispose();
+  }
+
   function dispose() {
     stop();
     document.removeEventListener('visibilitychange', onVisibilityChange);
     window.removeEventListener('resize', onResize);
     scene.traverse((o) => {
       o.geometry?.dispose?.();
-      if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose());
-      else o.material?.dispose?.();
+      if (Array.isArray(o.material)) o.material.forEach(disposeMaterial);
+      else if (o.material) disposeMaterial(o.material);
     });
+    // Anything off the scene graph (env maps, PMREM render targets, …)
+    // registered its own teardown via addDisposer — run those too.
+    for (const fn of disposers) fn();
     renderer.dispose();
   }
 
