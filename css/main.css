@@ -126,6 +126,10 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
 }
 .nav__burger[aria-expanded="true"] span:first-child { transform: translateY(3.5px) rotate(45deg); }
 .nav__burger[aria-expanded="true"] span:last-child  { transform: translateY(-3.5px) rotate(-45deg); }
+/* .nav__burger is a sibling of .menu, not a descendant, so color:inherit
+   always resolves through body's --ink. Recolour explicitly when open so
+   the control stays visible against the near-black .menu backdrop. */
+.nav__burger[aria-expanded="true"] { color: var(--canvas); }
 
 /* ---- Menu ---- */
 /* Fullscreen overlay menu. Hidden state uses opacity/visibility, never

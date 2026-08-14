@@ -16,17 +16,37 @@ export function initNav() {
   // display:none, so the focus trap keeps working). Chromium won't accept
   // focus on an element while it's still computed as visibility:hidden,
   // and that stays true until the transition actually finishes — so the
-  // first-link focus has to wait for `transitionend`, not fire inline.
+  // first-link focus prefers to wait for `transitionend`. But that must
+  // not be a hard dependency: prefers-reduced-motion (Task 8 sets
+  // `transition: none` for it) or any future change that drops the
+  // transition would mean `transitionend` never fires, silently breaking
+  // focus management. A bounded fallback timer races it — whichever
+  // happens first wins, and the timer alone still guarantees focus lands
+  // even if no transition ever runs. Timer must exceed --dur-ui (240ms).
   const focusFirstLink = () => menu.querySelector('a')?.focus();
+
+  let cancelFocusFallback = () => {};
 
   const setOpen = (open) => {
     menu.classList.toggle('is-open', open);
     menu.setAttribute('aria-hidden', String(!open));
     burger.setAttribute('aria-expanded', String(open));
     document.body.style.overflow = open ? 'hidden' : '';
-    menu.removeEventListener('transitionend', focusFirstLink);
+    cancelFocusFallback();
     if (open) {
-      menu.addEventListener('transitionend', focusFirstLink, { once: true });
+      let done = false;
+      const once = () => {
+        if (done) return;
+        done = true;
+        focusFirstLink();
+      };
+      menu.addEventListener('transitionend', once, { once: true });
+      const timer = setTimeout(once, 400);
+      cancelFocusFallback = () => {
+        done = true;
+        clearTimeout(timer);
+        menu.removeEventListener('transitionend', once);
+      };
     } else {
       burger.focus();
     }
