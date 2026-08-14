@@ -14,6 +14,55 @@
 </head>
 <body>
 <canvas id="stage" aria-hidden="true"></canvas>
-<main id="top"></main>
+
+<header class="nav">
+  <div class="container nav__inner">
+    <a class="nav__logo" href="#top" aria-label="TCC Global home">
+      <img src="assets/img/logo-text.svg" alt="TCC Global" height="20">
+    </a>
+    <nav aria-label="Primary">
+      <ul class="nav__links">
+        <li><a class="link" href="#what-we-do">What we do</a></li>
+        <li><a class="link" href="#how-it-works">How it works</a></li>
+        <li><a class="link" href="#loyalty-monitor">Loyalty Monitor</a></li>
+        <li><a class="link" href="#insights">Insights</a></li>
+        <li><a class="link" href="#careers">Careers</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn--solid" data-magnetic href="#contact">Contact</a>
+  </div>
+</header>
+
+<button class="nav__burger" aria-expanded="false" aria-controls="menu" aria-label="Open menu">
+  <span></span><span></span>
+</button>
+
+<div class="menu" id="menu" aria-hidden="true">
+  <nav aria-label="Menu">
+    <ul class="menu__list">
+      <li><a class="menu__link" href="#what-we-do">What we do</a></li>
+      <li><a class="menu__link" href="#how-it-works">How it works</a></li>
+      <li><a class="menu__link" href="#loyalty-monitor">Loyalty Monitor</a></li>
+      <li><a class="menu__link" href="#insights">Insights</a></li>
+      <li><a class="menu__link" href="#careers">Careers</a></li>
+      <li><a class="menu__link" href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+  <div class="menu__footer">
+    <span>TCC Global N.V.</span>
+    <span>Amsterdam</span>
+  </div>
+</div>
+
+<main id="top">
+  <!-- TEMPORARY spacer so the nav scroll-flip test has room to scroll.
+       Task 7 removes this once real sections land. -->
+  <div style="height:300vh"></div>
+</main>
+
+<script type="module">
+  import { initNav } from './js/motion/nav.js';
+  initNav();
+</script>
 </body>
 </html>
