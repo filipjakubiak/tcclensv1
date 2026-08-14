@@ -11,13 +11,22 @@ import { withPage } from '../test-support/helpers.mjs';
 // on coarse ones) so the TDD cycle is meaningful.
 
 test('stat counters animate up from zero and land exactly on target values', async () => {
-  const { early, finalResults } = await withPage(async (page) => {
+  const { mid, finalResults } = await withPage(async (page) => {
     await page.locator('#proof').scrollIntoViewIfNeeded();
-    await page.waitForTimeout(300);
-    const early = await page.evaluate(() => {
-      const el = document.querySelector('[data-count-to="120"]');
-      return el ? el.textContent.trim() : null;
-    });
+    // Wait on a condition, not a stopwatch: how long ScrollTrigger takes to
+    // recalculate and fire after a programmatic scroll (with Lenis
+    // reconciling scroll position in its own rAF loop concurrently) isn't
+    // bounded by a fixed wait, especially under CI load. A wall-clock
+    // sample here would race trigger latency and fail a correctly-working
+    // feature. Wait until the counter genuinely moves off its baked-in
+    // static text instead.
+    await page.waitForFunction(
+      () => document.querySelector('[data-count-to="120"]').textContent !== '120+',
+      { timeout: 2000 }
+    );
+    const mid = await page.evaluate(
+      () => parseInt(document.querySelector('[data-count-to="120"]').textContent, 10)
+    );
     await page.waitForTimeout(2200);
     const finalResults = await page.evaluate(() =>
       [...document.querySelectorAll('[data-count-to]')].map((el) => ({
@@ -25,9 +34,9 @@ test('stat counters animate up from zero and land exactly on target values', asy
         want: el.dataset.countTo + (el.dataset.suffix ?? ''),
       }))
     );
-    return { early, finalResults };
+    return { mid, finalResults };
   });
-  assert.notEqual(early, '120+', 'counter shows its final value almost immediately — it is not animating');
+  assert.ok(mid < 120, `expected mid-tween value below 120, got ${mid}`);
   assert.ok(finalResults.length > 0, 'no counters found');
   for (const r of finalResults) assert.equal(r.shown, r.want);
 });

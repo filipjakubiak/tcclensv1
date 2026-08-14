@@ -176,7 +176,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
 /* ---- Shared primitives ---- */
 /* Masked line reveal target. */
 .line { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
-.line > span { display: inline-block; will-change: transform; }
+.line > span { display: block; will-change: transform; }
 
 [data-focus-pull] { will-change: filter, opacity, transform; }
 
