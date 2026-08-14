@@ -1,0 +1,52 @@
+:root {
+  /* ---- Brand colour (TCC Brand Guidelines 2023) ---- */
+  --canvas:  #FCFCFC;
+  --chamber: #08070A;
+  --ink:     #000000;
+  --ink-2:   #4A4E57;
+  --ink-3:   #7C828C;
+  --accent:  #D380EB;   /* TCC Purple — never body text */
+  --support: #B1BDCE;   /* Space Grey */
+  --hairline:     rgba(0, 0, 0, 0.10);
+  --hairline-inv: rgba(252, 252, 252, 0.14);
+  --accent-shadow: rgba(148, 44, 181, 0.38);
+
+  /* ---- Gradients. One per section. Never combined. ---- */
+  --grad-core:           linear-gradient(105deg, #D380EB, #B1BDCE);
+  --grad-performance:    linear-gradient(105deg, #FFADBD, #CFD0F7);
+  --grad-insight:        linear-gradient(105deg, #B7F4E6, #CFD0F7);
+  --grad-creativity:     linear-gradient(105deg, #FDFFCF, #F8C1F7);
+  --grad-operational:    linear-gradient(105deg, #FFC896, #D9CAF6);
+  --grad-sustainability: linear-gradient(105deg, #B7F4E6, #E6F5A9);
+
+  /* ---- Type scale ---- */
+  --display:    clamp(3.5rem, 15vw, 18.4rem);
+  --heading-lg: clamp(2.75rem, 9vw, 9.7rem);
+  --heading:    clamp(2rem, 5.5vw, 6rem);
+  --subheading: clamp(1.75rem, 3.5vw, 3.75rem);
+  --lead:       clamp(1.125rem, 1.5vw, 1.375rem);
+  --body:       1.125rem;   /* HARD CAP — never raise */
+  --micro:      0.6875rem;
+
+  --track-display: -0.04em;
+  --track-tight:   -0.02em;
+  --track-micro:    0.01em;
+
+  /* ---- Spacing ---- */
+  --gutter:  clamp(1.25rem, 4vw, 4rem);
+  --section: clamp(7rem, 16vh, 12rem);
+  --page-max: 1400px;
+  --nav-h: 76px;
+
+  /* ---- Shape ---- */
+  --r-pill: 999px;
+  --r-card: 20px;
+
+  /* ---- Motion ---- */
+  --ease-out-strong: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-scrub:      cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-press:  160ms;
+  --dur-ui:     240ms;
+  --dur-reveal: 700ms;
+  --dur-hero:  1200ms;
+}
