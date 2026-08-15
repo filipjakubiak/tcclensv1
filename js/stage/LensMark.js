@@ -44,45 +44,69 @@ export async function createLensMark(stage) {
   const head = meshFor(svg.paths[0]);
   const heart = meshFor(svg.paths[1]);
 
-  const group = new T.Group();
-  group.add(head, heart);
-  group.scale.y *= -1; // SVG Y-down → Three Y-up
-
-  // Centre the combined head+heart bounding box on the origin. group's
-  // scale is a diagonal ±1 matrix (self-inverse), so multiplying the
-  // world-space centre by (1,-1,1) converts it back to a local-space
-  // offset; subtracting that same offset from every child is a rigid
-  // shift that leaves head/heart position relative to each other intact.
-  const box = new T.Box3().setFromObject(group);
+  // Centre the combined head+heart bounding box on the origin. Measured
+  // through a temporary Y-flipped group: its scale is a diagonal ±1 matrix
+  // (self-inverse), so multiplying the world-space centre by (1,-1,1)
+  // converts it back to a local-space offset; subtracting that same offset
+  // from both meshes is a rigid shift that leaves head and heart in the
+  // same position relative to each other.
+  const measure = new T.Group();
+  measure.add(head, heart);
+  measure.scale.y *= -1; // SVG Y-down → Three Y-up
+  const box = new T.Box3().setFromObject(measure);
   const size = box.getSize(new T.Vector3());
   const centre = box.getCenter(new T.Vector3());
   const localOffset = centre.clone().multiply(new T.Vector3(1, -1, 1));
-  for (const m of group.children) m.position.sub(localOffset);
+  for (const m of measure.children) m.position.sub(localOffset);
 
-  // Three nested groups, each owning exactly one job:
-  //   group  — the -1 Y flip (SVG Y-down -> Three Y-up)
-  //   fitted — normalise to ~2 world units tall
-  //   outer  — free for acts to position, rotate and scale
+  // Every transform gets its own group, and no group does two jobs:
   //
-  // The nesting is what makes the 2-unit invariant safe. When acts drove
-  // `outer.scale` directly against a single group that also carried the
-  // normalisation, `scale.setScalar(0.86)` REPLACED the fit factor instead
-  // of multiplying it and the mark snapped back to its raw extrusion size —
-  // 22 units tall, three times the height of the frame. Splitting the two
-  // scales apart makes that mistake unrepresentable rather than merely
-  // documented.
-  const fitted = new T.Group();
-  fitted.add(group);
-  fitted.scale.setScalar(2 / size.y);
+  //   outer      — whole-mark placement; acts own this
+  //   fitted     — normalise to ~2 world units tall; NOTHING else touches it
+  //   headPivot  \ per-half placement; acts own these (Act 2 splits them)
+  //   heartPivot /
+  //   *Flip      — the -1 Y flip, SVG Y-down -> Three Y-up
+  //   head/heart — carry the recentring offset baked into position
+  //
+  // The separation is the whole point. Twice now a state carried on a
+  // shared group has been destroyed by an act assigning to it rather than
+  // composing with it: `outer.scale.setScalar()` wiped the 2-unit
+  // normalisation (the mark rendered 22 units tall, 305% of frame), and
+  // `head.position.x = …` would equally wipe the recentring offset below.
+  // Splitting them makes both mistakes unrepresentable instead of merely
+  // documented. The flip sits under each pivot rather than above both, so
+  // acts work in ordinary Y-up space and +y means up.
+  //
+  // The fit sits BELOW each pivot, not above both. Above, a pivot's
+  // translation would be expressed in raw SVG units and then shrunk by the
+  // fit factor — a 1.55-unit split became 0.14 world units and the halves
+  // visibly never parted, while a test reading pivot.position.x passed.
+  // Below the pivot, an act's numbers are world units and mean what they say.
+  const FIT = 2 / size.y;
+  const withPivot = (mesh) => {
+    const flip = new T.Group();
+    flip.scale.y = -1;
+    flip.add(mesh);
+    const fit = new T.Group();
+    fit.scale.setScalar(FIT);
+    fit.add(flip);
+    const pivot = new T.Group();
+    pivot.add(fit);
+    return pivot;
+  };
+  const headPivot = withPivot(head);
+  const heartPivot = withPivot(heart);
 
   const outer = new T.Group();
-  outer.add(fitted);
+  outer.add(headPivot, heartPivot);
 
   const lens = {
     group: outer,
-    fitted,
+    fit: FIT,
     head,
     heart,
+    headPivot,
+    heartPivot,
     material,
     setTransmission(v) {
       material.transmission = v;

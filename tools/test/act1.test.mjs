@@ -11,9 +11,9 @@ test('doors slide apart on X as the act progresses', async () => {
       const d = window.__tccDirector, a = window.__tccAct1;
       const THREE = window.__tccStage.THREE;
       const halfWidth = new THREE.Box3().setFromObject(a.doorL).getSize(new THREE.Vector3()).x / 2;
-      d.setProgress(0);
+      setLocal(d, 'threshold', 0);
       const shut = { l: a.doorL.position.x, r: a.doorR.position.x };
-      d.setProgress(0.20);
+      setLocal(d, 'threshold', 0.91);
       const open = { l: a.doorL.position.x, r: a.doorR.position.x };
       // The leaves are shut when their inner EDGES meet on the centre line.
       // Comparing their centres instead only works for a door about 0.8
@@ -31,8 +31,8 @@ test('the camera dollies forward through the threshold', async () => {
     await boot(page);
     return page.evaluate(() => {
       const d = window.__tccDirector, cam = window.__tccStage.camera;
-      d.setProgress(0);   const start = cam.position.z;
-      d.setProgress(0.21); const end = cam.position.z;
+      setLocal(d, 'threshold', 0);   const start = cam.position.z;
+      setLocal(d, 'threshold', 0.95); const end = cam.position.z;
       return { start, end };
     });
   });
@@ -71,8 +71,8 @@ test('the aisle plates stay behind the mark for the whole act', async () => {
     return page.evaluate(() => {
       const d = window.__tccDirector, a = window.__tccAct1, lens = window.__tccLens;
       const samples = [];
-      for (const p of [0, 0.05, 0.11, 0.17, 0.21]) {
-        d.setProgress(p);
+      for (const p of [0, 0.25, 0.5, 0.75, 0.95]) {
+        setLocal(d, 'threshold', p);
         samples.push({
           p,
           markZ: lens.group.position.z,
@@ -101,7 +101,7 @@ test('every aisle plate fills the doorway it is seen through', async () => {
     return page.evaluate(() => {
       const d = window.__tccDirector, a = window.__tccAct1, cam = window.__tccStage.camera;
       const THREE = window.__tccStage.THREE;
-      d.setProgress(0);
+      setLocal(d, 'threshold', 0);
       const ap = new THREE.Box3().setFromObject(a.wall[0]); // left return -> aperture edge
       const apRight = new THREE.Box3().setFromObject(a.wall[1]);
       const apTop = new THREE.Box3().setFromObject(a.wall[2]);
@@ -134,7 +134,7 @@ test('the storefront wall covers the frame so the store reads as a doorway', asy
     return page.evaluate(() => {
       const d = window.__tccDirector, a = window.__tccAct1, cam = window.__tccStage.camera;
       const THREE = window.__tccStage.THREE;
-      d.setProgress(0);
+      setLocal(d, 'threshold', 0);
       const b = new THREE.Box3();
       for (const s of a.wall) b.union(new THREE.Box3().setFromObject(s));
       const dist = cam.position.z - a.wall[0].position.z;

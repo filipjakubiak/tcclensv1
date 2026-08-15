@@ -36,7 +36,10 @@ const AISLE_PLATES = [
 ];
 
 const CAM_START_Z = 8;
-const CAM_END_Z = 1.55;      // just short of the wall — the dolly ends mid-threshold
+// The dolly ends PAST the wall, so by the act boundary the storefront is
+// behind the camera. Act 2 can then swap it for the gradient field without
+// anything visibly disappearing from frame.
+const CAM_END_Z = 0.55;
 const WALL_Z = 1.2;
 const DOOR_Z = 1.0;
 
@@ -47,6 +50,17 @@ const APERTURE_W = 4.6;
 const APERTURE_H = 4.9;
 
 const lerp = (a, b, t) => a + (b - a) * t;
+
+// Where this act leaves everything at t = 1. Act 2 starts from these exact
+// values rather than its own guesses — act-boundary continuity is the thing
+// most likely to break the scroll, and neither act can see the other.
+export const END = {
+  cam: [APERTURE_X * 0.72, 0.16, CAM_END_Z],
+  look: [APERTURE_X * 0.9, 0, -2],
+  mark: [APERTURE_X * 0.62, 0.05, -2.6],
+  markRotY: 0.08,
+  markScale: 1.0,
+};
 
 let doorL, doorR, planes = [], wall = [], aisleGlow, spill;
 let doorShut = 0, doorOpen = 0;
@@ -59,6 +73,10 @@ function frustumAt(camera, z, fromZ = CAM_START_Z) {
 
 export default {
   id: 'threshold',
+  // Act 1 owns the hero; Act 2 begins at #thesis. The director re-derives
+  // these from the real section offsets, so the numbers here are only the
+  // pre-layout fallback.
+  anchor: '#hero',
   range: [0.0, 0.22],
 
   build(ctx) {
@@ -173,6 +191,13 @@ export default {
     window.__tccAct1 = { doorL, doorR, planes, wall };
   },
 
+  // Both acts define the full backdrop state on enter, so the swap is
+  // correct in either scroll direction without needing exit hooks.
+  enter(ctx) {
+    for (const o of [...planes, ...wall, doorL, doorR]) o.visible = true;
+    ctx.field?.hide();
+  },
+
   update(t, ctx) {
     const { stage, lens } = ctx;
 
@@ -191,18 +216,30 @@ export default {
     );
     stage.camera.lookAt(APERTURE_X * 0.9, 0, -2);
 
+    // Dim back to --chamber over the last stretch, so Act 2's gradient can
+    // come up from black instead of cutting. The plates are opaque (they
+    // must be, to appear in the transmission pass), so a fade has to happen
+    // in colour rather than alpha.
+    const fade = 1 - THREE.MathUtils.smoothstep(t, 0.86, 1);
+
     planes.forEach((p, i) => {
       // Nearer plates travel further: that difference is the parallax.
       p.position.z = AISLE_PLATES[i].z + push * (3.4 - i * 0.9);
       // The store comes up to brightness as the doors clear — and this is
       // what finally puts colour into the transmission pass behind the glass.
-      p.material.color.setHex(AISLE_PLATES[i].dim).multiplyScalar(lerp(1, 2.6 - i * 0.3, slide));
+      p.material.color
+        .setHex(AISLE_PLATES[i].dim)
+        .multiplyScalar(lerp(1, 2.6 - i * 0.3, slide) * fade);
     });
 
     // The mark waits in the aisle and drifts forward as the doors clear.
-    lens.group.position.set(APERTURE_X * lerp(1, 0.62, push), lerp(-0.15, 0.05, slide), lerp(-4.2, -1.4, slide));
-    lens.group.rotation.y = lerp(-0.6, 0.08, slide);
-    lens.group.scale.setScalar(lerp(0.9, 1.05, slide));
-    aisleGlow.intensity = lerp(30, 46, slide);
+    lens.group.position.set(
+      APERTURE_X * lerp(1, 0.62, push),
+      lerp(-0.15, END.mark[1], slide),
+      lerp(-4.2, END.mark[2], slide)
+    );
+    lens.group.rotation.y = lerp(-0.6, END.markRotY, slide);
+    lens.group.scale.setScalar(lerp(0.9, END.markScale, slide));
+    aisleGlow.intensity = lerp(30, 46, slide) * fade;
   },
 };

@@ -46,9 +46,13 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
 .heading-lg { font-size: var(--heading-lg); font-weight: 700; letter-spacing: var(--track-display); line-height: .92; }
 .heading    { font-size: var(--heading); }
 .lead       { font-size: var(--lead); color: var(--ink-2); line-height: 1.5; }
+/* --ink-2, not --ink-3. Eyebrows are 11px, so they need 4.5:1, and --ink-3
+   measures 3.77:1 against --canvas — a WCAG AA failure that predates the
+   WebGL backdrop and got worse under it (2.84:1). --ink-2 measures 8.13:1
+   on --canvas and 6.1:1 against the gradient field at its tint ceiling. */
 .eyebrow {
   font-size: var(--micro); font-weight: 600; text-transform: uppercase;
-  letter-spacing: var(--track-micro); color: var(--ink-3); margin: 0 0 1.5rem;
+  letter-spacing: var(--track-micro); color: var(--ink-2); margin: 0 0 1.5rem;
 }
 
 /* Dark surfaces */

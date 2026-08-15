@@ -6,7 +6,9 @@ import { createStage } from './stage/Stage.js';
 import { buildEnvironment } from './stage/env.js';
 import { createLensMark } from './stage/LensMark.js';
 import { createDirector, mountDebugScrub } from './stage/SceneDirector.js';
+import { createGradientField } from './stage/GradientField.js';
 import act1 from './stage/acts/act1-threshold.js';
+import act2 from './stage/acts/act2-headheart.js';
 
 initNav();
 initLenis();
@@ -43,12 +45,16 @@ async function initStage() {
   const env = buildEnvironment(stage);
   const lens = await createLensMark(stage);
 
-  stage.camera.position.set(1.3, 0.5, 4.2);
-  stage.camera.lookAt(0, 0, 0);
+  // Acts 2-4 drop the store photography for the brand book's own gradients
+  // (user direction, 2026-08-15). The field is also the mark's refraction
+  // content once Act 1's aisle plates are gone — without it the glass goes
+  // back to refracting flat --chamber and reads as plastic again.
+  const field = createGradientField(stage);
 
   // The glass leans on the environment map for its refraction and
   // dispersion, but a soft key light gives the clearcoat something
-  // crisp to specular-highlight against.
+  // crisp to specular-highlight against. The camera itself is owned by the
+  // acts from Task 13 on, so nothing is hand-positioned here.
   const key = new stage.THREE.DirectionalLight(0xffffff, 2.2);
   key.position.set(-3, 2, 5);
   stage.scene.add(key);
@@ -60,14 +66,18 @@ async function initStage() {
   // Task 12: the act director replaces Task 11's temporary idle rotation.
   // Acts are registered as placeholders here and swapped for real modules
   // by Tasks 13–16, keeping the same id and range.
-  const ctx = { stage, lens, env, THREE: stage.THREE };
+  const ctx = { stage, lens, env, field, THREE: stage.THREE };
   const director = createDirector(stage, ctx);
   director.register(act1);
-  for (const [id, range] of [
-    ['headheart', [0.22, 0.55]],
-    ['prism',     [0.55, 0.82]],
-    ['close',     [0.82, 1.00]],
-  ]) director.register({ id, range });
+  director.register(act2);
+  // Anchors follow the spec's act table; the director derives the real
+  // boundaries from where these sections actually land on the page.
+  for (const [id, anchor, range] of [
+    ['prism', '#what-we-do', [0.55, 0.82]],
+    ['close', '#clients', [0.82, 1.00]],
+  ]) director.register({ id, anchor, range });
+
+  director.alignToSections();
 
   // Park on the opening framing BEFORE attaching scroll. ScrollTrigger with
   // scrub only calls back once the user actually scrolls, so without this no

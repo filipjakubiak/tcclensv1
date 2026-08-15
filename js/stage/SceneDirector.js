@@ -21,7 +21,7 @@ export function createDirector(stage, ctx) {
     get progress() { return progress; },
     get activeAct() { return active; },
     get acts() { return acts; },
-    register, setProgress, attachScroll,
+    register, setProgress, attachScroll, alignToSections,
   };
 
   function register(act) {
@@ -30,6 +30,42 @@ export function createDirector(stage, ctx) {
     acts.push(act);
     acts.sort((a, b) => a.range[0] - b.range[0]);
     return director;
+  }
+
+  /**
+   * Re-derive act boundaries from where their sections actually sit.
+   *
+   * The spec assigns each act a range of DOM sections, and the plan then
+   * expressed those as fixed document fractions — but the two do not agree.
+   * The hero is about 7% of this page, not the 22% Act 1 was given, so the
+   * dark storefront act carried on playing behind three light sections of
+   * dark copy, which was close to unreadable.
+   *
+   * Anchoring to the sections themselves honours what the spec actually
+   * says, and keeps holding when copy length changes the page height.
+   */
+  function alignToSections() {
+    const doc = document.documentElement;
+    const scrollable = doc.scrollHeight - window.innerHeight;
+    if (scrollable <= 0) return;
+
+    const at = (sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return null;
+      return Math.min(1, Math.max(0, (el.getBoundingClientRect().top + window.scrollY) / scrollable));
+    };
+
+    let cursor = 0;
+    for (let i = 0; i < acts.length; i += 1) {
+      const next = acts[i + 1];
+      // An act runs until the first section of the act after it. The last
+      // act owns everything to the bottom.
+      const end = next?.anchor ? at(next.anchor) ?? next.range[0] : 1;
+      acts[i].range = [cursor, Math.max(cursor + 0.02, end)];
+      cursor = acts[i].range[1];
+    }
+    // Re-resolve the current position against the new boundaries.
+    setProgress(progress);
   }
 
   function actAt(p) {
@@ -69,6 +105,7 @@ export function createDirector(stage, ctx) {
       end: 'bottom bottom',
       scrub: 1,
       onUpdate: (self) => setProgress(self.progress),
+      onRefresh: alignToSections, // page height changed — re-derive boundaries
     });
   }
 

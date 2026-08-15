@@ -8,23 +8,44 @@ import { withPage } from '../test-support/helpers.mjs';
 const boot = (page) => page.waitForFunction(() => window.__tccReady, null, { timeout: 10000 });
 
 test('global progress maps to the correct act and local t', async () => {
-  const cases = await withPage(async (page) => {
+  // Asserted against the director's OWN ranges rather than the plan's fixed
+  // fractions. Those fractions turned out not to match the page: the hero is
+  // ~7% of the document, not the 22% Act 1 was given, so the ranges are now
+  // derived from where each act's section actually sits. Hardcoding numbers
+  // here would only re-assert the arithmetic that was wrong.
+  const r = await withPage(async (page) => {
     await boot(page);
-    return page.evaluate(() =>
-      [0.0, 0.11, 0.22, 0.385, 0.55, 0.685, 0.82, 1.0].map((p) => {
-        window.__tccDirector.setProgress(p);
-        return { p, id: window.__tccDirector.activeAct.id, t: +window.__tccDirector.activeAct._t.toFixed(3) };
-      })
-    );
+    return page.evaluate(() => {
+      const d = window.__tccDirector;
+      const out = [];
+      for (const act of d.acts) {
+        const [s, e] = act.range;
+        for (const local of [0, 0.5, 0.999]) {
+          d.setProgress(s + (e - s) * local);
+          out.push({ want: act.id, got: d.activeAct.id, local, t: +d.activeAct._t.toFixed(3) });
+        }
+      }
+      d.setProgress(1);
+      return { out, atEnd: { id: d.activeAct.id, t: d.activeAct._t }, last: d.acts.at(-1).id,
+               ranges: d.acts.map((a) => [a.id, +a.range[0].toFixed(3), +a.range[1].toFixed(3)]) };
+    });
   });
-  const byP = Object.fromEntries(cases.map((c) => [c.p, c]));
-  assert.equal(byP[0.0].id, 'threshold');
-  assert.equal(byP[0.11].t, 0.5);
-  assert.equal(byP[0.22].id, 'headheart');
-  assert.equal(byP[0.385].t, 0.5);
-  assert.equal(byP[0.55].id, 'prism');
-  assert.equal(byP[0.82].id, 'close');
-  assert.equal(byP[1.0].t, 1);
+
+  // The ranges must tile [0,1] with no gap and no overlap.
+  let cursor = 0;
+  for (const [id, start, end] of r.ranges) {
+    assert.ok(Math.abs(start - cursor) < 1e-6, `${id} starts at ${start}, expected ${cursor}`);
+    assert.ok(end > start, `${id} has an empty or inverted range`);
+    cursor = end;
+  }
+  assert.ok(Math.abs(cursor - 1) < 1e-6, `acts cover only up to ${cursor}`);
+
+  for (const c of r.out) {
+    assert.equal(c.got, c.want, `progress inside ${c.want} resolved to ${c.got}`);
+    assert.ok(Math.abs(c.t - c.local) < 0.01, `local t was ${c.t}, expected ${c.local} in ${c.want}`);
+  }
+  assert.equal(r.atEnd.id, r.last, 'the final act must own progress 1');
+  assert.equal(r.atEnd.t, 1);
 });
 
 test('an act is active and updated before any scroll happens', async () => {
@@ -70,10 +91,10 @@ test('crossing an act boundary fires exit on the old act and enter on the new', 
         a.enter = () => log.push(`enter:${a.id}`);
         a.exit = () => log.push(`exit:${a.id}`);
       }
-      d.setProgress(0.1);   // settle into threshold
+      setLocal(d, 'threshold', 0.5);
       log.length = 0;       // ignore whatever act we were parked in
-      d.setProgress(0.3);   // threshold -> headheart
-      d.setProgress(0.35);  // same act, must not re-fire
+      setLocal(d, 'headheart', 0.3);
+      setLocal(d, 'headheart', 0.6); // same act, must not re-fire
       return log;
     });
   });
@@ -104,13 +125,21 @@ test('the debug slider drives the director and reports the active act', async ()
     await boot(page);
     await page.locator('#tcc-debug input').fill('600');
     await page.locator('#tcc-debug input').dispatchEvent('input');
-    return page.evaluate(() => ({
-      progress: window.__tccDirector.progress,
-      id: window.__tccDirector.activeAct.id,
-      label: document.querySelector('#tcc-debug span').textContent,
-    }));
+    return page.evaluate(() => {
+      const d = window.__tccDirector;
+      // Which act owns 0.6 depends on the page's section layout, so ask the
+      // director rather than assuming — that assumption is exactly what went
+      // wrong with the plan's fixed act fractions.
+      const owner = d.acts.filter((a) => 0.6 >= a.range[0]).at(-1);
+      return {
+        progress: d.progress,
+        id: d.activeAct.id,
+        expected: owner.id,
+        label: document.querySelector('#tcc-debug span').textContent,
+      };
+    });
   }, '/?debug=1');
   assert.equal(r.progress, 0.6);
-  assert.equal(r.id, 'prism');
-  assert.equal(r.label, '0.600 · prism');
+  assert.equal(r.id, r.expected);
+  assert.equal(r.label, `0.600 · ${r.expected}`);
 });
