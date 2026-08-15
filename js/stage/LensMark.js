@@ -59,14 +59,28 @@ export async function createLensMark(stage) {
   const localOffset = centre.clone().multiply(new T.Vector3(1, -1, 1));
   for (const m of group.children) m.position.sub(localOffset);
 
-  // Normalise to ~2 world units tall. Wrapping in an outer group keeps
-  // the -1 Y-flip and the uniform scale as separate, inspectable steps.
+  // Three nested groups, each owning exactly one job:
+  //   group  — the -1 Y flip (SVG Y-down -> Three Y-up)
+  //   fitted — normalise to ~2 world units tall
+  //   outer  — free for acts to position, rotate and scale
+  //
+  // The nesting is what makes the 2-unit invariant safe. When acts drove
+  // `outer.scale` directly against a single group that also carried the
+  // normalisation, `scale.setScalar(0.86)` REPLACED the fit factor instead
+  // of multiplying it and the mark snapped back to its raw extrusion size —
+  // 22 units tall, three times the height of the frame. Splitting the two
+  // scales apart makes that mistake unrepresentable rather than merely
+  // documented.
+  const fitted = new T.Group();
+  fitted.add(group);
+  fitted.scale.setScalar(2 / size.y);
+
   const outer = new T.Group();
-  outer.add(group);
-  outer.scale.setScalar(2 / size.y);
+  outer.add(fitted);
 
   const lens = {
     group: outer,
+    fitted,
     head,
     heart,
     material,

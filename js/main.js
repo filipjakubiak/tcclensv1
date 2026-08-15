@@ -6,6 +6,7 @@ import { createStage } from './stage/Stage.js';
 import { buildEnvironment } from './stage/env.js';
 import { createLensMark } from './stage/LensMark.js';
 import { createDirector, mountDebugScrub } from './stage/SceneDirector.js';
+import act1 from './stage/acts/act1-threshold.js';
 
 initNav();
 initLenis();
@@ -61,8 +62,8 @@ async function initStage() {
   // by Tasks 13–16, keeping the same id and range.
   const ctx = { stage, lens, env, THREE: stage.THREE };
   const director = createDirector(stage, ctx);
+  director.register(act1);
   for (const [id, range] of [
-    ['threshold', [0.00, 0.22]],
     ['headheart', [0.22, 0.55]],
     ['prism',     [0.55, 0.82]],
     ['close',     [0.82, 1.00]],
