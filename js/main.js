@@ -5,6 +5,7 @@ import { initCounters } from './motion/counters.js';
 import { createStage } from './stage/Stage.js';
 import { buildEnvironment } from './stage/env.js';
 import { createLensMark } from './stage/LensMark.js';
+import { createDirector, mountDebugScrub } from './stage/SceneDirector.js';
 
 initNav();
 initLenis();
@@ -55,14 +56,33 @@ async function initStage() {
   stage.scene.add(rim);
   stage.addDisposer(() => { stage.scene.remove(key); stage.scene.remove(rim); }); // Light has no dispose() to call
 
-  // Temporary idle rotation so the glass has something to catch the
-  // environment with before Task 12's act director takes over.
-  stage.addUpdater((t) => {
-    lens.group.rotation.y = Math.sin(t * 0.25) * 0.35;
-    lens.group.rotation.x = Math.sin(t * 0.18) * 0.06;
-  });
+  // Task 12: the act director replaces Task 11's temporary idle rotation.
+  // Acts are registered as placeholders here and swapped for real modules
+  // by Tasks 13–16, keeping the same id and range.
+  const ctx = { stage, lens, env, THREE: stage.THREE };
+  const director = createDirector(stage, ctx);
+  for (const [id, range] of [
+    ['threshold', [0.00, 0.22]],
+    ['headheart', [0.22, 0.55]],
+    ['prism',     [0.55, 0.82]],
+    ['close',     [0.82, 1.00]],
+  ]) director.register({ id, range });
+
+  // Park on the opening framing BEFORE attaching scroll. ScrollTrigger with
+  // scrub only calls back once the user actually scrolls, so without this no
+  // act is ever entered and no update() runs on first paint — every act would
+  // render at its build() defaults until the first wheel event. 0.04 is far
+  // enough into Act 1 to be its settled hero framing rather than frame zero,
+  // and it is the same value ?shot=1 and reduced motion rest at.
+  director.setProgress(0.04);
+  if (motionEnabled()) director.attachScroll();
+  mountDebugScrub(director);
 
   window.__tccEnv = env;
+  // Published last, and only here: every stage test boots on this rather
+  // than on __tccStage / __tccLens / __tccDirector, each of which appears
+  // partway through this function and would race whatever follows it.
+  window.__tccReady = true;
 }
 
 initStage();
