@@ -131,8 +131,10 @@ export default {
       if (!motionEnabled()) return; // ?shot=1 and reduced motion stay settled
       const idle = 1 - THREE.MathUtils.smoothstep(localT, 0.02, 0.3);
       if (idle <= 0) return;
-      ctx.lens.group.rotation.y += Math.sin(elapsed * 0.45) * 0.55 * idle;
-      ctx.lens.group.rotation.x = Math.sin(elapsed * 0.31) * 0.09 * idle;
+      // Slow. A full sweep takes about 50 seconds — the mark should feel like
+      // it is drifting, not presenting itself.
+      ctx.lens.group.rotation.y += Math.sin(elapsed * 0.125) * 0.5 * idle;
+      ctx.lens.group.rotation.x = Math.sin(elapsed * 0.085) * 0.07 * idle;
     });
 
     window.__tccAct1 = { doorL, doorR };

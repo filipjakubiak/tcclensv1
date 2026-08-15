@@ -293,11 +293,20 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
   /* Translucent, so the section's own light still moves behind the mosaic. */
   background: color-mix(in srgb, var(--canvas) 72%, transparent);
 }
-.bento__cell--lead { grid-column: span 6; grid-row: span 2; justify-content: space-between; }
-.bento__cell--tall { grid-column: span 6; }
-.bento__cell--wide { grid-column: span 7; }
-.bento__cell--sm   { grid-column: span 3; }
-.bento__well       { grid-column: span 5; border-radius: var(--r-card); }
+/* EXPLICIT placement, not span-and-hope. With spans alone the row of 6+3+3
+   left a 7-wide cell nowhere to go, so it wrapped and the mosaic tore open
+   with dead space. Every cell is now positioned by hand and the three rows
+   tile 12 columns exactly: 6+6, 6+3+3, 5+4+3. */
+.bento { grid-auto-rows: minmax(clamp(9rem, 16vh, 12rem), auto); }
+.bento > :nth-child(1) { grid-column: 1 / 7;  grid-row: 1 / 3; justify-content: space-between; }
+.bento > :nth-child(2) { grid-column: 7 / 13; grid-row: 1; }
+.bento > :nth-child(3) { grid-column: 7 / 10; grid-row: 2; }
+.bento > :nth-child(4) { grid-column: 10 / 13; grid-row: 2; }
+.bento > :nth-child(5) { grid-column: 1 / 6;  grid-row: 3; }
+.bento > :nth-child(6) { grid-column: 6 / 10; grid-row: 3; }
+/* The well: a deliberate hole where the live canvas shows at full strength,
+   since the legibility veil covers the mark everywhere a cell sits. */
+.bento > :nth-child(7) { grid-column: 10 / 13; grid-row: 3; }
 
 .bento__figure {
   display: block; font-weight: 700; line-height: .86;
@@ -477,12 +486,11 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 @media (max-width: 860px) {
   .thesis__lede { grid-template-columns: 1fr; margin-left: 0; }
   .stats__head { grid-template-columns: 1fr; align-items: start; gap: 1.5rem; }
-  /* Two-up: the lead keeps its emphasis, everything else pairs off, and the
-     well is dropped — there is no spare width to spend on it. */
-  .bento__cell--lead { grid-column: span 12; grid-row: auto; }
-  .bento__cell--tall, .bento__cell--wide { grid-column: span 12; }
-  .bento__cell--sm { grid-column: span 6; }
-  .bento__well { display: none; }
+  /* Two-up. Explicit placement has to be undone or it survives the
+     breakpoint and rebuilds the desktop mosaic in a narrower box. */
+  .bento > * { grid-column: auto / span 6 !important; grid-row: auto !important; }
+  .bento > :nth-child(1) { grid-column: auto / span 12 !important; }
+  .bento > :nth-child(7) { display: none; }
   .fork__grid { grid-template-columns: 1fr; }
   .howworks__steps { grid-template-columns: 1fr; }
   .global__grid, .careers__grid { grid-template-columns: 1fr; gap: 2.5rem; align-items: start; }
@@ -490,7 +498,7 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
   .insight:first-child .insight__img { aspect-ratio: 4 / 3; }
 }
 @media (max-width: 560px) {
-  .bento__cell, .bento__cell--sm { grid-column: span 12; }
+  .bento > * { grid-column: auto / span 12 !important; }
   .careers__values { grid-template-columns: 1fr; }
 }
 
@@ -559,8 +567,8 @@ html.stage-live main > section:not(.theme-dark):not([data-tint]) {
      right. Text keeps a --canvas surface; the glass keeps its contrast. */
   background-image: linear-gradient(
     to right,
-    color-mix(in srgb, var(--canvas) 68%, transparent) 0%,
-    color-mix(in srgb, var(--canvas) 68%, transparent) 48%,
+    color-mix(in srgb, var(--canvas) 74%, transparent) 0%,
+    color-mix(in srgb, var(--canvas) 74%, transparent) 48%,
     color-mix(in srgb, var(--canvas) 30%, transparent) 72%,
     transparent 88%
   );
@@ -578,7 +586,7 @@ html.stage-live main > section:not(.theme-dark):not([data-tint]) {
    Gradients are assigned by meaning, not decoration, and each is used once:
    the brand book forbids combining two secondary gradients. */
 main > section[data-tint] {
-  --veil: color-mix(in srgb, var(--canvas) 80%, transparent);
+  --veil: color-mix(in srgb, var(--canvas) 68%, transparent);
   background-image: linear-gradient(var(--veil), var(--veil)), var(--tint);
   background-attachment: fixed, fixed;
 }
@@ -592,3 +600,92 @@ section[data-tint='insight']        { --tint: var(--grad-insight); }
 section[data-tint='creativity']     { --tint: var(--grad-creativity); }
 section[data-tint='operational']    { --tint: var(--grad-operational); }
 section[data-tint='sustainability'] { --tint: var(--grad-sustainability); }
+
+/* ---- Surface motion ----
+   Cards, bento cells and grid boxes. The page had exactly two moves before
+   this — the headline focus pull and a fade-and-rise on everything else — so
+   every surface on the page entered identically and nothing between the
+   headlines felt alive.
+
+   Entrance and hover both write to `transform`, so they compose through
+   custom properties inside ONE transform rather than fighting over the
+   property. GSAP animates --enter-*; the pointer handler writes --tilt-*. */
+[data-lift] {
+  position: relative;
+  transform:
+    perspective(900px)
+    rotateX(var(--tilt-x, 0deg))
+    rotateY(var(--tilt-y, 0deg))
+    translate3d(0, var(--enter-y, 0px), 0)
+    scale(var(--enter-s, 1));
+  transform-style: preserve-3d;
+  transition:
+    transform 420ms var(--ease-out-strong),
+    box-shadow 420ms var(--ease-out-strong);
+}
+/* Only while pointing — a permanent will-change on every card keeps a
+   compositor layer alive for the whole page. */
+[data-lift].is-hot { will-change: transform; }
+
+/* The light that follows the cursor. This is the lens idea at surface scale:
+   a highlight catching as you pass over it. Painted on a pseudo-element so
+   the card's own background and border are untouched. */
+[data-lift]::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none; opacity: 0;
+  transition: opacity 420ms var(--ease-out-strong);
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--canvas) 70%, transparent) 0%,
+    transparent 55%
+  );
+}
+[data-lift].is-hot::after { opacity: 1; }
+[data-lift].is-hot { box-shadow: 0 18px 44px color-mix(in srgb, var(--ink) 12%, transparent); }
+
+/* Default state is VISIBLE — a JS failure leaves every surface readable and
+   in place. Only html.motion-on, added by JS once it is running, hides them. */
+html.motion-on [data-lift] { opacity: 0; --enter-y: 26px; --enter-s: .975; filter: blur(7px); }
+
+/* ---- Hero intro ----
+   The hero eyebrow and CTAs are hidden only while motion is on, so a JS
+   failure still leaves the whole hero readable. The headline already has its
+   hidden state from [data-focus-pull]. */
+html.motion-on #hero .eyebrow,
+html.motion-on #hero .hero__ctas .btn { opacity: 0; transform: translateY(14px); }
+
+/* ---- Gradient figures ----
+   The two biggest numbers carry the brand gradient in the digits themselves.
+   Only the largest: applied to all six it stops being emphasis and becomes
+   decoration. background-clip:text needs a transparent fill, and the
+   fallback colour matters — if the clip is unsupported the text must not
+   vanish, so --ink is set first and only overridden where the clip works. */
+.bento > :nth-child(1) .bento__figure,
+.bento > :nth-child(2) .bento__figure { color: var(--ink); }
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .bento > :nth-child(1) .bento__figure,
+  .bento > :nth-child(2) .bento__figure {
+    background-image: var(--grad-core);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+/* ---- Insight cards: gradient glow on hover ----
+   A pooled light under the card rather than on it, so the card lifts off the
+   page instead of just changing colour. Sits behind via a negative z-index
+   on a pseudo-element, which is why the card needs its own stacking context. */
+.insight { position: relative; isolation: isolate; }
+.insight::before {
+  content: ''; position: absolute; inset: -6% -4% -12%;
+  border-radius: calc(var(--r-card) + 12px);
+  background-image: var(--grad-core);
+  filter: blur(28px);
+  opacity: 0; z-index: -1;
+  transform: translateY(6px) scale(.96);
+  transition: opacity 420ms var(--ease-out-strong), transform 420ms var(--ease-out-strong);
+}
+.insight:hover::before, .insight:focus-within::before {
+  opacity: .55; transform: translateY(0) scale(1);
+}

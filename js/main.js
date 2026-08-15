@@ -1,7 +1,8 @@
 import { initNav } from './motion/nav.js';
-import { initLenis, initReveals, motionEnabled } from './motion/reveal.js';
+import { initLenis, initReveals, initHeroIntro, motionEnabled } from './motion/reveal.js';
 import { initCursor, initMagnetic } from './motion/cursor.js';
 import { initCounters } from './motion/counters.js';
+import { initSurfaceReveals, initSurfacePointer } from './motion/elements.js';
 import { createStage } from './stage/Stage.js';
 import { buildEnvironment } from './stage/env.js';
 import { createLensMark } from './stage/LensMark.js';
@@ -10,13 +11,17 @@ import { createGradientField } from './stage/GradientField.js';
 import act1 from './stage/acts/act1-threshold.js';
 import act2 from './stage/acts/act2-headheart.js';
 import act3 from './stage/acts/act3-prism.js';
+import act4 from './stage/acts/act4-close.js';
 
 initNav();
 initLenis();
 initReveals();
+initHeroIntro();
 initCursor();
 initMagnetic();
 initCounters();
+initSurfaceReveals();
+initSurfacePointer();
 
 if (!motionEnabled()) document.documentElement.classList.add('motion-off');
 
@@ -74,7 +79,7 @@ async function initStage() {
   // Anchors follow the spec's act table; the director derives the real
   // boundaries from where these sections actually land on the page.
   director.register(act3);
-  director.register({ id: 'close', anchor: '#clients', range: [0.82, 1.00] });
+  director.register(act4);
 
   director.alignToSections();
 

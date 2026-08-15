@@ -20,6 +20,17 @@ import { GRADIENTS } from '../GradientField.js';
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
+// Handed to Act 4, which opens by unwinding the prism. Same contract as the
+// two boundaries before it.
+export const END = {
+  cam: [-0.8, 0, 4.4],
+  mark: [0.9, 0, 0],
+  rotY: (Math.PI / 2) * 1.18,
+  rotZ: 0.14,
+  thickness: 5.2,
+  dispersion: 7.5,
+};
+
 // Which capability the environment and backdrop are currently tuned to.
 let observer = null;
 let current = null;
@@ -106,9 +117,13 @@ export default {
   },
 
   exit(ctx) {
+    // Material only. The ROTATION is deliberately left where it is: Act 4
+    // opens by unwinding the prism, so zeroing it here would snap the mark
+    // flat at the boundary and steal that move — the same mistake Act 2 made
+    // with the head/heart split. Act 2's update rewrites rotation every frame,
+    // so scrolling back up self-corrects.
     ctx.lens.material.thickness = 2.4;
     ctx.lens.material.dispersion = 4.0;
-    ctx.lens.group.rotation.set(0, 0, 0);
     ctx.env?.setTint(...GRADIENTS.core);
     ctx.field?.setGradient('core', 1);
     current = null;

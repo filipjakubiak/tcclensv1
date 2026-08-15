@@ -50,7 +50,7 @@ const SIZE = 512;
  * guard could not see them — it measures tokens against --canvas, which
  * stopped being the background the moment this field existed.
  */
-const MAX_TINT = 0.3;
+const MAX_TINT = 0.46;
 
 export function createGradientField(stage, { z = -14 } = {}) {
   const canvas = document.createElement('canvas');
