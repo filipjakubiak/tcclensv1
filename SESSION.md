@@ -1,8 +1,8 @@
 # TCC Lens — Session Log
 
-**Started:** 2026-08-14 · **Last worked:** 2026-08-15
+**Started:** 2026-08-14 · **Last worked:** 2026-08-15 (session closed)
 **Working dir:** `C:\Users\filip\Desktop\neststudio\tcc-lens\`
-**Branch:** `build/tcc-lens` · **HEAD:** `e54e6b4` · working tree clean · suite **82/82 green**
+**Branch:** `build/tcc-lens` · **HEAD:** `0271e8f` · working tree clean · suite **81/81 green**
 
 ---
 
@@ -42,14 +42,13 @@ node tools/serve.mjs 4192       # or START.bat
 | 13 | Act 1 Threshold | ✅ (rebuilt twice since) |
 | 14 | Act 2 Head & Heart + GradientField | ✅ |
 | 15 | Act 3 Prism + capability spectrum | ✅ |
-| 16 | **Act 4 Close** — glass → solid logo | ⬜ **NOT BUILT** (still a placeholder act) |
+| 16 | Act 4 Close — glass → solid logo | ✅ |
 | 17 | Resilience — capability tiers, no-WebGL fallback | ⬜ |
 | 18 | A11y, responsive, QA screenshots | ⬜ |
 | 19 | Bento `#proof` | ✅ |
 | 20 | Structural originality audit | ⬜ |
 
-**Act 4 is the biggest functional gap.** `close` is registered as a bare placeholder, so the
-last quarter of the scroll does nothing.
+All four acts now run. **Tasks 17, 18 and 20 are the remaining plan work.**
 
 ---
 
@@ -80,7 +79,16 @@ turned a 1.55-unit split into 0.14 world units *while the test passed*.
 `LensMark.js` now gives every transform its own group. **Acts drive `group`, `headPivot`,
 `heartPivot` — nothing else.**
 
-### 2.4 Act ranges were fixed document fractions
+### 2.4 An additive per-frame updater is not an oscillation
+The mark was given an idle spin written as `rotation.y += Math.sin(elapsed)` inside a
+per-frame updater. That **accumulates**: every frame adds another increment to the last, so it
+span up continuously — 2.2 radians in 1.5 seconds. When the user reported it as too fast I
+slowed the frequency, which only changed how fast it ran away.
+**My test asserted only that rotation CHANGED over time, which a runaway satisfies perfectly.**
+Reverted from both Act 1 and Act 4. If idle motion is wanted again, **assign an offset from a
+stored base rotation**; never add to the live value. Assert a bounded range, not mere change.
+
+### 2.5 Act ranges were fixed document fractions
 The spec assigns acts to **sections**; the plan turned that into fixed fractions that did not
 match. The hero is ~7% of the page, not 22%, so the dark act played under three light sections.
 `director.alignToSections()` now derives boundaries from real section offsets. **Tests address
@@ -108,24 +116,38 @@ acts by name and local t via `setLocal(director, id, t)`** — never a hardcoded
 
 # 4. Next up — the user's list, in order
 
-1. **Creative per-element animations.** *"i need more creative animations for sections, for
-   individual elements like grid boxes etc. this has to really live."* The page has only
-   Task 8's masked line reveal and a fade-and-rise on `[data-reveal]`. The new `.bento__cell`
-   elements are the obvious first target. **This is the top ask.**
-2. **Hero title animation quality.** Clipping is fixed (line-height was .88 against a 123.84px
-   font, so the mask sheared the descenders); the motion itself is untouched — no per-line
-   stagger, no crafted easing.
-3. **More gradients** on other sections in brand-book colours, where they suit. Five are
-   assigned so far (`#thesis` core · `#how-it-works` insight · `#insights` performance ·
-   `#global` sustainability · `#careers` creativity · `#contact` core). Each gradient used
-   once — the brand book forbids combining two.
-4. **Core gradient on flat `--accent` highlights** (`.focus-word`, `.btn--solid`, `.pill`).
+Done on 2026-08-15: Act 4, the element motion kit, varied per-section entrances, the hero
+load-in, the bento regrid, `#how-it-works` as a stepped bento, gradient figures, the insight
+hover glow, the CTA/footer repair.
+
+**Still open:**
+
+1. **`#careers`** — *"loyalty is built by people, ze zdjecie z prawej strony… trzeba to fajnie
+   zanimowac."* The one section the user named that has no bespoke motion yet.
+2. **Core gradient on flat `--accent` highlights** (`.focus-word`, `.btn--solid`, `.pill`).
    Needs `background-clip: text` and its own contrast check — `--accent` alone is ~2:1 on
-   `--canvas`, which is why `--accent-strong` exists.
-5. **Run `impeccable` and a taste skill** over the whole page (user asked 2026-08-15). Note:
-   there is no `/taste` skill installed; candidates are `design-taste-frontend`, `gpt-taste`,
-   `impeccable`.
-6. **Task 16 (Act 4)**, then 17, 18, 20.
+   `--canvas`, which is why `--accent-strong` exists. The bento figures already do this
+   correctly, with an `@supports` fallback; copy that pattern.
+3. **More gradients** where they suit. Six assigned (`#thesis` core · `#how-it-works` insight ·
+   `#insights` performance · `#global` sustainability · `#careers` creativity · `#contact`
+   core). Each gradient used once — the brand book forbids combining two.
+4. **Run `impeccable` and a taste skill** over the whole page. There is no `/taste` skill
+   installed; candidates are `design-taste-frontend`, `gpt-taste`, `impeccable`.
+5. **Tasks 17, 18, 20.**
+
+## Motion contracts now in place — read before adding animation
+
+- `[data-lift]` inside `[data-surface-group]` gets a staggered entrance ordered by distance
+  from the group's top-left, plus a cursor-tracking sheen and tilt.
+  **Entrance and hover compose through CSS custom properties inside ONE transform**
+  (`--enter-y`, `--enter-s`, `--tilt-x`, `--tilt-y`). Do not animate `transform` directly on
+  these — two owners of one property means whichever wrote last wins.
+- Sections declare their copy's entrance direction with `data-enter`
+  (`rise` · `left` · `right` · `lift` · `settle`). No two consecutive sections share one.
+- `initHeroIntro()` owns the hero headline on load; it is excluded from the scroll-triggered
+  focus-pull pass so one element never gets two timelines.
+- Every act exports an `END` state and the next blends from it. The Act 1→2 continuity test has
+  caught a real pop three times, most recently a 0.78-unit jump.
 
 ## Layout observations to act on later (asked for, recorded not fixed)
 
