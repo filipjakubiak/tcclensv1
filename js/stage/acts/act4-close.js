@@ -1,6 +1,5 @@
 import * as THREE from '../../vendor/three.module.js';
 import { END as ACT3_END } from './act3-prism.js';
-import { motionEnabled } from '../../motion/reveal.js';
 
 /**
  * Act 4 — Close.
@@ -22,25 +21,20 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const REST = [1.55, 0.55, -1.2];
 const CAM_REST = [0, 0, 6.4];
 
-let localT = 1;
-
 export default {
   id: 'close',
   anchor: '#clients', // spec: Act 4 covers Clients → Contact
   range: [0.82, 1.0],
 
   build(ctx) {
-    // Even at rest the mark keeps breathing. The complaint that started this
-    // act was that it "stops animating" — landing it on an exact pose and
-    // holding there forever is the same failure with extra steps.
-    ctx.stage.addUpdater((elapsed) => {
-      if (!motionEnabled()) return;
-      const settled = THREE.MathUtils.smoothstep(localT, 0.55, 1);
-      if (settled <= 0) return;
-      ctx.lens.group.rotation.y += Math.sin(elapsed * 0.11) * 0.16 * settled;
-      ctx.lens.group.position.y += Math.sin(elapsed * 0.19) * 0.05 * settled;
-    });
-
+    // REMOVED with Act 1's idle spin, and for the same reason: this used
+    // `rotation.y +=` / `position.y +=` inside a per-frame updater, which
+    // accumulates rather than oscillating. The mark drifted away from its
+    // resting pose instead of breathing in place.
+    //
+    // The freeze this act was written to fix is fixed by the act existing at
+    // all — update() now drives the transform across the whole range, where
+    // before the placeholder left it untouched.
     window.__tccAct4 = { REST };
   },
 
@@ -52,7 +46,6 @@ export default {
 
   update(t, ctx) {
     const { stage, lens } = ctx;
-    localT = t;
 
     // Unwind the prism back to face-on, picked up from exactly where Act 3
     // left it rather than from zero.

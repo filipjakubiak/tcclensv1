@@ -1,5 +1,4 @@
 import * as THREE from '../../vendor/three.module.js';
-import { motionEnabled } from '../../motion/reveal.js';
 
 /**
  * Act 1 — Threshold.
@@ -53,8 +52,6 @@ export const END = {
 };
 
 let doorL, doorR, aisleGlow, spill, doorMat;
-// Local progress, kept so the per-frame idle spin knows how far in we are.
-let localT = 0;
 let doorShut = 0, doorOpen = 0;
 
 /** World size of the camera frustum at a world Z, for the camera at its dolly start. */
@@ -120,22 +117,18 @@ export default {
       doorMat.dispose();
     });
 
-    // The mark turns on its own before anyone scrolls.
+    // REMOVED: an idle spin that ran before the first scroll.
     //
-    // update() only runs when setProgress is called — i.e. on scroll — so a
-    // rotation written there is frozen on a still page. This is a per-frame
-    // updater instead, and it ADDS to whatever the act set rather than
-    // replacing it. It fades out as the act gets under way, so the scroll
-    // choreography takes over cleanly and nothing fights for the transform.
-    stage.addUpdater((elapsed) => {
-      if (!motionEnabled()) return; // ?shot=1 and reduced motion stay settled
-      const idle = 1 - THREE.MathUtils.smoothstep(localT, 0.02, 0.3);
-      if (idle <= 0) return;
-      // Slow. A full sweep takes about 50 seconds — the mark should feel like
-      // it is drifting, not presenting itself.
-      ctx.lens.group.rotation.y += Math.sin(elapsed * 0.125) * 0.5 * idle;
-      ctx.lens.group.rotation.x = Math.sin(elapsed * 0.085) * 0.07 * idle;
-    });
+    // It was written as `rotation.y += sin(elapsed)` inside a per-frame
+    // updater, which does not oscillate — it ACCUMULATES. Every frame added
+    // another increment on top of the last, so the mark span up continuously
+    // instead of drifting: measured 2.2 radians in 1.5 seconds, and slowing
+    // the frequency only changed how fast it ran away.
+    //
+    // A correct version would assign an offset from a stored base rotation
+    // rather than adding to the live value. Removed rather than fixed,
+    // because the act already owns this transform and the scroll
+    // choreography is the motion this shot is built around.
 
     window.__tccAct1 = { doorL, doorR };
   },
@@ -159,7 +152,6 @@ export default {
 
   update(t, ctx) {
     const { stage, lens } = ctx;
-    localT = t;
 
     // Hold shut, then part decisively across the middle of the act.
     const slide = THREE.MathUtils.smoothstep(t, 0.10, 0.78);
