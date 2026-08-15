@@ -65,7 +65,7 @@ export default {
     // Same full-state declaration as Act 2, so entering from either side
     // lands identically.
     const a1 = window.__tccAct1;
-    if (a1) for (const o of [...a1.wall, a1.doorL, a1.doorR]) o.visible = false;
+    if (a1) for (const o of [a1.doorL, a1.doorR]) o.visible = false;
     ctx.field?.show();
   },
 

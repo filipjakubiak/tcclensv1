@@ -55,7 +55,7 @@ export default {
     // Stated in full here rather than as a diff, so entering from either
     // direction lands on the same state.
     const a1 = window.__tccAct1;
-    if (a1) for (const o of [...a1.wall, a1.doorL, a1.doorR]) o.visible = false;
+    if (a1) for (const o of [a1.doorL, a1.doorR]) o.visible = false;
     ctx.field?.show();
   },
 

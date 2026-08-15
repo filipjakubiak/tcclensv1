@@ -26,10 +26,32 @@ export async function createLensMark(stage) {
     dispersion: 4.0,
     roughness: 0.04,
     metalness: 0.0,
-    iridescence: 0.25,
     clearcoat: 1.0,
     clearcoatRoughness: 0.03,
     color: 0xffffff,
+
+    // Everything below exists because perfectly clear glass in front of a
+    // smooth gradient is INVISIBLE. Measured: the mark's silhouette scored
+    // 0.035 luminance contrast against the field immediately around it —
+    // refraction returned the backdrop's own colour, so there was nothing to
+    // see. The optics were correct and the object was not there.
+    //
+    // Attenuation: light is absorbed as it travels through the glass, so
+    // thick parts tint and thin edges stay clear — a gradient across the body
+    // that comes from the geometry rather than from a painted-on tint.
+    //
+    // --support, NOT --accent. Attenuating toward the accent tinted the glass
+    // the same purple as the field behind it, so it cancelled out and the
+    // mark stayed invisible. The cool token reads as denser, cooler glass
+    // against a warm purple backdrop.
+    attenuationColor: new T.Color(0xb1bdce), // --support
+    attenuationDistance: 0.55,
+
+    // Stronger thin-film and a hotter environment give the bevel a crisp
+    // specular to catch, which is the other half of reading as glass.
+    iridescence: 0.5,
+    iridescenceIOR: 1.35,
+    envMapIntensity: 2.1,
   });
 
   const meshFor = (path) => {

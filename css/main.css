@@ -64,6 +64,14 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
 .theme-dark { background: var(--chamber); color: var(--canvas); }
 .theme-dark .eyebrow { color: var(--support); }
 .theme-dark .lead    { color: var(--support); }
+/* The hero is the one .theme-dark section that sits over the live gradient
+   rather than over flat --chamber. --support measures ~0.50 luminance, so
+   against a gradient it needs a backdrop darker than 0.073 to clear 4.5:1 —
+   i.e. effectively black, which is the opposite of a gradient hero. Every
+   depth/shade combination was swept and none passed. --canvas clears it at
+   a backdrop luminance of 0.177, which leaves the gradient its colour.
+   #film and #loyalty-monitor keep --support: they are on true --chamber. */
+#hero .eyebrow, #hero .lead { color: var(--canvas); }
 
 /* ---- Components ---- */
 
@@ -486,3 +494,26 @@ html.stage-live #hero { background: transparent; }
 html.stage-live main > section:not(.theme-dark) {
   background: color-mix(in srgb, var(--canvas) 86%, transparent);
 }
+
+/* Per-section brand gradients.
+
+   A flat --canvas veil is layered OVER the gradient rather than the gradient
+   being lightened, because CSS cannot mix a gradient's stops. Two background
+   layers: the veil on top, the brand gradient beneath. That keeps every
+   section's copy on something very close to --canvas — the five capability
+   cards already proved full-strength gradients need their own contrast check
+   — while still giving each section its own colour identity.
+
+   Gradients are assigned by meaning, not decoration, and each is used once:
+   the brand book forbids combining two secondary gradients. */
+main > section[data-tint] {
+  --veil: color-mix(in srgb, var(--canvas) 80%, transparent);
+  background-image: linear-gradient(var(--veil), var(--veil)), var(--tint);
+  background-attachment: fixed, fixed;
+}
+section[data-tint='core']           { --tint: var(--grad-core); }
+section[data-tint='performance']    { --tint: var(--grad-performance); }
+section[data-tint='insight']        { --tint: var(--grad-insight); }
+section[data-tint='creativity']     { --tint: var(--grad-creativity); }
+section[data-tint='operational']    { --tint: var(--grad-operational); }
+section[data-tint='sustainability'] { --tint: var(--grad-sustainability); }

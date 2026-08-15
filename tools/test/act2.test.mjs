@@ -125,7 +125,7 @@ test('Act 2 swaps the storefront for the brand gradient, and Act 1 puts it back'
     return page.evaluate(() => {
       const d = window.__tccDirector, a1 = window.__tccAct1, f = window.__tccField;
       const snap = () => ({
-        wall: a1.wall[0].visible,
+        gate: a1.doorL.visible,
         field: f.mesh.visible,
         // Opaque means fading has to be done in colour, not alpha.
         fieldOpaque: f.mesh.material.transparent === false,
@@ -138,8 +138,8 @@ test('Act 2 swaps the storefront for the brand gradient, and Act 1 puts it back'
       return { inAct1, inAct2, backInAct1: snap() };
     });
   });
-  assert.deepEqual(r.inAct1, { wall: true, field: true, fieldOpaque: true });
-  assert.deepEqual(r.inAct2, { wall: false, field: true, fieldOpaque: true });
+  assert.deepEqual(r.inAct1, { gate: true, field: true, fieldOpaque: true });
+  assert.deepEqual(r.inAct2, { gate: false, field: true, fieldOpaque: true });
   assert.deepEqual(r.backInAct1, r.inAct1, 'scrolling back up did not restore the storefront');
 });
 

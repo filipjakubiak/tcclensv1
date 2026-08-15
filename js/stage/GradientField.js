@@ -62,6 +62,8 @@ export function createGradientField(stage, { z = -14 } = {}) {
 
   const from = new THREE.Color(CHAMBER);
   const to = new THREE.Color(CHAMBER);
+  // How hard the bottom-left is weighted down, where the copy sits.
+  let shade = 0.55;
 
   function paint() {
     // 105deg in CSS, read as a diagonal across the square — the same axis
@@ -71,23 +73,80 @@ export function createGradientField(stage, { z = -14 } = {}) {
     g.addColorStop(1, '#' + to.getHexString());
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, SIZE, SIZE);
+
+    // Soft blooms. These are not decoration — they are what makes the glass
+    // visible. Clear glass in front of a perfectly smooth field refracts a
+    // uniform colour into the same uniform colour, so the mark vanishes into
+    // its own background: measured at rgb(97,99,115) inside the silhouette
+    // against a near-identical field outside it. Refraction only reads when
+    // there is structure to bend, so the field carries some.
+    ctx.globalCompositeOperation = 'lighter';
+    for (const [x, y, r, a] of [
+      // One tight, bright hotspot behind where the mark sits, and one broad
+      // soft one for general lift. The tight one is doing the work: a broad
+      // 0.42-radius bloom is almost as smooth as no bloom at all, and the
+      // mark measured a mean delta of 10.7/765 against it — present in the
+      // scene graph, invisible on screen.
+      [0.70, 0.30, 0.13, 0.46],
+      [0.74, 0.28, 0.38, 0.18],
+      [0.28, 0.66, 0.30, 0.12],
+    ]) {
+      const s = ctx.createRadialGradient(x * SIZE, y * SIZE, 0, x * SIZE, y * SIZE, r * SIZE);
+      s.addColorStop(0, `rgba(255,255,255,${a})`);
+      s.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = s;
+      ctx.fillRect(0, 0, SIZE, SIZE);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+
+    // Weight the bottom-left down. Page copy sits left; the brightest part of
+    // the field belongs on the opposite diagonal, away from the text.
+    const v = ctx.createLinearGradient(0, SIZE, SIZE * 0.75, SIZE * 0.15);
+    v.addColorStop(0, `rgba(8,7,10,${shade})`);
+    v.addColorStop(1, 'rgba(8,7,10,0)');
+    ctx.fillStyle = v;
+    ctx.fillRect(0, 0, SIZE, SIZE);
+
     texture.needsUpdate = true;
   }
   paint();
 
-  // Cover the frustum at this depth from the nearest the camera ever gets,
-  // with margin, so the field never shows an edge.
-  const dist = Math.abs(z) + 8;
-  const h = 2 * dist * Math.tan((stage.camera.fov * Math.PI) / 180 / 2);
+  // The field rides the camera at a fixed distance rather than sitting at a
+  // fixed point in the scene.
+  //
+  // As a world-space plane it drifted under the copy: the acts dolly and pan,
+  // so whichever part of the gradient sat behind the headline changed with
+  // every frame, and the bright end slid under the text mid-dolly — measured
+  // at 3.37:1 against a 4.5:1 floor at exactly the point the camera had moved
+  // furthest. Locked to the camera, "dark under the copy, bright top-right"
+  // is a property of the design instead of a coincidence of one frame.
+  //
+  // It is also what a section background actually is: a backdrop, not scenery.
+  const DIST = Math.abs(z);
+  const h = 2 * DIST * Math.tan((stage.camera.fov * Math.PI) / 180 / 2);
   const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(h * Math.max(stage.camera.aspect, 1.9) * 1.6, h * 1.6),
+    // Generous margin so no edge shows at any aspect ratio.
+    new THREE.PlaneGeometry(h * Math.max(stage.camera.aspect, 2.4) * 1.3, h * 1.3),
     // Basic, not Standard: this is a backdrop, not a lit surface. Lighting
     // it would muddy the brand colours the whole act depends on.
     new THREE.MeshBasicMaterial({ map: texture })
   );
-  mesh.position.set(0, 0, z);
   mesh.visible = false;
   stage.scene.add(mesh);
+
+  const fwd = new THREE.Vector3();
+  function follow() {
+    stage.camera.updateMatrixWorld();
+    stage.camera.getWorldDirection(fwd);
+    mesh.position.copy(stage.camera.position).addScaledVector(fwd, DIST);
+    mesh.quaternion.copy(stage.camera.quaternion);
+    mesh.updateMatrixWorld();
+  }
+  // Every frame for the live page, and again whenever an act repaints — the
+  // rAF loop alone would leave the position stale for any synchronous render,
+  // which is exactly what the tests and probes do.
+  stage.addUpdater(follow);
+  follow();
 
   const field = {
     mesh,
@@ -96,15 +155,36 @@ export function createGradientField(stage, { z = -14 } = {}) {
      * (so Act 1's dark aisle can hand over without a cut), 1 lands on the
      * brand gradient tinted over --canvas at MAX_TINT.
      */
-    setGradient(name, amount = 1, tint = MAX_TINT) {
+    setGradient(name, amount = 1, tint = MAX_TINT, shadeAmount = 0.55) {
       const [a, b] = GRADIENTS[name] ?? GRADIENTS.core;
       const t = Math.min(tint, MAX_TINT);
       const target = (hex) => new THREE.Color(CANVAS).lerp(new THREE.Color(hex), t);
       from.setHex(CHAMBER).lerp(target(a), amount);
       to.setHex(CHAMBER).lerp(target(b), amount);
+      shade = shadeAmount;
       paint();
+      follow();
     },
-    show() { mesh.visible = true; },
+
+    /**
+     * Full-strength brand gradient, ignoring the light-section tint ceiling.
+     * For the hero, which is .theme-dark: its copy is white, so the backdrop
+     * wants the brand colours at real saturation and a hard weight under the
+     * text, not the pale wash the light body sections need.
+     */
+    setHeroGradient(name = 'core', depth = 0.72, shadeAmount = 0.4) {
+      const [a, b] = GRADIENTS[name] ?? GRADIENTS.core;
+      // The DARK end sits at bottom-left, under the headline, and the bright
+      // end runs off to the top-right where the gate and the mark are. Using
+      // the raw brand stops at both ends put full-strength TCC Purple
+      // directly behind white copy — bright, on-brand, and unreadable.
+      from.setHex(a).lerp(new THREE.Color(CHAMBER), depth);
+      to.setHex(b);
+      shade = shadeAmount;
+      paint();
+      follow();
+    },
+    show() { mesh.visible = true; follow(); },
     hide() { mesh.visible = false; },
     dispose() {
       mesh.geometry.dispose();

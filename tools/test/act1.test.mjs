@@ -65,56 +65,53 @@ test('doors are reflective, not transmissive — only the lens uses transmission
   assert.equal(t.transmissive, 1, `${t.transmissive} transmissive materials in the scene, expected 1`);
 });
 
-test('the core gradient runs behind the doorway from the first frame', async () => {
-  // Act 1 originally opened on three store stills; they were replaced by the
-  // brand core gradient. It has to be live and dark from frame one — dark
-  // because the hero is .theme-dark with white copy sitting on it.
+test('the hero opens on the brand gradient, not on black', async () => {
+  // The page used to open on a --chamber storefront wall with the gradient
+  // confined to a hole in it, which meant the first thing anyone saw was a
+  // black screen. The gradient IS the hero now.
+  //
+  // Measured over the whole field rather than one pixel: it carries blooms
+  // and a weighted-down corner, so any single sample describes a detail
+  // rather than the backdrop.
   const r = await withPage(async (page) => {
     await boot(page);
     return page.evaluate(() => {
       const d = window.__tccDirector, f = window.__tccField;
-      const sample = () => {
-        const px = f.mesh.material.map.image.getContext('2d').getImageData(8, 8, 1, 1).data;
-        return { lum: (0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]) / 255, visible: f.mesh.visible };
+      const survey = () => {
+        const img = f.mesh.material.map.image;
+        const px = img.getContext('2d').getImageData(0, 0, img.width, img.height).data;
+        let lum = 0, chroma = 0, n = 0;
+        for (let i = 0; i < px.length; i += 4 * 97) { // stride-sample
+          const [r0, g0, b0] = [px[i], px[i + 1], px[i + 2]];
+          lum += (0.2126 * r0 + 0.7152 * g0 + 0.0722 * b0) / 255;
+          chroma += (Math.max(r0, g0, b0) - Math.min(r0, g0, b0)) / 255;
+          n += 1;
+        }
+        return { lum: lum / n, chroma: chroma / n, visible: f.mesh.visible };
       };
       setLocal(d, 'threshold', 0);
-      const shut = sample();
+      const shut = survey();
       setLocal(d, 'threshold', 0.95);
-      return { shut, open: sample() };
+      return { shut, open: survey() };
     });
   });
   assert.equal(r.shut.visible, true, 'the gradient field is not showing during Act 1');
-  assert.ok(r.shut.lum > 0.02, `the backdrop is effectively black: luminance ${r.shut.lum.toFixed(3)}`);
-  assert.ok(r.open.lum > r.shut.lum * 1.3, 'the backdrop does not brighten as the doors open');
-  // Deliberately NOT capping brightness here. An earlier version did, to
-  // protect the hero's white copy — but the aperture now sits clear of the
-  // headline entirely, and legibility is measured properly against the real
-  // rendered pixel in backdrop-contrast.test.mjs. A second, guessed bound
-  // in this file would only argue with it.
+  assert.ok(r.shut.lum > 0.12, `the hero opens on near-black: mean luminance ${r.shut.lum.toFixed(3)}`);
+  // Grey is the failure mode this act kept falling into — a desaturated
+  // backdrop is not a brand gradient no matter how bright it is.
+  assert.ok(r.shut.chroma > 0.06, `the backdrop is desaturated grey: mean chroma ${r.shut.chroma.toFixed(3)}`);
+  // The backdrop is deliberately CONSTANT across the act, so this asserts it
+  // holds rather than that it moves. An earlier version brightened it as the
+  // gate opened; it looked right in isolation but the hero copy is on screen
+  // throughout, and the brighter end measured 2.92:1 against a 4.5:1 floor.
+  // The reveal is the gate parting and the mark coming forward.
+  assert.ok(
+    Math.abs(r.open.lum - r.shut.lum) < 0.02,
+    `the backdrop shifts during the act (${r.shut.lum.toFixed(3)} -> ${r.open.lum.toFixed(3)}); legibility depends on it not doing that`
+  );
+  // Deliberately NOT capping brightness here. Legibility is measured against
+  // the real rendered pixel in backdrop-contrast.test.mjs; a second, guessed
+  // bound in this file would only argue with it.
 });
 
-test('the storefront wall covers the frame so the store reads as a doorway', async () => {
-  // The wall is the whole reason this is a threshold rather than a photo
-  // behind text: everything outside the aperture must be flat --chamber.
-  const r = await withPage(async (page) => {
-    await boot(page);
-    return page.evaluate(() => {
-      const d = window.__tccDirector, a = window.__tccAct1, cam = window.__tccStage.camera;
-      const THREE = window.__tccStage.THREE;
-      setLocal(d, 'threshold', 0);
-      const b = new THREE.Box3();
-      for (const s of a.wall) b.union(new THREE.Box3().setFromObject(s));
-      const dist = cam.position.z - a.wall[0].position.z;
-      const visH = 2 * dist * Math.tan((cam.fov * Math.PI) / 180 / 2);
-      return {
-        coversH: (b.max.y - b.min.y) / visH,
-        coversW: (b.max.x - b.min.x) / (visH * cam.aspect),
-        colour: '#' + a.wall[0].material.color.getHexString(),
-      };
-    });
-  });
-  assert.ok(r.coversH >= 1, `wall covers only ${r.coversH.toFixed(2)}x the frame height`);
-  assert.ok(r.coversW >= 1, `wall covers only ${r.coversW.toFixed(2)}x the frame width`);
-  assert.equal(r.colour, '#08070a', 'the wall must be --chamber');
-});
 
