@@ -159,17 +159,29 @@ test('theme-dark sections keep the true --accent on .focus-word', async () => {
   assert.equal(darkFocus, accent, 'dark-section focus-word should stay the true brand purple');
 });
 
-// ---- M9: accent-band logo must preserve the source aspect ratio ----
+// ---- M9: every wordmark must preserve the source aspect ratio ----
 
-test('accent-band logo preserves the 59x27 source aspect ratio', async () => {
+test('every logo-text.svg instance preserves the 59x27 source aspect ratio', async () => {
+  // Was scoped to `.accent-band img`. That band is retired — it was a 40vh
+  // slab of flat --accent with a logo in the corner and read as a rendering
+  // fault at the bottom of the page. The underlying defect it guarded (a
+  // wordmark stretched away from its real 59x27 viewBox) applies to every
+  // instance, so the test now covers all of them rather than being deleted
+  // with the element that happened to expose it first.
   const dims = await withPage((page) =>
-    page.evaluate(() => {
-      const img = document.querySelector('.accent-band img');
-      return { w: img.getAttribute('width'), h: img.getAttribute('height') };
-    })
+    page.evaluate(() =>
+      [...document.querySelectorAll('img[src$="logo-text.svg"]')].map((img) => ({
+        w: img.getAttribute('width'),
+        h: img.getAttribute('height'),
+        where: img.closest('[class]')?.className ?? '(unclassed)',
+      }))
+    )
   );
-  assert.equal(dims.w, '59');
-  assert.equal(dims.h, '27');
+  assert.ok(dims.length >= 2, `expected at least two wordmarks, found ${dims.length}`);
+  for (const d of dims) {
+    assert.equal(d.w, '59', `wordmark in ${d.where} has width ${d.w}`);
+    assert.equal(d.h, '27', `wordmark in ${d.where} has height ${d.h}`);
+  }
 });
 
 // ---- M10: insights sizes breakpoint must match the grid collapse breakpoint ----

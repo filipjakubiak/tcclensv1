@@ -110,8 +110,34 @@ test('the hero opens on the brand gradient, not on black', async () => {
     `the backdrop shifts during the act (${r.shut.lum.toFixed(3)} -> ${r.open.lum.toFixed(3)}); legibility depends on it not doing that`
   );
   // Deliberately NOT capping brightness here. Legibility is measured against
-  // the real rendered pixel in backdrop-contrast.test.mjs; a second, guessed
-  // bound in this file would only argue with it.
+  // the real rendered pixel in composited-contrast.test.mjs; a second,
+  // guessed bound in this file would only argue with it.
+});
+
+test('the mark turns on its own before anyone scrolls, and is settled in ?shot=1', async () => {
+  // update() only runs when setProgress is called — i.e. on scroll — so a
+  // rotation written there is frozen on a still page. The idle spin is a
+  // per-frame updater instead, which means it also has to respect the
+  // motion gate that everything else on this page obeys.
+  const live = await withPage(async (page) => {
+    await boot(page);
+    await page.waitForTimeout(500);
+    const a = await page.evaluate(() => window.__tccLens.group.rotation.y);
+    await page.waitForTimeout(1200);
+    const b = await page.evaluate(() => window.__tccLens.group.rotation.y);
+    return Math.abs(b - a);
+  });
+  assert.ok(live > 0.02, `the mark is static on a still page (rotation moved ${live})`);
+
+  const shot = await withPage(async (page) => {
+    await boot(page);
+    await page.waitForTimeout(500);
+    const a = await page.evaluate(() => window.__tccLens.group.rotation.y);
+    await page.waitForTimeout(1000);
+    const b = await page.evaluate(() => window.__tccLens.group.rotation.y);
+    return Math.abs(b - a);
+  }, '/?shot=1');
+  assert.ok(shot < 0.001, `?shot=1 must render settled, but the mark moved ${shot}`);
 });
 
 

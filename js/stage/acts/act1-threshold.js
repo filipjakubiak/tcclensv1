@@ -1,4 +1,5 @@
 import * as THREE from '../../vendor/three.module.js';
+import { motionEnabled } from '../../motion/reveal.js';
 
 /**
  * Act 1 — Threshold.
@@ -52,6 +53,8 @@ export const END = {
 };
 
 let doorL, doorR, aisleGlow, spill, doorMat;
+// Local progress, kept so the per-frame idle spin knows how far in we are.
+let localT = 0;
 let doorShut = 0, doorOpen = 0;
 
 /** World size of the camera frustum at a world Z, for the camera at its dolly start. */
@@ -117,6 +120,21 @@ export default {
       doorMat.dispose();
     });
 
+    // The mark turns on its own before anyone scrolls.
+    //
+    // update() only runs when setProgress is called — i.e. on scroll — so a
+    // rotation written there is frozen on a still page. This is a per-frame
+    // updater instead, and it ADDS to whatever the act set rather than
+    // replacing it. It fades out as the act gets under way, so the scroll
+    // choreography takes over cleanly and nothing fights for the transform.
+    stage.addUpdater((elapsed) => {
+      if (!motionEnabled()) return; // ?shot=1 and reduced motion stay settled
+      const idle = 1 - THREE.MathUtils.smoothstep(localT, 0.02, 0.3);
+      if (idle <= 0) return;
+      ctx.lens.group.rotation.y += Math.sin(elapsed * 0.45) * 0.55 * idle;
+      ctx.lens.group.rotation.x = Math.sin(elapsed * 0.31) * 0.09 * idle;
+    });
+
     window.__tccAct1 = { doorL, doorR };
   },
 
@@ -139,6 +157,7 @@ export default {
 
   update(t, ctx) {
     const { stage, lens } = ctx;
+    localT = t;
 
     // Hold shut, then part decisively across the middle of the act.
     const slide = THREE.MathUtils.smoothstep(t, 0.10, 0.78);

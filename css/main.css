@@ -102,9 +102,10 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
         transition: background-size var(--dur-ui) var(--ease-out-strong); }
 .link:hover { background-size: 100% 1px; }
 
-/* Closing accent band — HOMEDESIGN's signature, in TCC Purple */
-.accent-band { background: var(--accent); min-height: 40vh; display: flex; align-items: flex-start;
-               padding: var(--gutter); }
+/* The closing accent band is gone. It was a 40vh slab of flat --accent with
+   a logo in the corner and nothing else — decorative, aria-hidden, and it
+   read as a rendering fault at the bottom of the page. The closing statement
+   is now #contact itself, on the core gradient. */
 
 /* ---- Nav ---- */
 .nav { position: fixed; inset: 0 0 auto; height: var(--nav-h); z-index: 20;
@@ -118,6 +119,11 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
    currentColor), so `color` on .nav does nothing to it — it's an <img>,
    not inline SVG. Invert it while the nav sits over the dark hero; the
    filter drops away the moment .nav--solid's light chip is behind it. */
+/* The wordmark now carries its true 59x27 intrinsic size in markup, so its
+   rendered size has to come from CSS. It previously had height="20" and NO
+   width, which sized it correctly but left the browser without an aspect
+   ratio to reserve — a layout shift on every load. */
+.nav__logo img { display: block; height: 20px; width: auto; }
 .nav:not(.nav--solid) .nav__logo img { filter: invert(1); }
 .nav__links { display: flex; gap: 2rem; list-style: none; margin: 0; padding: 0;
               font-size: var(--micro); font-weight: 600; text-transform: uppercase;
@@ -266,11 +272,45 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 /* ---- 3 · Proof / stat wall ---- */
 .stats__head { display: grid; grid-template-columns: 1.15fr 1fr; gap: clamp(1.5rem, 4vw, 4rem); align-items: end; margin-bottom: clamp(3rem, 7vh, 5rem); }
 .stats__intro { max-width: 46ch; }
-.stats__grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 3rem; }
-.stat { border-top: 1px solid var(--hairline); padding-block: 2rem 2.75rem; display: flex; flex-direction: column; gap: .5rem; }
-.stat__num { display: block; font-weight: 700; font-size: clamp(3rem, 6vw, 5rem); line-height: 1; letter-spacing: var(--track-display); }
-.stat__label { display: block; font-size: 1.0625rem; font-weight: 600; margin-top: .25rem; }
-.stat__cap { display: block; color: var(--ink-3); font-size: .875rem; line-height: 1.5; max-width: 34ch; margin-top: .35rem; }
+/* ---- The record: bento mosaic ----
+   Was a uniform three-up grid of six identical cells, which gave every
+   number the same weight and made the section read as a table. A mosaic
+   lets 1B+ carry the argument and the rest support it.
+
+   The empty .bento__well is load-bearing, not filler: this section spans the
+   full width, so the veil that keeps copy legible over the live canvas was
+   covering the glass mark everywhere it fell. The well is a hole in the
+   mosaic where the canvas shows through at full strength. */
+.bento {
+  list-style: none; margin: clamp(2.5rem, 6vh, 4rem) 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(12, 1fr);
+  gap: clamp(.75rem, 1.4vw, 1.25rem);
+}
+.bento__cell {
+  display: flex; flex-direction: column; justify-content: flex-end;
+  gap: .4rem; padding: clamp(1.5rem, 2.4vw, 2.25rem);
+  border: 1px solid var(--hairline); border-radius: var(--r-card);
+  /* Translucent, so the section's own light still moves behind the mosaic. */
+  background: color-mix(in srgb, var(--canvas) 72%, transparent);
+}
+.bento__cell--lead { grid-column: span 6; grid-row: span 2; justify-content: space-between; }
+.bento__cell--tall { grid-column: span 6; }
+.bento__cell--wide { grid-column: span 7; }
+.bento__cell--sm   { grid-column: span 3; }
+.bento__well       { grid-column: span 5; border-radius: var(--r-card); }
+
+.bento__figure {
+  display: block; font-weight: 700; line-height: .86;
+  letter-spacing: var(--track-display);
+  font-size: clamp(2.75rem, 5.2vw, 4.25rem);
+}
+/* The lead figure is the section's headline, not a stat among six. */
+.bento__cell--lead .bento__figure { font-size: clamp(4.5rem, 11vw, 9.5rem); }
+.bento__cell--wide .bento__figure { font-size: clamp(3.25rem, 6.5vw, 5.5rem); }
+.bento__label { display: block; font-size: 1.0625rem; font-weight: 600; margin-top: .5rem; }
+/* --ink-2, not --ink-3: these sit on a translucent surface over a live
+   gradient, and --ink-3 measures 3.77:1 even on flat --canvas. */
+.bento__cap { display: block; color: var(--ink-2); font-size: .875rem; line-height: 1.5; max-width: 38ch; }
 
 /* ---- 4 · Brand film ---- */
 #film { position: relative; min-height: 100vh; display: grid; align-items: center; overflow: clip; padding-block: 0; }
@@ -416,9 +456,19 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 .contact__row { display: flex; align-items: center; gap: 3rem; flex-wrap: wrap; margin-top: 2.5rem; }
 .contact__address { color: var(--ink-2); font-size: .9375rem; line-height: 1.7; margin: 0; }
 
-.footer { border-top: 1px solid var(--hairline); }
+/* The footer paints its own surface. Without one the live canvas showed
+   through it and the small print sat on whatever the gradient rendered —
+   unreadable at the bottom of the page. Dark closes the page against the
+   gradient CTA above it. It is a <footer>, not a section, so it does not
+   affect the exactly-three-.theme-dark-sections contract. */
+.footer { background: var(--chamber); color: var(--canvas); }
+.footer .footer__tag { color: var(--support); }
+.footer .footer__legal { color: var(--support); }
+.footer .link { color: var(--canvas); }
 .footer__inner { display: flex; align-items: center; justify-content: space-between; gap: 2rem; flex-wrap: wrap; padding-block: 2rem; }
-.footer__logo { display: block; height: 20px; width: auto; }
+/* logo-text.svg is baked black-on-transparent, so it vanished on the new
+   dark footer exactly as it did on the dark hero nav. Same fix. */
+.footer__logo { display: block; height: 20px; width: auto; filter: invert(1); }
 .footer__tag { color: var(--ink-2); font-size: .875rem; margin: 0; }
 .footer__links { list-style: none; display: flex; gap: 1.75rem; margin: 0; padding: 0; font-size: .875rem; }
 .footer__legal { color: var(--ink-3); font-size: var(--micro); }
@@ -427,7 +477,12 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 @media (max-width: 860px) {
   .thesis__lede { grid-template-columns: 1fr; margin-left: 0; }
   .stats__head { grid-template-columns: 1fr; align-items: start; gap: 1.5rem; }
-  .stats__grid { grid-template-columns: 1fr 1fr; }
+  /* Two-up: the lead keeps its emphasis, everything else pairs off, and the
+     well is dropped — there is no spare width to spend on it. */
+  .bento__cell--lead { grid-column: span 12; grid-row: auto; }
+  .bento__cell--tall, .bento__cell--wide { grid-column: span 12; }
+  .bento__cell--sm { grid-column: span 6; }
+  .bento__well { display: none; }
   .fork__grid { grid-template-columns: 1fr; }
   .howworks__steps { grid-template-columns: 1fr; }
   .global__grid, .careers__grid { grid-template-columns: 1fr; gap: 2.5rem; align-items: start; }
@@ -435,7 +490,7 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
   .insight:first-child .insight__img { aspect-ratio: 4 / 3; }
 }
 @media (max-width: 560px) {
-  .stats__grid { grid-template-columns: 1fr; }
+  .bento__cell, .bento__cell--sm { grid-column: span 12; }
   .careers__values { grid-template-columns: 1fr; }
 }
 
@@ -528,6 +583,10 @@ main > section[data-tint] {
   background-attachment: fixed, fixed;
 }
 section[data-tint='core']           { --tint: var(--grad-core); }
+/* The closing CTA carries more colour than a body section — it is the last
+   thing on the page and it is asking for the click. Its own veil, checked by
+   the composited-contrast guard like everything else. */
+#contact { --veil: color-mix(in srgb, var(--canvas) 62%, transparent); padding-block: clamp(6rem, 14vh, 10rem); }
 section[data-tint='performance']    { --tint: var(--grad-performance); }
 section[data-tint='insight']        { --tint: var(--grad-insight); }
 section[data-tint='creativity']     { --tint: var(--grad-creativity); }
