@@ -65,65 +65,32 @@ test('doors are reflective, not transmissive — only the lens uses transmission
   assert.equal(t.transmissive, 1, `${t.transmissive} transmissive materials in the scene, expected 1`);
 });
 
-test('the aisle plates stay behind the mark for the whole act', async () => {
+test('the core gradient runs behind the doorway from the first frame', async () => {
+  // Act 1 originally opened on three store stills; they were replaced by the
+  // brand core gradient. It has to be live and dark from frame one — dark
+  // because the hero is .theme-dark with white copy sitting on it.
   const r = await withPage(async (page) => {
     await boot(page);
     return page.evaluate(() => {
-      const d = window.__tccDirector, a = window.__tccAct1, lens = window.__tccLens;
-      const samples = [];
-      for (const p of [0, 0.25, 0.5, 0.75, 0.95]) {
-        setLocal(d, 'threshold', p);
-        samples.push({
-          p,
-          markZ: lens.group.position.z,
-          plateZ: a.planes.map((m) => m.position.z),
-        });
-      }
-      return { samples, count: a.planes.length };
-    });
-  });
-  assert.equal(r.count, 3, 'expected three aisle plates');
-  for (const s of r.samples) {
-    for (const z of s.plateZ) {
-      // Smaller z is further from the camera, which looks down -Z.
-      assert.ok(z < s.markZ, `at p=${s.p} a plate at z=${z} was in front of the mark at z=${s.markZ}`);
-    }
-  }
-});
-
-test('every aisle plate fills the doorway it is seen through', async () => {
-  // The store is seen through an aperture, so a plate does not need to fill
-  // the viewport — it needs to fill the cone the aperture exposes at its own
-  // depth. A plate narrower than that shows its own edge inside the doorway,
-  // which is the failure this guards.
-  const r = await withPage(async (page) => {
-    await boot(page);
-    return page.evaluate(() => {
-      const d = window.__tccDirector, a = window.__tccAct1, cam = window.__tccStage.camera;
-      const THREE = window.__tccStage.THREE;
+      const d = window.__tccDirector, f = window.__tccField;
+      const sample = () => {
+        const px = f.mesh.material.map.image.getContext('2d').getImageData(8, 8, 1, 1).data;
+        return { lum: (0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]) / 255, visible: f.mesh.visible };
+      };
       setLocal(d, 'threshold', 0);
-      const ap = new THREE.Box3().setFromObject(a.wall[0]); // left return -> aperture edge
-      const apRight = new THREE.Box3().setFromObject(a.wall[1]);
-      const apTop = new THREE.Box3().setFromObject(a.wall[2]);
-      const apBottom = new THREE.Box3().setFromObject(a.wall[3]);
-      const apW = apRight.min.x - ap.max.x;
-      const apH = apTop.min.y - apBottom.max.y;
-      const apZ = ap.max.z;
-      return a.planes.map((m) => {
-        // The aperture cone widens linearly with distance from the camera.
-        const spread = (cam.position.z - m.position.z) / (cam.position.z - apZ);
-        const box = new THREE.Box3().setFromObject(m);
-        return {
-          coversW: (box.max.x - box.min.x) / (apW * spread),
-          coversH: (box.max.y - box.min.y) / (apH * spread),
-        };
-      });
+      const shut = sample();
+      setLocal(d, 'threshold', 0.95);
+      return { shut, open: sample() };
     });
   });
-  for (const [i, p] of r.entries()) {
-    assert.ok(p.coversW >= 1, `plate ${i} spans only ${p.coversW.toFixed(2)}x the doorway width at its depth`);
-    assert.ok(p.coversH >= 1, `plate ${i} spans only ${p.coversH.toFixed(2)}x the doorway height at its depth`);
-  }
+  assert.equal(r.shut.visible, true, 'the gradient field is not showing during Act 1');
+  assert.ok(r.shut.lum > 0.02, `the backdrop is effectively black: luminance ${r.shut.lum.toFixed(3)}`);
+  assert.ok(r.open.lum > r.shut.lum * 1.3, 'the backdrop does not brighten as the doors open');
+  // Deliberately NOT capping brightness here. An earlier version did, to
+  // protect the hero's white copy — but the aperture now sits clear of the
+  // headline entirely, and legibility is measured properly against the real
+  // rendered pixel in backdrop-contrast.test.mjs. A second, guessed bound
+  // in this file would only argue with it.
 });
 
 test('the storefront wall covers the frame so the store reads as a doorway', async () => {
@@ -151,24 +118,3 @@ test('the storefront wall covers the frame so the store reads as a doorway', asy
   assert.equal(r.colour, '#08070a', 'the wall must be --chamber');
 });
 
-test('the letterboxed stills are cropped so no black bar is sampled', async () => {
-  const crops = await withPage(async (page) => {
-    await boot(page);
-    return page.evaluate(() =>
-      window.__tccAct1.planes.map((m) => ({
-        src: m.material.map.image?.currentSrc || m.material.map.image?.src || '',
-        offsetY: m.material.map.offset.y,
-        repeatY: m.material.map.repeat.y,
-      }))
-    );
-  });
-  for (const c of crops) {
-    const letterboxed = /brand-film-[23]\.jpg$/.test(c.src);
-    if (letterboxed) {
-      assert.equal(c.repeatY, 0.8, `${c.src} should crop its 90px bars to repeat.y 0.8`);
-      assert.equal(c.offsetY, 0.1, `${c.src} should offset past its bottom bar`);
-    } else {
-      assert.equal(c.repeatY, 1, `${c.src} has no bars and must not be cropped`);
-    }
-  }
-});

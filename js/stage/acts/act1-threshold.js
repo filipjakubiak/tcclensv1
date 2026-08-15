@@ -3,37 +3,38 @@ import * as THREE from '../../vendor/three.module.js';
 /**
  * Act 1 — Threshold (progress 0.00 → 0.22).
  *
- * You are outside, at night. A storefront wall fills the frame with one lit
- * aperture in it, right of the headline. Two glass doors part on X, the
- * camera dollies through the aperture, and the store opens out: three aisle
- * plates receding on Z with the glass mark hanging among them.
+ * A --chamber storefront wall fills the frame with one lit aperture in it,
+ * right of the headline. Two glass doors part on X, the camera dollies
+ * through the aperture, and the brand's core gradient opens out beyond it
+ * with the glass mark hanging in front of it.
  *
  * Two things drive the construction:
  *
- * 1. **The wall is what makes it a threshold.** With the aisle plates
- *    full-bleed across the viewport there is no "outside" — the shot reads
- *    as a photograph behind text, not as a doorway. Confining the store to
- *    an aperture and painting the rest in --chamber is what turns it into a
- *    place you cross into, and it keeps the hero copy on flat dark ground.
+ * 1. **The wall is what makes it a threshold.** A full-bleed backdrop reads
+ *    as a picture behind text, with no "outside" to cross from. Confining
+ *    the light to an aperture and painting the rest in --chamber is what
+ *    turns it into a doorway, and it keeps the hero copy on flat dark ground.
  *
- * 2. **The plates are the transmission content.** Until this act the glass
- *    mark refracted a flat near-black background, so its dispersion was
- *    inert no matter how the material was tuned. The plates are the first
- *    thing in the scene with colour and contrast behind the mark.
+ * 2. **The backdrop is the transmission content.** Before it existed the
+ *    glass refracted flat near-black and its dispersion was inert no matter
+ *    how the material was tuned.
+ *
+ * This act originally opened on store photography — three aisle stills
+ * receding on Z. Replaced with the core gradient at the user's direction
+ * (2026-08-15). It is also better optics: a smooth high-chroma field is
+ * exactly what makes per-wavelength separation legible, where a dim
+ * photograph mostly is not.
  */
 
-// Near → far, and a narrative in three frames: taking a basket at the
-// entrance, walking in past the produce wall, the aisle receding to its
-// vanishing point. All three are TCC's own brand-film footage.
-//
-// `bars` is the letterbox burned into the still — measured, not guessed:
-// brand-film-2 and -3 are a 2.39:1 crop inside a 1600x900 frame, exactly
-// 90px top and bottom, so 0.1 of the height at each end.
-const AISLE_PLATES = [
-  { src: 'assets/media/stills/home-banner-2.jpg', bars: 0,   z: -6.5,  dim: 0x2f3038 },
-  { src: 'assets/media/stills/brand-film-3.jpg',  bars: 0.1, z: -12.0, dim: 0x3c3e4a },
-  { src: 'assets/media/stills/brand-film-2.jpg',  bars: 0.1, z: -19.0, dim: 0x4a4c5c },
-];
+// How far the core gradient is brought up behind the doors. Deliberately
+// low, and the numbers look smaller than they are: three.js blends colour in
+// LINEAR space, so 0.16 here already renders around 0.44 in sRGB. The hero is
+// .theme-dark with white copy over this, so the backdrop
+// has to stay a deep, dark reading of --grad-core rather than the pale tint
+// the light body sections get. It lifts as the doors part, so the store
+// coming up to brightness is still the reveal.
+const FIELD_SHUT = 0.26;
+const FIELD_OPEN = 0.62;
 
 const CAM_START_Z = 8;
 // The dolly ends PAST the wall, so by the act boundary the storefront is
@@ -43,11 +44,13 @@ const CAM_END_Z = 0.55;
 const WALL_Z = 1.2;
 const DOOR_Z = 1.0;
 
-// The aperture sits right of centre so the headline lands on flat wall
-// rather than fighting the store behind it.
-const APERTURE_X = 1.85;
-const APERTURE_W = 4.6;
-const APERTURE_H = 4.9;
+// The aperture sits well right of centre, clear of the headline entirely.
+// While it overlapped the copy, the doorway had to stay dim to protect
+// contrast, which made it read as a grey slab rather than a lit opening.
+// Off the copy it can be as bright as the shot actually wants.
+const APERTURE_X = 2.9;
+const APERTURE_W = 3.5;
+const APERTURE_H = 5.4;
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -62,7 +65,7 @@ export const END = {
   markScale: 1.0,
 };
 
-let doorL, doorR, planes = [], wall = [], aisleGlow, spill;
+let doorL, doorR, wall = [], aisleGlow, spill, wallMat, doorMat;
 let doorShut = 0, doorOpen = 0;
 
 /** World size of the camera frustum at a world Z, for the camera at its dolly start. */
@@ -81,50 +84,11 @@ export default {
 
   build(ctx) {
     const { stage } = ctx;
-    const loader = new THREE.TextureLoader();
-
-    planes = AISLE_PLATES.map(({ src, bars, z, dim }) => {
-      const tex = loader.load(src);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      // Sample only the live band, so no black bar is ever stretched.
-      tex.offset.y = bars;
-      tex.repeat.y = 1 - bars * 2;
-
-      const mat = new THREE.MeshBasicMaterial({
-        map: tex,
-        // These are bright white supermarket interiors under a dark hero
-        // with white copy. `color` multiplies them down to a night-exterior
-        // glow; update() lifts it as the doors part, so the store coming up
-        // to brightness IS the reveal.
-        color: new THREE.Color(dim),
-        // MUST stay opaque. three.js renders ONLY opaque objects into the
-        // transmission render target, so a `transparent: true` plate is
-        // invisible to the glass mark's refraction — measured directly:
-        // with transparent plates, the pixel at the mark's centre was
-        // byte-identical whether the plates were dim, blazing magenta, or
-        // deleted from the scene. That, not "nothing colourful behind it",
-        // is why the dispersion read as inert. The plates are full opaque
-        // rectangles and need no alpha, so this costs nothing.
-        transparent: false,
-      });
-
-      // Sized to the aperture's cone rather than the whole frustum: the
-      // store is seen THROUGH a doorway, so a plate only ever needs to fill
-      // what the doorway exposes at its own depth.
-      const spread = (CAM_START_Z - z) / (CAM_START_Z - WALL_Z);
-      const mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(APERTURE_W * spread * 1.15, APERTURE_H * spread * 1.15),
-        mat
-      );
-      mesh.position.set(APERTURE_X * spread, 0, z);
-      stage.scene.add(mesh);
-      return mesh;
-    });
 
     // The storefront wall: four slabs leaving a rectangular aperture. Built
     // oversized so it still covers the frame as the dolly closes on it.
     const { w: frameW, h: frameH } = frustumAt(stage.camera, WALL_Z);
-    const wallMat = new THREE.MeshBasicMaterial({ color: 0x08070a }); // --chamber
+    wallMat = new THREE.MeshBasicMaterial({ color: 0x08070a }); // --chamber
     const OVER = 3.2; // reach past the frame edges by this much at the start
     const slab = (w, h, x, y) => {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), wallMat);
@@ -146,7 +110,7 @@ export default {
     // Doors: reflective envmap glass, NOT transmissive. Only the LensMark
     // runs a transmission pass — the single largest per-frame WebGL cost,
     // and the spec allows exactly one object to pay it.
-    const doorMat = new THREE.MeshPhysicalMaterial({
+    doorMat = new THREE.MeshPhysicalMaterial({
       color: 0x0e0d12, // --ink
       metalness: 0.0,
       roughness: 0.08,
@@ -172,30 +136,40 @@ export default {
     doorR.position.set(APERTURE_X + doorShut, 0, DOOR_Z);
     stage.scene.add(doorL, doorR);
 
-    // Spill from inside the store, sitting between the plates and the mark
-    // so the glass has a near source to streak, plus a cool fill so the
-    // shadow side never goes fully black.
+    // Spill from beyond the doorway, sitting between the gradient and the
+    // mark so the glass has a near source to streak, plus a cool fill so
+    // the shadow side never goes fully black.
     aisleGlow = new THREE.PointLight(0xd380eb, 30, 34); // --accent
     aisleGlow.position.set(APERTURE_X, 1.1, -3.0);
     spill = new THREE.AmbientLight(0xb1bdce, 0.35); // --support
     stage.scene.add(aisleGlow, spill);
 
     stage.addDisposer(() => {
-      stage.scene.remove(aisleGlow, spill, doorL, doorR, ...planes, ...wall);
+      stage.scene.remove(aisleGlow, spill, doorL, doorR, ...wall);
       wallMat.dispose();
-      for (const m of [...planes, ...wall]) m.geometry.dispose();
+      for (const m of wall) m.geometry.dispose();
       geo.dispose();
       doorMat.dispose();
     });
 
-    window.__tccAct1 = { doorL, doorR, planes, wall };
+    window.__tccAct1 = { doorL, doorR, wall };
   },
 
-  // Both acts define the full backdrop state on enter, so the swap is
+  // Every act declares the full backdrop state on enter, so the swap is
   // correct in either scroll direction without needing exit hooks.
   enter(ctx) {
-    for (const o of [...planes, ...wall, doorL, doorR]) o.visible = true;
-    ctx.field?.hide();
+    for (const o of [...wall, doorL, doorR]) o.visible = true;
+    // The gradient field runs from the very first frame now — the store
+    // photography behind the doors is gone (user direction, 2026-08-15).
+    // It is also the mark's refraction content from frame one, which is
+    // strictly better than the dim plates it replaces.
+    ctx.field?.show();
+    // Act 1 is the only act where the mark is a single assembled object, so
+    // it owns putting the halves back together for anyone scrolling up.
+    for (const p of [ctx.lens.headPivot, ctx.lens.heartPivot]) {
+      p.position.set(0, 0, 0);
+      p.rotation.set(0, 0, 0);
+    }
   },
 
   update(t, ctx) {
@@ -216,23 +190,20 @@ export default {
     );
     stage.camera.lookAt(APERTURE_X * 0.9, 0, -2);
 
-    // Dim back to --chamber over the last stretch, so Act 2's gradient can
-    // come up from black instead of cutting. The plates are opaque (they
-    // must be, to appear in the transmission pass), so a fade has to happen
-    // in colour rather than alpha.
-    const fade = 1 - THREE.MathUtils.smoothstep(t, 0.86, 1);
+    // The core gradient brightens as the doors part — the reveal is now the
+    // brand light coming up, not a photograph appearing. Held deliberately
+    // dark while the hero is on screen: it is .theme-dark with white copy
+    // sitting on this, so a pale backdrop would break the headline outright.
+    //
+    // It stays dark for the whole act. An earlier version ramped the backdrop
+    // to the light body tint as the hero scrolled away, because the light
+    // section below shares the viewport with the dark hero for a full
+    // screen-height. That is now solved in CSS — light sections veil the
+    // canvas — so this act no longer has to compromise between two sections
+    // that want opposite things.
+    ctx.field?.setGradient('core', lerp(FIELD_SHUT, FIELD_OPEN, slide));
 
-    planes.forEach((p, i) => {
-      // Nearer plates travel further: that difference is the parallax.
-      p.position.z = AISLE_PLATES[i].z + push * (3.4 - i * 0.9);
-      // The store comes up to brightness as the doors clear — and this is
-      // what finally puts colour into the transmission pass behind the glass.
-      p.material.color
-        .setHex(AISLE_PLATES[i].dim)
-        .multiplyScalar(lerp(1, 2.6 - i * 0.3, slide) * fade);
-    });
-
-    // The mark waits in the aisle and drifts forward as the doors clear.
+    // The mark waits beyond the doorway and drifts forward as they clear.
     lens.group.position.set(
       APERTURE_X * lerp(1, 0.62, push),
       lerp(-0.15, END.mark[1], slide),
@@ -240,6 +211,6 @@ export default {
     );
     lens.group.rotation.y = lerp(-0.6, END.markRotY, slide);
     lens.group.scale.setScalar(lerp(0.9, END.markScale, slide));
-    aisleGlow.intensity = lerp(30, 46, slide) * fade;
+    aisleGlow.intensity = lerp(30, 46, slide);
   },
 };

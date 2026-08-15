@@ -77,7 +77,7 @@ test('copy stays legible against the live WebGL backdrop', async () => {
     let sampled = 0;
     // Across Act 2 and into Act 3, where the gradient field is the page's
     // background rather than --canvas.
-    for (const frac of [0.26, 0.32, 0.42, 0.5, 0.58, 0.66]) {
+    for (const frac of [0, 0.02, 0.26, 0.32, 0.42, 0.5, 0.58, 0.66]) {
       for (const row of await sampleAt(page, frac)) {
         sampled += 1;
         const large = row.size >= 24 || (row.size >= 18.66 && row.weight >= 700);

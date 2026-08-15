@@ -42,8 +42,13 @@ section    { padding-block: var(--section); position: relative; }
 
 /* ---- Type ---- */
 h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); line-height: 1.0; }
-.display    { font-size: var(--display);    font-weight: 700; letter-spacing: var(--track-display); line-height: .88; }
-.heading-lg { font-size: var(--heading-lg); font-weight: 700; letter-spacing: var(--track-display); line-height: .92; }
+/* line-height was .88, which made the line box 15px SHORTER than the font
+   size at hero scale — so ascenders and descenders overflowed it and the
+   .line mask (overflow:hidden) clipped the tails off p, g and y. 1.0 gives
+   the glyphs their own em box back and adds the extra air between the two
+   hero lines. */
+.display    { font-size: var(--display);    font-weight: 700; letter-spacing: var(--track-display); line-height: 1.0; }
+.heading-lg { font-size: var(--heading-lg); font-weight: 700; letter-spacing: var(--track-display); line-height: .98; }
 .heading    { font-size: var(--heading); }
 .lead       { font-size: var(--lead); color: var(--ink-2); line-height: 1.5; }
 /* --ink-2, not --ink-3. Eyebrows are 11px, so they need 4.5:1, and --ink-3
@@ -179,7 +184,9 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
 
 /* ---- Shared primitives ---- */
 /* Masked line reveal target. */
-.line { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+/* The mask needs headroom on BOTH sides: the reveal slides the span through
+   it, and any glyph the box does not contain gets sheared mid-animation. */
+.line { display: block; overflow: hidden; padding: 0.06em 0 0.18em; margin: -0.06em 0 -0.18em; }
 .line > span { display: block; will-change: transform; }
 
 [data-focus-pull] { will-change: filter, opacity, transform; }
@@ -300,8 +307,9 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 .howworks__quote::before { margin-inline: auto; }
 
 /* ---- 7 · Capabilities spectrum ----
-   Structure and data-gradient only — Task 15 paints each band. Cards stay
-   on the plain canvas surface (RULING 2) until then. */
+   The load-bearing idea: the brand's five secondary gradients ARE a
+   spectrum, and a prism splits light into a spectrum. So the five cards are
+   the spectrum the glass mark throws when it turns edge-on. */
 .spectrum { list-style: none; margin: clamp(2.5rem, 6vh, 4rem) 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
 .capability { padding: 1.75rem; display: flex; flex-direction: column; gap: .75rem; }
 /* Uniform equal-weight visual slot for all five cards — only LoyaltyQuest
@@ -314,6 +322,21 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 .capability h3 { font-size: 1.375rem; }
 .capability p { color: var(--ink-2); font-size: .9375rem; margin: 0; }
 .capability .pill { align-self: flex-start; }
+
+/* Exactly one gradient per card, each used once and paired with nothing —
+   the brand book forbids combining two secondary gradients. Body copy stays
+   --ink-2, which clears 4.5:1 against the darkest stop of all five; the
+   pairing is asserted in act3.test.mjs rather than eyeballed, because these
+   are painted surfaces and the WebGL backdrop guard cannot see them. */
+.capability { border-radius: var(--r-card); }
+.capability[data-gradient="performance"]    { background-image: var(--grad-performance); }
+.capability[data-gradient="insight"]        { background-image: var(--grad-insight); }
+.capability[data-gradient="creativity"]     { background-image: var(--grad-creativity); }
+.capability[data-gradient="operational"]    { background-image: var(--grad-operational); }
+.capability[data-gradient="sustainability"] { background-image: var(--grad-sustainability); }
+/* On a painted card the neutral image slot reads as a grey hole; let the
+   card's own gradient show through instead. */
+.capability[data-gradient] .capability__visual { background: color-mix(in srgb, var(--canvas) 28%, transparent); }
 
 /* ---- 8 · Loyalty Monitor ---- */
 #loyalty-monitor { min-height: 100vh; display: grid; align-items: center; overflow: clip; padding-block: 0; }
@@ -446,3 +469,20 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
    .stage-live and #hero keeps its var(--chamber) background from rule
    .theme-dark above — correctly dark and readable without the canvas. */
 html.stage-live #hero { background: transparent; }
+
+/* Light sections veil the canvas instead of leaving it bare.
+
+   #stage is one fixed full-viewport surface, so a section cannot ask it to
+   look different from what the section above wants. The dark hero (white
+   copy, needs a dark backdrop) and the light section below it (dark copy,
+   needs a light one) share the viewport for a whole screen-height of
+   scrolling, and no single backdrop curve serves both — every value tried
+   failed one or the other, measured at 1.61:1 for the hero eyebrow and
+   2.52:1 for the section eyebrow at opposite ends of the range.
+
+   The veil lets the brand gradient tint through at 14% — which is what
+   makes the page feel lit from behind — while pinning contrast to something
+   close to --canvas regardless of where the scroll happens to be. */
+html.stage-live main > section:not(.theme-dark) {
+  background: color-mix(in srgb, var(--canvas) 86%, transparent);
+}

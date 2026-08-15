@@ -21,6 +21,17 @@ const SPLIT = 1.55;
 const CAM_SETTLED = [0, 0.12, 5.4];
 const LOOK_SETTLED = [0, 0, 0];
 
+// Handed to Act 3 for the same reason Act 1 hands its end state here: an act
+// cannot see its neighbours, and a snap at a boundary is the most visible
+// way this scroll can fail.
+export const END = {
+  cam: CAM_SETTLED,
+  look: LOOK_SETTLED,
+  mark: [0, 0, 0],
+  split: 1.55,
+  splitY: 0.35,
+};
+
 let headLight, heartLight;
 const look = new THREE.Vector3();
 
@@ -44,7 +55,7 @@ export default {
     // Stated in full here rather than as a diff, so entering from either
     // direction lands on the same state.
     const a1 = window.__tccAct1;
-    if (a1) for (const o of [...a1.planes, ...a1.wall, a1.doorL, a1.doorR]) o.visible = false;
+    if (a1) for (const o of [...a1.wall, a1.doorL, a1.doorR]) o.visible = false;
     ctx.field?.show();
   },
 
@@ -101,11 +112,9 @@ export default {
   exit(ctx) {
     headLight.intensity = 0;
     heartLight.intensity = 0;
-    // Leave the halves joined for whichever act takes over, so Act 1 (going
-    // back) and Act 3 (going forward) both start from an assembled mark.
-    ctx.lens.headPivot.position.set(0, 0, 0);
-    ctx.lens.heartPivot.position.set(0, 0, 0);
-    ctx.lens.headPivot.rotation.y = 0;
-    ctx.lens.heartPivot.rotation.y = 0;
+    // The halves are deliberately LEFT split. Act 3 opens by recombining
+    // them, so zeroing them here would snap them together at the boundary
+    // and steal the move Act 3 exists to make. Act 1's enter() re-assembles
+    // the mark for anyone scrolling back up.
   },
 };

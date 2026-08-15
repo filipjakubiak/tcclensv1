@@ -9,6 +9,7 @@ import { createDirector, mountDebugScrub } from './stage/SceneDirector.js';
 import { createGradientField } from './stage/GradientField.js';
 import act1 from './stage/acts/act1-threshold.js';
 import act2 from './stage/acts/act2-headheart.js';
+import act3 from './stage/acts/act3-prism.js';
 
 initNav();
 initLenis();
@@ -72,20 +73,23 @@ async function initStage() {
   director.register(act2);
   // Anchors follow the spec's act table; the director derives the real
   // boundaries from where these sections actually land on the page.
-  for (const [id, anchor, range] of [
-    ['prism', '#what-we-do', [0.55, 0.82]],
-    ['close', '#clients', [0.82, 1.00]],
-  ]) director.register({ id, anchor, range });
+  director.register(act3);
+  director.register({ id: 'close', anchor: '#clients', range: [0.82, 1.00] });
 
   director.alignToSections();
 
   // Park on the opening framing BEFORE attaching scroll. ScrollTrigger with
   // scrub only calls back once the user actually scrolls, so without this no
   // act is ever entered and no update() runs on first paint — every act would
-  // render at its build() defaults until the first wheel event. 0.04 is far
-  // enough into Act 1 to be its settled hero framing rather than frame zero,
-  // and it is the same value ?shot=1 and reduced motion rest at.
-  director.setProgress(0.04);
+  // render at its build() defaults until the first wheel event.
+  //
+  // Expressed as a position INSIDE Act 1, not as a global 0.04. Once act
+  // ranges were derived from real section offsets, Act 1 shrank from 22% of
+  // the document to about 6%, and a hardcoded 0.04 put the opening frame
+  // two-thirds of the way through the act — doors already parting, backdrop
+  // already lifted, on first paint.
+  const [a1Start, a1End] = act1.range;
+  director.setProgress(a1Start + (a1End - a1Start) * 0.14);
   if (motionEnabled()) director.attachScroll();
   mountDebugScrub(director);
 
