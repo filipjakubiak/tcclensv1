@@ -354,10 +354,29 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 /* ---- 6 · How it works ---- */
 .howworks__head { max-width: 62ch; }
 .howworks__intro { margin-top: 1.5rem; }
-.howworks__steps { list-style: none; margin: clamp(3rem, 8vh, 5.5rem) 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(1.5rem, 4vw, 3rem); }
-.howworks__step { border-top: 1px solid var(--hairline); padding-top: 1.5rem; display: flex; flex-direction: column; gap: .6rem; }
+/* The three steps are bento surfaces, not three columns under a rule. The
+   loop they describe — spend, reward, return — is a sequence, so the cells
+   step DOWN as they go: each one is offset a little further, and the reader
+   descends the process rather than scanning three equal columns. */
+.howworks__steps {
+  list-style: none; margin: clamp(3rem, 8vh, 5.5rem) 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(12, 1fr);
+  gap: clamp(.75rem, 1.4vw, 1.25rem);
+}
+.howworks__step {
+  display: flex; flex-direction: column; gap: .6rem; justify-content: flex-end;
+  padding: clamp(1.5rem, 2.4vw, 2.25rem);
+  border: 1px solid var(--hairline); border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--canvas) 72%, transparent);
+  min-height: clamp(13rem, 26vh, 19rem);
+}
+.howworks__steps > :nth-child(1) { grid-column: 1 / 6; }
+.howworks__steps > :nth-child(2) { grid-column: 6 / 10; margin-top: clamp(1.5rem, 4vh, 3rem); }
+.howworks__steps > :nth-child(3) { grid-column: 10 / 13; margin-top: clamp(3rem, 8vh, 6rem); }
 .howworks__step .eyebrow { margin: 0; }
-.howworks__idx { font-size: var(--micro); font-weight: 600; letter-spacing: var(--track-micro); color: var(--accent); }
+/* --accent-strong, not --accent: these sit on a light surface, where raw
+   accent measures about 2:1. */
+.howworks__idx { font-size: var(--micro); font-weight: 600; letter-spacing: var(--track-micro); color: var(--accent-strong); }
 .howworks__step h3 { font-size: clamp(1.75rem, 3vw, 2.5rem); }
 .howworks__step > p:last-child { color: var(--ink-2); font-size: .9375rem; line-height: 1.55; margin: 0; }
 .howworks__quote { margin: clamp(3rem, 7vh, 5rem) auto 0; text-align: center; }
@@ -492,7 +511,7 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
   .bento > :nth-child(1) { grid-column: auto / span 12 !important; }
   .bento > :nth-child(7) { display: none; }
   .fork__grid { grid-template-columns: 1fr; }
-  .howworks__steps { grid-template-columns: 1fr; }
+  .howworks__steps > * { grid-column: 1 / -1 !important; margin-top: 0 !important; }
   .global__grid, .careers__grid { grid-template-columns: 1fr; gap: 2.5rem; align-items: start; }
   .insights__grid { grid-template-columns: 1fr; }
   .insight:first-child .insight__img { aspect-ratio: 4 / 3; }
