@@ -36,16 +36,28 @@ export async function createLensMark(stage) {
     // refraction returned the backdrop's own colour, so there was nothing to
     // see. The optics were correct and the object was not there.
     //
-    // Attenuation: light is absorbed as it travels through the glass, so
-    // thick parts tint and thin edges stay clear — a gradient across the body
-    // that comes from the geometry rather than from a painted-on tint.
+    // Absorption is what makes the mark exist on screen at all.
     //
-    // --support, NOT --accent. Attenuating toward the accent tinted the glass
-    // the same purple as the field behind it, so it cancelled out and the
-    // mark stayed invisible. The cool token reads as denser, cooler glass
-    // against a warm purple backdrop.
-    attenuationColor: new T.Color(0xb1bdce), // --support
-    attenuationDistance: 0.55,
+    // Swept every candidate against BOTH a dark and a light backdrop, scoring
+    // the share of pixels that separate readably (delta > 60) when the mark
+    // is hidden:
+    //
+    //   --accent  d=0.70   dark 0.05%   light 0.00%
+    //   --accent  d=0.35   dark 0.04%   light 5.34%
+    //   --support d=0.55   dark 0.05%   light 0.01%
+    //   --ink-2   d=0.60   dark 5.28%   light 6.92%
+    //   --ink-2   d=0.34   dark 5.79%   light 6.96%   <- chosen: at 0.60 the
+    //     thin parts of the extrusion still dominated and the mark read as a
+    //     flat pale silhouette rather than a solid object.
+    //   --chamber d=0.45   dark 5.80%   light 6.96%   (near-opaque, loses the glass)
+    //
+    // Every brand-coloured option failed on one side or the other: absorbing
+    // toward a light or saturated colour cannot darken glass enough to show
+    // against pale copy sections, which is what the user reported. --ink-2
+    // is smoked glass — it reads on the gradient hero AND on --canvas, and
+    // it still transmits, so the backdrop's colour comes through it.
+    attenuationColor: new T.Color(0x4a4e57), // --ink-2
+    attenuationDistance: 0.34,
 
     // Stronger thin-film and a hotter environment give the bevel a crisp
     // specular to catch, which is the other half of reading as glass.

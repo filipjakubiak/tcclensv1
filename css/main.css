@@ -491,8 +491,24 @@ html.stage-live #hero { background: transparent; }
    The veil lets the brand gradient tint through at 14% — which is what
    makes the page feel lit from behind — while pinning contrast to something
    close to --canvas regardless of where the scroll happens to be. */
-html.stage-live main > section:not(.theme-dark) {
-  background: color-mix(in srgb, var(--canvas) 86%, transparent);
+html.stage-live main > section:not(.theme-dark):not([data-tint]) {
+  /* The veil is a HORIZONTAL gradient, not a flat wash.
+
+     Flat, it covered the whole section at 86% --canvas — so only 14% of the
+     glass mark's contrast survived to the screen and it read as a pale
+     smudge on every light section. An entire pass of material tuning went
+     into a layer that was then multiplied by 0.14.
+
+     Copy is left-aligned on this page and the mark lives right of centre in
+     every act, so the veil is opaque under the text and clears away on the
+     right. Text keeps a --canvas surface; the glass keeps its contrast. */
+  background-image: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--canvas) 68%, transparent) 0%,
+    color-mix(in srgb, var(--canvas) 68%, transparent) 48%,
+    color-mix(in srgb, var(--canvas) 30%, transparent) 72%,
+    transparent 88%
+  );
 }
 
 /* Per-section brand gradients.
