@@ -174,6 +174,34 @@ lead, per-section lean, wider stagger) · bigger `--eyebrow` · careers photo en
 · fluid pointer gradient on `#contact` and `#loyalty-monitor` · loyalty-gap meter draws ·
 offices list draws in.
 
+## ▶ PICK UP HERE (2026-08-16, session end)
+
+Everything is pushed to **github filipjakubiak/tcclensv1**, branch `main`, at `a8c7935`.
+Local branch is `build/tcc-lens` tracking `origin/main`. Working tree clean.
+
+**Suite is 110/111 — one KNOWN failure, pushed deliberately.**
+`interact.test.mjs` → "the marquee slows under the pointer without jumping".
+**The implementation is correct**; the test instrument is not. Verified by direct frame
+tracing: deltas decay 40 → 13 → 10px with no discontinuity. Four instruments have failed on
+it — see the ledger's round six. **Do not rewrite the marquee again.** Either drop the
+leftover speed-comparison segment (it starves at ~8fps headless, reading 0.086 px/ms) and
+keep only the direction assertion, which works and passes, or retire the test.
+
+**Three things asked for and NOT started:**
+
+1. **`#what-we-do` fork panels** — the user's last request, untouched.
+   *"the height of the bento boxes needs to be smaller since now these images are really
+   long"* — `.fork__img` is at `aspect-ratio: 16/7`; measure the rendered height at
+   1440/1100/860 before changing it, since the panels are half-width and the ratio may not
+   be the binding constraint.
+   *"make the bento boxes appear from left and right side when scrolling through"* — both
+   panels currently inherit the section's `data-enter="right"`, so they arrive from the same
+   side. The left one needs its own `x: -34`.
+2. **Full suite has not run** since the round-six motion fixes; only `interact.test.mjs` did.
+   `will-change` and the easing change touch shared code.
+3. **The eyebrow-on-every-section finding.** Flagged three times, on all thirteen sections,
+   and made larger this session. The only open design decision.
+
 **Still open:**
 
 1. **`.pill` is deliberately still flat.** All five live inside `.capability` cards that already
