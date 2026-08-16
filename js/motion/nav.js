@@ -2,8 +2,18 @@ export function initNav() {
   const nav = document.querySelector('.nav');
   if (!nav) return;
 
+  const progress = nav.querySelector('.nav__progress');
+
   const sync = () => {
     nav.classList.toggle('nav--solid', window.scrollY > window.innerHeight * 0.85);
+    if (progress) {
+      // Plain scroll maths, not GSAP: this is an orientation cue and has to
+      // keep working with motion off, under reduced motion and in ?shot=1,
+      // where the ScrollTrigger machinery is never started.
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const read = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0;
+      progress.style.setProperty('--read', read.toFixed(4));
+    }
   };
   sync();
   window.addEventListener('scroll', sync, { passive: true });

@@ -243,14 +243,23 @@ export default {
     );
     gate.rotation.y = THREE.MathUtils.clamp(facing, -GATE_MAX_YAW, GATE_MAX_YAW);
 
-    // The mark waits beyond the curtain and comes forward as it clears.
+    // The mark opens LARGE and settles back, rather than starting small and
+    // far and travelling forward (user, 2026-08-16: "zoomed in more so it is
+    // bigger when it starts"). It used to begin at z=-5 and 0.86 scale, which
+    // put it a long way behind the curtain and made the first thing revealed
+    // the smallest the mark ever gets.
+    //
+    // Starting nearer the camera AND larger means the reveal lands on the
+    // mark at full presence and the settle to END is a release of pressure.
+    // Held right of centre the whole way, clear of the bottom-left headline —
+    // it is much bigger now, so the copy has less room to spare.
     lens.group.position.set(
-      lerp(0.4, END.mark[0], slide),
-      lerp(-0.1, END.mark[1], slide),
-      lerp(-5.0, END.mark[2], slide)
+      lerp(1.15, END.mark[0], slide),
+      lerp(0.30, END.mark[1], slide),
+      lerp(-0.6, END.mark[2], slide)
     );
     lens.group.rotation.y = lerp(-0.6, END.markRotY, slide);
-    lens.group.scale.setScalar(lerp(0.86, END.markScale, slide));
+    lens.group.scale.setScalar(lerp(1.5, END.markScale, slide));
     aisleGlow.intensity = lerp(30, 46, slide);
   },
 };

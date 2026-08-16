@@ -134,8 +134,19 @@ export async function createLensMark(stage) {
   const outer = new T.Group();
   outer.add(headPivot, heartPivot);
 
+  // One more group, one more job: the pointer response.
+  //
+  // It has to sit ABOVE `outer` because acts assign to outer's rotation and
+  // position every frame — anything written there would be overwritten on the
+  // next update, which is the same trap that wiped the fit scale and would
+  // have wiped the recentring offset. Nothing in acts/ may touch this.
+  const pointer = new T.Group();
+  pointer.add(outer);
+
   const lens = {
     group: outer,
+    /** Pointer parallax only. Acts must never write to this. */
+    pointer,
     fit: FIT,
     head,
     heart,
@@ -150,11 +161,11 @@ export async function createLensMark(stage) {
       head.geometry.dispose();
       heart.geometry.dispose();
       material.dispose();
-      outer.removeFromParent();
+      pointer.removeFromParent();
     },
   };
 
-  stage.scene.add(outer);
+  stage.scene.add(pointer);
   stage.addDisposer(lens.dispose);
   window.__tccLens = lens;
   return lens;

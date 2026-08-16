@@ -9,6 +9,13 @@ export function initCursor() {
   dot.setAttribute('aria-hidden', 'true');
   document.body.appendChild(dot);
 
+  // Hide the SYSTEM cursor, and only once the dot is actually on the page.
+  // Set here rather than in the stylesheet on purpose: every early return
+  // above (touch device, reduced motion, ?shot=1) means there is no dot, and
+  // a CSS-only `cursor: none` would leave those readers with no pointer at
+  // all. The class is the proof that a replacement exists.
+  document.documentElement.classList.add('cursor-live');
+
   const { gsap } = window;
   const move = gsap.quickTo(dot, 'x', { duration: 0.25, ease: 'power3' });
   const moveY = gsap.quickTo(dot, 'y', { duration: 0.25, ease: 'power3' });

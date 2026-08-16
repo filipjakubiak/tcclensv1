@@ -150,6 +150,20 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
               backdrop-filter: blur(14px); color: var(--ink);
               border-bottom: 1px solid var(--hairline); }
 .nav__inner { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+/* How far through the page you are. The page is one long scroll-driven
+   sequence with no chapter markers, so this is the only thing telling the
+   reader where they are in it. scaleX from a left origin — never width. */
+.nav__progress {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background-image: var(--grad-core);
+  transform: scaleX(var(--read, 0));
+  transform-origin: left center;
+  transition: opacity var(--dur-ui) var(--ease-out-strong);
+  opacity: 0;
+}
+/* Hidden over the hero, where there is nothing to report yet and the nav is
+   transparent over the curtain. */
+.nav--solid .nav__progress { opacity: 1; }
 /* logo-text.svg is baked black-on-transparent (fill="black" per path, not
    currentColor), so `color` on .nav does nothing to it — it's an <img>,
    not inline SVG. Invert it while the nav sits over the dark hero; the
@@ -702,6 +716,12 @@ html.motion-on .monitor__fill { --fill: 0; }
           mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
 }
 .marquee__track { display: flex; width: max-content; animation: marquee 38s linear infinite; }
+/* Slows under the pointer rather than stopping. A band of logos moving at a
+   fixed speed is the one element on the page that actively resists being
+   read; a full stop would read as broken, so it drops to a quarter speed and
+   stays alive. animation-duration is not a composited property, but this
+   changes once on hover rather than per frame. */
+.marquee.is-slowed .marquee__track { animation-duration: 150s; }
 .marquee__group { display: flex; align-items: center; gap: 4rem; padding-right: 4rem; }
 .marquee__group img { display: block; height: 28px; width: auto; }
 @keyframes marquee { to { transform: translateX(-50%); } }
@@ -728,7 +748,21 @@ html.motion-on .monitor__fill { --fill: 0; }
   background: var(--hairline);
   transform: scaleX(var(--rule-s, 1));
   transform-origin: left center;
+  transition: background var(--dur-ui) var(--ease-out-strong);
 }
+/* The list was inert once it had drawn itself in. Dwelling on a city now
+   lifts its rule to the brand gradient and brings its country up out of the
+   muted tier. :focus-within as well as :hover — the rows carry tabindex, so
+   the same response is reachable from the keyboard, which is the part
+   hover-only effects usually miss. */
+.global__offices li { transition: color var(--dur-ui) var(--ease-out-strong); }
+.global__offices li:hover::before,
+.global__offices li:focus-within::before,
+.global__offices li:focus::before { background-image: var(--grad-core); }
+.global__offices li:hover .global__meta,
+.global__offices li:focus .global__meta { color: var(--ink-2); }
+.global__offices li:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.global__offices .global__meta { transition: color var(--dur-ui) var(--ease-out-strong); }
 .global__meta { color: var(--ink-3); font-weight: 400; font-size: .875rem; }
 
 /* ---- 11 · Insights ---- */
@@ -856,6 +890,13 @@ html.motion-on .careers__img[data-lift] { --enter-y: 46px; --enter-s: .94; filte
 }
 .cursor--swell { transform: scale(3.667); }
 @media (pointer: coarse) { .cursor { display: none; } }
+/* The dot REPLACES the system cursor rather than accompanying it. Applied to
+   descendants too, since elements carry their own cursor values (links get
+   `pointer`, the canvas `default`) and hiding it only on <html> leaves the
+   arrow back the moment you touch a link. .cursor-live is added by JS once
+   the dot exists, so a touch device or a reduced-motion reader — where the
+   dot never mounts — keeps its own pointer. */
+html.cursor-live, html.cursor-live * { cursor: none; }
 
 /* Chromatic hover — ties DOM interaction back to the glass thread.
    RULING 3: color-mix, not hand-spelled rgba, so --accent/--support stay

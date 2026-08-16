@@ -5,6 +5,7 @@ import { initCounters } from './motion/counters.js';
 import { initSurfaceReveals, initSurfacePointer, initFluidSurfaces } from './motion/elements.js';
 import { initCareers } from './motion/careers.js';
 import { initMeter, initOffices } from './motion/sections.js';
+import { initMarkPointer, initMarquee, initOfficeRows } from './motion/interact.js';
 import { createStage } from './stage/Stage.js';
 import { buildEnvironment } from './stage/env.js';
 import { createLensMark } from './stage/LensMark.js';
@@ -29,6 +30,8 @@ initFluidSurfaces();
 initCareers();
 initMeter();
 initOffices();
+initMarquee();
+initOfficeRows();
 
 if (!motionEnabled()) document.documentElement.classList.add('motion-off');
 
@@ -57,6 +60,12 @@ async function initStage() {
   // moving or scaling the mark itself.
   const env = buildEnvironment(stage);
   const lens = await createLensMark(stage);
+
+  // The mark leans toward the cursor. Registered as a stage updater so it
+  // rides the existing rAF loop (which already pauses on a hidden tab) rather
+  // than starting a second one.
+  const leanToPointer = initMarkPointer(lens);
+  if (leanToPointer) stage.addUpdater(leanToPointer);
 
   // Acts 2-4 drop the store photography for the brand book's own gradients
   // (user direction, 2026-08-15). The field is also the mark's refraction

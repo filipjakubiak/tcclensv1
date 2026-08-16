@@ -2,7 +2,7 @@
 
 **Started:** 2026-08-14 · **Last worked:** 2026-08-16
 **Working dir:** `C:\Users\filip\Desktop\neststudio\tcc-lens\`
-**Branch:** `build/tcc-lens` · suite **104/104 green**
+**Branch:** `build/tcc-lens` · suite **111/111 green**
 
 ---
 
@@ -26,7 +26,7 @@ independent look**; the final whole-branch review is the only one planned, and i
 ## Commands
 
 ```
-cd tools && npm test            # 104 tests, ~4 min (concurrency pinned to 3)
+cd tools && npm test            # 111 tests, ~5 min (concurrency pinned to 3)
 node tools/serve.mjs 4192       # or START.bat
 ```
 - `http://localhost:4192/` · `?debug=1` act scrub slider · `?shot=1` all motion off, settled
@@ -105,7 +105,9 @@ acts by name and local t via `setLocal(director, id, t)`** — never a hardcoded
   measured light-section contrast ceilings (`MAX_TINT`); animating it would put those back in
   play for a change that only concerns the dark hero.
 - **Measure the composited page**, not the WebGL buffer (§2.2).
-- **One group, one job** in `LensMark` (§2.3).
+- **One group, one job** in `LensMark` (§2.3). `lens.pointer` sits ABOVE `lens.group` and
+  carries the pointer lean; **acts must never write to it** — they assign to `lens.group` every
+  frame and would erase anything put there. Asserted by driving every act across its range.
 - **No hex outside `css/tokens.css`** — guard test enforces. WebGL JS may use hex *with a
   comment naming its token*.
 - Body copy ≤ `1.125rem`. Tagline only ever appears whole.
