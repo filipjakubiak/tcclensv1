@@ -12,6 +12,14 @@ html {
   /* Fixed nav would otherwise hide the top of every anchor target's
      heading on jump-to-section. */
   scroll-padding-top: var(--nav-h);
+  /* Section entrances park their copy off-frame horizontally (data-enter
+     left/right translate x by up to 34px, headline lines by 22px), and a
+     transform to the RIGHT extends scrollable overflow. Measured 404px of
+     scroll width in a 390px viewport before this. `overflow-x: hidden` on
+     body alone does not stop it — the document element is what scrolls.
+     `clip`, not `hidden`: hidden makes this a scroll container, which breaks
+     position:sticky descendants and fights Lenis. */
+  overflow-x: clip;
 }
 body {
   margin: 0;
@@ -93,8 +101,30 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
 .btn--solid:hover { box-shadow: 0 14px 30px var(--accent-shadow); }
 .btn--ghost { background: transparent; color: currentColor; border: 1px solid var(--hairline); }
 .theme-dark .btn--ghost { border-color: var(--hairline-inv); }
-.btn:active { transform: scale(.97); }
+/* Press feedback and the magnetic pull compose through custom properties
+   inside ONE transform. Written as `transform: scale(.97)` on :active it was
+   dead for every [data-magnetic] element — initMagnetic set an inline
+   transform, and inline beats the stylesheet — which is to say for nearly
+   every primary button on the page. */
+.btn {
+  transform:
+    translate3d(var(--mag-x, 0px), calc(var(--mag-y, 0px) + var(--intro-y, 0px)), 0)
+    scale(var(--press, 1));
+}
+.btn:active { --press: .97; }
 :where(a, button):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Small text links (nav, footer, insight CTAs) render 15-19px tall, which is
+   under the 24x24 minimum in WCAG 2.2 AA (2.5.8 Target Size). The hit area is
+   expanded with a pseudo-element rather than padding, because .link's
+   underline is a background positioned at the bottom edge and padding would
+   push it away from the text. Layout is untouched. */
+.link { position: relative; }
+.link::after {
+  content: ''; position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 24px; transform: translateY(-50%);
+}
 
 /* Pill lozenge — brand graphic device */
 .pill { display: inline-block; padding: .4rem 1rem; border-radius: var(--r-pill);
@@ -484,7 +514,11 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 .fork__intro { max-width: 60ch; margin-bottom: clamp(2.5rem, 6vh, 4rem); }
 .fork__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
 .fork__panel { display: flex; flex-direction: column; }
-.fork__img { aspect-ratio: 16 / 10; overflow: clip; }
+/* Shallower than the 16/10 it started at (user, 2026-08-16). These are
+   portrait source photographs cropped by object-fit, so the crop tightens
+   rather than the subject shrinking, and it stops the two panels running so
+   tall that their copy falls below the fold. */
+.fork__img { aspect-ratio: 16 / 7; overflow: clip; }
 .fork__img img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .fork__body { padding: clamp(1.5rem, 3vw, 2.25rem); display: flex; flex-direction: column; gap: .9rem; flex: 1; }
 .fork__body .eyebrow { margin-bottom: 0; }
@@ -712,7 +746,9 @@ html.motion-on .monitor__fill { --fill: 0; }
    height from it to fit the copy. */
 .insight__img { aspect-ratio: 4 / 3; flex: 0 0 auto; }
 .insight:first-child .insight__img { aspect-ratio: 16 / 10; }
-.insight__img img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 600ms var(--ease-out-strong); }
+/* 400ms, not 600: a card hover is seen dozens of times in a session, and at
+   600ms the zoom was still travelling well after the pointer had settled. */
+.insight__img img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 400ms var(--ease-out-strong); }
 @media (hover: hover) and (pointer: fine) { .insight:hover .insight__img img { transform: scale(1.04); } }
 .insight .insight__meta { display: block; margin: 1.1rem 1.25rem 0; }
 .insight h3 { font-size: 1.25rem; margin: .4rem 1.25rem 0; max-width: 24ch; }
@@ -837,6 +873,9 @@ html.motion-on .careers__img[data-lift] { --enter-y: 46px; --enter-s: .94; filte
 @media (prefers-reduced-motion: reduce) {
   .marquee__track { animation: none; }
   .insight:hover .insight__img img { transform: none; }
+  /* The generic picture zoom was missed when its .insight sibling above was
+     neutralised — same transform, same objection under reduced motion. */
+  picture:hover img { transform: none; }
   /* The edge trace still marks the panel; it just stops travelling. */
   .fork__panel:hover::after, .fork__panel:focus-within::after { animation: none; }
 }
@@ -927,9 +966,12 @@ section[data-tint='core']           { --tint: var(--grad-core); }
     transparent 72%
   );
   opacity: 0;
+  /* Asymmetric: the light answers the pointer promptly and leaves slowly.
+     Symmetric 700ms in both directions made arriving in the section feel
+     like the page was catching up with you. */
   transition: opacity 700ms var(--ease-out-strong);
 }
-[data-fluid].is-fluid::after { opacity: 1; }
+[data-fluid].is-fluid::after { opacity: 1; transition-duration: 420ms; }
 
 /* A dark surface can take far more light than a light one before anything
    becomes hard to read — on --chamber the glow at these strengths still
@@ -974,8 +1016,14 @@ section[data-tint='sustainability'] { --tint: var(--grad-sustainability); }
     translate3d(0, calc(var(--enter-y, 0px) + var(--step-y, 0px)), 0)
     scale(var(--enter-s, 1));
   transform-style: preserve-3d;
+  /* 200ms on transform, not the 420ms this started at. Two reasons: the
+     cursor tilt is written to --tilt-* on every pointer frame and a long
+     transition makes the surface trail the pointer, and GSAP tweens --enter-y
+     inside this same transform, so the transition was re-smoothing the
+     entrance on top of its own easing. Shadow can stay slow — nothing tracks
+     the pointer with it. */
   transition:
-    transform 420ms var(--ease-out-strong),
+    transform 200ms var(--ease-out-strong),
     box-shadow 420ms var(--ease-out-strong);
 }
 /* Only while pointing — a permanent will-change on every card keeps a
@@ -1006,8 +1054,11 @@ html.motion-on [data-lift] { opacity: 0; --enter-y: 26px; --enter-s: .975; filte
    The hero eyebrow and CTAs are hidden only while motion is on, so a JS
    failure still leaves the whole hero readable. The headline already has its
    hidden state from [data-focus-pull]. */
-html.motion-on #hero .eyebrow,
-html.motion-on #hero .hero__ctas .btn { opacity: 0; transform: translateY(14px); }
+html.motion-on #hero .eyebrow { opacity: 0; transform: translateY(14px); }
+/* --intro-y, not `transform`: the button's transform already carries the
+   magnetic pull and the press scale, and a third owner would win by writing
+   last. initHeroIntro animates this variable. */
+html.motion-on #hero .hero__ctas .btn { opacity: 0; --intro-y: 14px; }
 
 /* ---- Gradient figures ----
    ALL six statistics carry the brand gradient now (user, 2026-08-16 — the

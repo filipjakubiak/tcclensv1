@@ -149,5 +149,8 @@ export function initHeroIntro() {
   }
   tl.to(hero.querySelector('.eyebrow'), { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 0.1);
   tl.to(hero.querySelector('.lead'), { opacity: 1, filter: 'blur(0px)', scale: 1, duration: 0.8, ease: 'expo.out' }, 0.42);
-  tl.to(hero.querySelectorAll('.hero__ctas .btn'), { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out', stagger: 0.08 }, 0.58);
+  // --intro-y, not y: the buttons' transform is shared with the magnetic pull
+  // and the press scale, so this composes through a variable rather than
+  // taking the property over.
+  tl.to(hero.querySelectorAll('.hero__ctas .btn'), { opacity: 1, '--intro-y': '0px', duration: 0.6, ease: 'power3.out', stagger: 0.08 }, 0.58);
 }

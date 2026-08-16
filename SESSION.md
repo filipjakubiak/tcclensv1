@@ -124,6 +124,14 @@ acts by name and local t via `setLocal(director, id, t)`** — never a hardcoded
   parser that assumes `rgb()` reads them as near-black and passes every contrast check. And a
   custom property read with `getPropertyValue` comes back UNRESOLVED; paint it on a probe
   element to get real numbers.
+- **Anything GSAP touches with `x`/`y`/`scale` can no longer take a transform from CSS.** GSAP
+  writes an inline transform and inline outranks the stylesheet, so a `:hover` or `:active`
+  transform on that element is dead code. Every primary button lost its press feedback this
+  way. `.btn` composes `--mag-x`, `--mag-y`, `--intro-y` and `--press` in one transform.
+- **Off-frame entrance states are a responsive bug.** `data-enter` parks copy at `x: ±34`,
+  which extends scrollable overflow to the right — measured 404px of scroll width in a 390px
+  viewport. `html { overflow-x: clip }` is what holds it (`clip`, not `hidden`: hidden makes
+  the root a scroll container and fights Lenis).
 - **Measure layout with `offsetHeight`, not `getBoundingClientRect()`**, wherever an entrance
   scales the element — the rect includes the transform, and a staggered entrance then reports
   identical boxes as different heights.

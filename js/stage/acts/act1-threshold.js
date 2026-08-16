@@ -68,7 +68,7 @@ export const END = {
   markScale: 1.0,
 };
 
-let gate, doorL, doorR, aisleGlow, spill, doorMat, edgeMat;
+let gate, doorL, doorR, aisleGlow, spill, doorMat;
 let doorShut = 0, doorOpen = 0;
 
 /** World size of the camera frustum at a world Z, seen from the dolly start. */
@@ -130,29 +130,19 @@ export default {
     doorL.position.set(-doorShut, 0, 0);
     doorR.position.set(doorShut, 0, 0);
 
-    // A lit edge down each leaf's INNER side.
+    // REMOVED: a lit --accent edge down each leaf's inner side.
     //
-    // Without it the shut curtain is a single even sheet of glass across the
-    // frame — it reads as a haze over the hero, not as two doors about to
-    // part, which is exactly how the previous gate failed. The seam is the
-    // only thing that says "this opens". Once the leaves move, these are the
-    // two bright lines travelling apart, and they are what the eye follows.
+    // It was added to make the shut curtain read as two doors rather than one
+    // even sheet of glass, and it did — but as a hard purple line down the
+    // middle of the hero, which the user did not want (2026-08-16). The
+    // parting itself now has to carry that read: the leaves separate within
+    // the first few percent of the act, so the seam is only ever ambiguous
+    // for the moment before anyone scrolls.
     //
-    // Parented to the leaves, so they carry the seam with them rather than
-    // needing their own animation to stay put.
-    const edgeGeo = new THREE.BoxGeometry(0.045, leafH, 0.06);
-    edgeMat = new THREE.MeshBasicMaterial({
-      color: 0xd380eb, // --accent
-      transparent: true,
-      opacity: 0.85,
-      depthWrite: false,
-    });
-    const edgeL = new THREE.Mesh(edgeGeo, edgeMat);
-    const edgeR = new THREE.Mesh(edgeGeo, edgeMat);
-    edgeL.position.set(leafW / 2, 0, 0.04);   // inner (right) side of the left leaf
-    edgeR.position.set(-leafW / 2, 0, 0.04);  // inner (left) side of the right leaf
-    doorL.add(edgeL);
-    doorR.add(edgeR);
+    // If a seam is wanted again, make it a darkening at the inner edges
+    // rather than an emissive strip — the glass has its own specular edge to
+    // work with, and a coloured line across a brand gradient is a hard object
+    // in a soft composition.
 
     gate = new THREE.Group();
     gate.position.set(0, 0, GATE_Z);
@@ -170,9 +160,7 @@ export default {
     stage.addDisposer(() => {
       stage.scene.remove(aisleGlow, spill, gate);
       geo.dispose();
-      edgeGeo.dispose();
       doorMat.dispose();
-      edgeMat.dispose();
     });
 
     // REMOVED: an idle spin that ran before the first scroll.
@@ -226,12 +214,7 @@ export default {
 
     // The leaves fade back as they clear, so the last of the glass does not
     // sit as a hard edge at the frame margin.
-    const clearing = THREE.MathUtils.smoothstep(t, 0.45, 0.95);
-    doorMat.opacity = lerp(0.3, 0.06, clearing);
-    // The seam fades with them. It is the brightest thing on screen while the
-    // curtain is shut, and it has no business still glowing at the frame
-    // edges once the reveal is over.
-    edgeMat.opacity = lerp(0.85, 0, clearing);
+    doorMat.opacity = lerp(0.3, 0.06, THREE.MathUtils.smoothstep(t, 0.45, 0.95));
 
     // A short push, not a dolly through the threshold. The curtain parting is
     // the move; the camera only leans in behind it.

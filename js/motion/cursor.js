@@ -26,15 +26,30 @@ export function initMagnetic() {
   const { gsap } = window;
   const MAX = 8;
 
+  // Animates CUSTOM PROPERTIES, not x/y.
+  //
+  // GSAP's x/y write an inline `transform`, and an inline style outranks any
+  // stylesheet rule — so `.btn:active { transform: scale(.97) }` stopped
+  // applying to every magnetic element the moment this ran. That is the nav
+  // CONTACT button, both hero CTAs, the monitor CTA, the careers link and the
+  // closing CTA: essentially every primary button on the page had no press
+  // feedback, and nothing failed to make it visible.
+  //
+  // Composing both through variables inside one CSS transform is the same
+  // rule the surface kit follows for entrance vs tilt, arrived at the same
+  // way — two owners of one property means whichever wrote last wins.
   document.querySelectorAll('[data-magnetic]').forEach((el) => {
     el.addEventListener('pointermove', (e) => {
       const r = el.getBoundingClientRect();
       const dx = ((e.clientX - (r.left + r.width / 2)) / (r.width / 2)) * MAX;
       const dy = ((e.clientY - (r.top + r.height / 2)) / (r.height / 2)) * MAX;
-      gsap.to(el, { x: dx, y: dy, duration: 0.4, ease: 'power3.out' });
+      gsap.to(el, { '--mag-x': `${dx.toFixed(2)}px`, '--mag-y': `${dy.toFixed(2)}px`, duration: 0.4, ease: 'power3.out' });
     });
     el.addEventListener('pointerleave', () => {
-      gsap.to(el, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1, 0.6)', overwrite: true });
+      gsap.to(el, {
+        '--mag-x': '0px', '--mag-y': '0px',
+        duration: 0.5, ease: 'elastic.out(1, 0.6)', overwrite: true,
+      });
     });
   });
 }
