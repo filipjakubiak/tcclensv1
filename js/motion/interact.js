@@ -60,12 +60,51 @@ export function initMarkPointer(lens) {
  * it alive while giving the reader a chance to actually look at a logo.
  */
 export function initMarquee() {
-  if (!motionEnabled() || !finePointer()) return;
+  if (!motionEnabled()) return;
   const marquee = document.querySelector('.marquee');
-  if (!marquee) return;
+  const track = marquee?.querySelector('.marquee__track');
+  if (!track) return;
 
-  marquee.addEventListener('pointerenter', () => marquee.classList.add('is-slowed'));
-  marquee.addEventListener('pointerleave', () => marquee.classList.remove('is-slowed'));
+  // GSAP drives the loop, NOT the CSS keyframe, so the speed can be changed
+  // without moving the band.
+  //
+  // The first version simply swapped animation-duration from 38s to 150s on
+  // hover. Changing duration mid-play recomputes progress against the NEW
+  // duration, so the position snaps: measured a 209.7px jump backwards the
+  // instant the pointer arrived. timeScale() rescales the playhead instead,
+  // which is exactly what it exists for, and eases between speeds.
+  const { gsap } = window;
+  document.documentElement.classList.add('marquee-js');
+
+  // Position is INTEGRATED from a speed, not read off a playhead.
+  //
+  // Two earlier versions both jumped, measured. Swapping animation-duration
+  // recomputes CSS progress against the new duration (209.7px backwards).
+  // Tweening timeScale on a repeating GSAP tween re-derives the playhead from
+  // the new rate: progress leapt 0.110 -> 0.185 in one frame, another ~246px.
+  //
+  // Integrating makes the jump unrepresentable rather than merely fixed: x
+  // only ever moves by speed x elapsed, so changing the speed changes the
+  // RATE of travel and can never change the position.
+  const PERCENT_PER_SEC = 50 / 38; // the original 38s for one 50% cycle
+  const state = { speed: 1 };
+  let x = 0;
+
+  const tick = (_t, deltaMs) => {
+    x -= PERCENT_PER_SEC * state.speed * (deltaMs / 1000);
+    // The track holds two identical groups, so -50% is one whole cycle.
+    if (x <= -50) x += 50;
+    gsap.set(track, { xPercent: x });
+  };
+  gsap.ticker.add(tick);
+
+  if (!finePointer()) return;
+  // Slows rather than stops. A band of logos moving at a fixed speed is the
+  // one element on the page that actively resists being read; a full stop
+  // would read as broken.
+  const ramp = (to) => gsap.to(state, { speed: to, duration: 0.6, ease: 'power2.out', overwrite: true });
+  marquee.addEventListener('pointerenter', () => ramp(0.25));
+  marquee.addEventListener('pointerleave', () => ramp(1));
 }
 
 /**

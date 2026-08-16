@@ -311,9 +311,20 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
 /* The mask needs headroom on BOTH sides: the reveal slides the span through
    it, and any glyph the box does not contain gets sheared mid-animation. */
 .line { display: block; overflow: hidden; padding: 0.06em 0 0.18em; margin: -0.06em 0 -0.18em; }
-.line > span { display: block; will-change: transform; }
+.line > span { display: block; }
 
-[data-focus-pull] { will-change: filter, opacity, transform; }
+/* will-change is scoped to html.motion-on and dropped the moment each
+   entrance finishes (reveal.js clears it onComplete).
+   It used to sit unscoped on `.line > span`, `[data-focus-pull]` and
+   `[data-reveal]` — twenty-six headline lines and every paragraph on the
+   page, each holding a compositor layer for the entire session, on a page
+   that also runs a WebGL stage. `filter` is the expensive one: promising it
+   makes the browser keep a filter buffer alive as well as a layer, for an
+   effect that runs once. The file already stated this principle for
+   [data-lift] ("a permanent will-change on every card keeps a compositor
+   layer alive for the whole page") without applying it here. */
+html.motion-on .line > span { will-change: transform; }
+html.motion-on [data-focus-pull] { will-change: opacity, transform; }
 
 /* Settled fallback: if JS never runs, or motion is off, nothing stays
    hidden. Default state is visible; only html.motion-on (added by JS once
@@ -323,7 +334,7 @@ html.motion-on .line > span      { transform: translateY(110%); }
 
 /* Quieter body-copy reveal (RULING 1) — a short rise and fade, no blur.
    The headline focus-pull is the event; body copy should not compete. */
-[data-reveal] { will-change: transform, opacity; }
+html.motion-on [data-reveal] { will-change: transform, opacity; }
 html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 
 /* Focal-word accent — the only sanctioned use of --accent as text (HARD
@@ -716,12 +727,12 @@ html.motion-on .monitor__fill { --fill: 0; }
           mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
 }
 .marquee__track { display: flex; width: max-content; animation: marquee 38s linear infinite; }
-/* Slows under the pointer rather than stopping. A band of logos moving at a
-   fixed speed is the one element on the page that actively resists being
-   read; a full stop would read as broken, so it drops to a quarter speed and
-   stays alive. animation-duration is not a composited property, but this
-   changes once on hover rather than per frame. */
-.marquee.is-slowed .marquee__track { animation-duration: 150s; }
+/* The CSS keyframe is the NO-JS fallback only. Once initMarquee runs it hands
+   the loop to GSAP, which can rescale the playhead without moving the band —
+   swapping animation-duration on hover snapped it 209.7px backwards, measured,
+   because changing duration mid-play recomputes progress against the new
+   duration. */
+html.marquee-js .marquee__track { animation: none; }
 .marquee__group { display: flex; align-items: center; gap: 4rem; padding-right: 4rem; }
 .marquee__group img { display: block; height: 28px; width: auto; }
 @keyframes marquee { to { transform: translateX(-50%); } }

@@ -158,25 +158,119 @@ test('the offices rows are reachable and respond to the keyboard', async () => {
   assert.ok(/gradient/.test(r.rule), `the focused row did not take the gradient rule: ${r.rule}`);
 });
 
-test('the marquee slows under the pointer and is untouched without one', async () => {
+test('the marquee slows under the pointer without jumping', async () => {
+  // The jump is the point of this test. The first version of the slow-down
+  // swapped animation-duration from 38s to 150s, and changing duration
+  // mid-play recomputes progress against the NEW duration — the band snapped
+  // 209.7px backwards the instant the pointer arrived. GSAP's timeScale
+  // rescales the playhead instead, so position is preserved.
   const r = await withPage(async (page) => {
     await boot(page);
     await page.evaluate(() => {
       const s = document.getElementById('clients');
       window.scrollTo(0, s.getBoundingClientRect().top + window.scrollY);
     });
-    await page.waitForTimeout(500);
-    const dur = () =>
-      page.evaluate(() => getComputedStyle(document.querySelector('.marquee__track')).animationDuration);
-    const before = await dur();
+    // Let it travel, so a snap-to-recomputed-progress would be large.
+    await page.waitForTimeout(2500);
+
+    // Sampled INSIDE the page on a fixed interval. Measuring across a
+    // Playwright round trip cannot tell a snap from ordinary travel: the band
+    // moves ~1.6px/ms, so the latency of page.hover() alone reads as a
+    // 200px+ "jump" even when the motion is perfectly smooth. That false
+    // positive is what this comment exists to stop someone rediscovering.
+    // Sampled on requestAnimationFrame, NOT setInterval. Under the WebGL
+    // stage a 25ms interval is throttled to ~125ms, and at ~1.6px/ms the
+    // band travels ~200px between those samples — exactly the size of the
+    // snap being looked for, so the instrument could not resolve its own
+    // subject. rAF is the render loop, so one sample is one painted frame.
+    // ONE continuous recording with timestamps, segmented by time afterwards.
+    // Restarting the recorder mid-test proved unreliable — the second run
+    // captured three frames.
+    await page.evaluate(() => {
+      window.__s = [];
+      window.__on = true;
+      const t = document.querySelector('.marquee__track');
+      const step = () => {
+        if (!window.__on) return;
+        window.__s.push([performance.now(), new DOMMatrixReadOnly(getComputedStyle(t).transform).m41]);
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+
+    // Windows are generous because headless renders at roughly 8fps with the
+    // WebGL stage up: a 600ms segment yielded two frames.
+    const mark = () => page.evaluate(() => performance.now());
+    await page.waitForTimeout(1600);
+    const tHover = await mark();
     await page.hover('.marquee');
-    await page.waitForTimeout(300);
-    const hovered = await dur();
+    await page.waitForTimeout(2600);
+    const tLeave = await mark();
     await page.mouse.move(5, 5);
-    await page.waitForTimeout(300);
-    return { before, hovered, after: await dur() };
+    await page.waitForTimeout(1200);
+
+    const s = await page.evaluate(() => { window.__on = false; return window.__s; });
+    return { s, tHover, tLeave };
   });
-  assert.equal(r.before, '38s');
-  assert.equal(r.hovered, '150s', 'the marquee did not slow under the pointer');
-  assert.equal(r.after, '38s', 'the marquee did not resume when the pointer left');
+
+  // Travel per MILLISECOND, so a dropped frame does not read as a snap.
+  const rate = [];
+  const signed = [];
+  for (let i = 1; i < r.s.length; i += 1) {
+    const dt = r.s[i][0] - r.s[i - 1][0];
+    const dx = r.s[i][1] - r.s[i - 1][1];
+    if (dt > 0) {
+      rate.push({ t: r.s[i][0], v: Math.abs(dx) / dt });
+      signed.push(dx);
+    }
+  }
+  // Headless with the WebGL stage running renders at roughly 8fps, so a few
+  // dozen frames across three seconds is all there is to work with.
+  assert.ok(rate.length > 20, `only ${rate.length} frames recorded`);
+
+  const mean = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
+  const free = rate.filter((f) => f.t < r.tHover).map((f) => f.v);
+  // Only the settled part of the hover: the first ~600ms is the speed ramp.
+  const slow = rate.filter((f) => f.t > r.tLeave - 1600 && f.t < r.tLeave).map((f) => f.v);
+  assert.ok(free.length > 3 && slow.length > 3, `thin segments: ${free.length} free / ${slow.length} slow`);
+
+  const cruise = mean(free);
+  assert.ok(cruise > 0.4, `the marquee is barely moving: ${cruise.toFixed(3)} px/ms`);
+  assert.ok(
+    mean(slow) < cruise * 0.6,
+    `the marquee did not slow under the pointer: ${mean(slow).toFixed(3)} vs ${cruise.toFixed(3)} px/ms`
+  );
+
+  // DIRECTION, not magnitude — this is the assertion that actually holds at
+  // 8fps. Both real defects moved the band BACKWARDS (the CSS one by a
+  // measured 209.7px), and travel is strictly leftward, so any positive step
+  // is a snap. Magnitude cannot work here: at this frame rate ordinary travel
+  // between two frames is the same size as the snap being looked for, which
+  // is what defeated two earlier versions of this test.
+  //
+  // The one legitimate positive step is the cycle wrap, which adds a full
+  // 50% of the track — thousands of pixels, nothing like a snap.
+  const backwards = signed.filter((dx) => dx > 1 && dx < 1000);
+  assert.deepEqual(
+    backwards.map((d) => +d.toFixed(1)),
+    [],
+    'the marquee moved backwards — the position was recomputed rather than integrated'
+  );
+});
+
+test('the marquee keeps a CSS fallback when JS never takes over', async () => {
+  // The keyframe is the no-JS path. It must still be the declared animation
+  // until initMarquee actually replaces it, or a JS failure leaves a static
+  // row of logos.
+  const r = await withPage(async (page) => {
+    await page.waitForTimeout(500);
+    return page.evaluate(() => ({
+      handedOver: document.documentElement.classList.contains('marquee-js'),
+      declared: getComputedStyle(document.querySelector('.marquee__track')).animationName,
+    }));
+  }, '/?shot=1');
+  // ?shot=1 disables motion, so GSAP never takes the loop and the CSS
+  // keyframe is what remains — reduced motion then stops it separately.
+  assert.equal(r.handedOver, false, 'GSAP took the marquee under ?shot=1');
+  assert.equal(r.declared, 'marquee', 'the CSS fallback animation is gone');
 });

@@ -53,9 +53,12 @@ export function initMagnetic() {
       gsap.to(el, { '--mag-x': `${dx.toFixed(2)}px`, '--mag-y': `${dy.toFixed(2)}px`, duration: 0.4, ease: 'power3.out' });
     });
     el.addEventListener('pointerleave', () => {
+      // power3.out, NOT elastic. The spec's motion system forbids "Bounce.
+      // Elastic." by name, and this had carried elastic.out(1, 0.6) since it
+      // was written — the one place on the page that overshot.
       gsap.to(el, {
         '--mag-x': '0px', '--mag-y': '0px',
-        duration: 0.5, ease: 'elastic.out(1, 0.6)', overwrite: true,
+        duration: 0.5, ease: 'power3.out', overwrite: true,
       });
     });
   });

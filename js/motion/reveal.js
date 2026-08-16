@@ -37,6 +37,14 @@ export function initReveals() {
 
     const tl = gsap.timeline({
       scrollTrigger: { trigger: el, start: 'top 85%', once: true },
+      // Release the compositor layer once the entrance is over. These run
+      // ONCE; holding a promoted layer (and, for the headline, a filter
+      // buffer) for the rest of the session is pure cost on a page that also
+      // runs a WebGL stage.
+      onComplete: () => {
+        el.style.willChange = 'auto';
+        for (const s of el.querySelectorAll('.line > span')) s.style.willChange = 'auto';
+      },
     });
 
     // The eyebrow announces the section before the headline lands. It used to
@@ -118,6 +126,7 @@ export function initReveals() {
         y: 0, x: 0, opacity: 1,
         duration: e.duration, ease: e.ease, stagger: e.stagger,
         scrollTrigger: { trigger: els[0], start: 'top 90%', once: true },
+        onComplete: () => { for (const el of els) el.style.willChange = 'auto'; },
       }
     );
   });
