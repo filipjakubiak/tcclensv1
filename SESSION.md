@@ -2,7 +2,7 @@
 
 **Started:** 2026-08-14 · **Last worked:** 2026-08-16
 **Working dir:** `C:\Users\filip\Desktop\neststudio\tcc-lens\`
-**Branch:** `build/tcc-lens` · suite **99/99 green**
+**Branch:** `build/tcc-lens` · suite **102/102 green**
 
 ---
 
@@ -26,7 +26,7 @@ independent look**; the final whole-branch review is the only one planned, and i
 ## Commands
 
 ```
-cd tools && npm test            # 99 tests, ~3 min (concurrency pinned to 3)
+cd tools && npm test            # 102 tests, ~4 min (concurrency pinned to 3)
 node tools/serve.mjs 4192       # or START.bat
 ```
 - `http://localhost:4192/` · `?debug=1` act scrub slider · `?shot=1` all motion off, settled
@@ -122,6 +122,15 @@ acts by name and local t via `setLocal(director, id, t)`** — never a hardcoded
 - **Measure layout with `offsetHeight`, not `getBoundingClientRect()`**, wherever an entrance
   scales the element — the rect includes the transform, and a staggered entrance then reports
   identical boxes as different heights.
+- **`gsap.fromTo` applies its START value at init, not when its ScrollTrigger fires.** Anything
+  below the fold therefore sits in the "from" state until scrolled to. Fine for opacity; not
+  fine for a property whose resting value is part of the brand.
+- **Equal-specificity CSS is ordered by position, and `main.css` is long.** A later rule with
+  the same weight silently wins. `html.motion-on .careers__img` lost to
+  `html.motion-on [data-lift]` for a whole session. Only a rendered measurement caught it.
+- **A pixel probe that can read past its buffer returns `undefined` → `NaN`**, and `NaN >= x`
+  is false — which reports as a design failure that never happened. Bounds-check the sampler
+  and assert the sample COUNT separately.
 
 ---
 
@@ -131,10 +140,17 @@ Done on 2026-08-15: Act 4, the element motion kit, varied per-section entrances,
 load-in, the bento regrid, `#how-it-works` as a stepped bento, gradient figures, the insight
 hover glow, the CTA/footer repair.
 
-Done on 2026-08-16 (eleven requests): hero gate front-facing · Act 2→3 boundary snap fixed ·
-core gradient on buttons and focal words · `#careers` motion · mobile menu illumination ·
+Done on 2026-08-16, round one (eleven requests): hero gate front-facing · Act 2→3 boundary snap
+fixed · core gradient on buttons and focal words · `#careers` motion · mobile menu illumination ·
 equal-height steps and insight cards · fork-panel edge trace · hero CTA hover swap ·
 monitor CTA spacing · `#global` untinted so the mark shows through.
+
+Done on 2026-08-16, round two (ten more): the gradient system settled on `--grad-core`
+everywhere · all six stat figures gradient, one size except `1B+` · bento resolves per-cell on
+scroll · `#how-it-works` level, equal width, interiors aligned · section-title motion (eyebrow
+lead, per-section lean, wider stagger) · bigger `--eyebrow` · careers photo entrance un-deadened
+· fluid pointer gradient on `#contact` and `#loyalty-monitor` · loyalty-gap meter draws ·
+offices list draws in.
 
 **Still open:**
 
@@ -162,13 +178,23 @@ monitor CTA spacing · `#global` untinted so the mark shows through.
 - Every act exports an `END` state and the next blends from it. The Act 1→2 continuity test has
   caught a real pop three times, most recently a 0.78-unit jump.
 
-## Gradient rules as of 2026-08-16
+## Gradient rules as of 2026-08-16 — READ BEFORE TOUCHING ANY GRADIENT
 
-- `--grad-core` is the page's one accent gradient: `.btn--solid`, `.focus-word` on dark
-  sections, `.pullquote::before`, the careers value rules, the menu wash, the fork edge trace.
-- **`--grad-core-strong` for text on light surfaces.** Both stops mixed 62% toward `--ink`,
-  the same treatment `--accent-strong` gets. The raw gradient measures ~1.6:1 as text on
-  `--canvas` and must never be used there.
+- **`--grad-core` everywhere, on every surface.** The rule the user stated twice: gradient
+  paint must match the nav CONTACT button exactly — purple to light grey. `.btn--solid`,
+  `.focus-word` (light AND dark), `.bento__figure`, `.pullquote::before`, the careers value
+  rules, the menu wash, the fork edge trace, the fluid surfaces.
+- **KNOWN, ACCEPTED, DO NOT "FIX": on light sections that gradient measures 2.54:1 and
+  1.85:1 as text against `--canvas`**, under the 3:1 large-text floor. It was raised with
+  numbers and confirmed. `gradient-text.test.mjs` PINS those two figures rather than
+  asserting a floor — if they move, someone changed the gradient or the canvas.
+- `--grad-core-strong` / `--support-strong` exist, are measured (5.87:1 and 8.55:1) and are
+  **deliberately unused**. They are the contrast-safe alternative if that call is revisited.
+  Do not delete them and do not silently reintroduce them.
+- **`background-size` on gradient text must be `100% 100%`.** Anything larger pushes part of
+  the ramp outside the glyphs and the word reads as flat purple. Asserted. Note that
+  `.theme-dark .focus-word` overrides `background-image` but NOT `background-size`, so a
+  size set on the base rule leaks onto every surface.
 - **Gradient text is headline-scale only.** Micro labels stay solid.
 - Every gradient-clipped rule sets a solid fallback colour FIRST and overrides it inside
   `@supports (background-clip: text)`, so an unsupported browser gets a coloured word rather

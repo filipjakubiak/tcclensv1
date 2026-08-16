@@ -172,9 +172,12 @@ test('theme-dark sections keep the true brand purple on .focus-word', async () =
   );
   assert.ok(r.dark, 'no .focus-word found inside a .theme-dark section to check');
   assert.ok(r.light, 'no .focus-word found on a light section to check');
+  // ONE gradient on both surfaces (user, 2026-08-16): the focal word must be
+  // the same paint as the nav CONTACT button wherever it appears. This test
+  // previously asserted the opposite — a darkened twin on light sections —
+  // which was the earlier, contrast-led decision that has since been overruled.
   assert.equal(r.dark, r.core, 'dark-section focus-word should carry the true core gradient');
-  assert.equal(r.light, r.strong, 'light-section focus-word should carry the darkened core gradient');
-  assert.notEqual(r.core, r.strong, 'the two core gradients resolved identically — the darkened twin is not being applied');
+  assert.equal(r.light, r.core, 'light-section focus-word should carry the same true core gradient');
 });
 
 // ---- M9: every wordmark must preserve the source aspect ratio ----

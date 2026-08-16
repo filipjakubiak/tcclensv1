@@ -14,19 +14,21 @@
      alone sits ~2:1 against --canvas, below the 3:1 large-text threshold.
      62% keeps it recognisably purple while clearing the bar (measured). */
   --accent-strong: color-mix(in srgb, var(--accent) 62%, var(--ink));
-  /* Same 62% darkening applied to Space Grey, so the core gradient has a
-     light-surface twin. Measured on --canvas: #834F92 is 5.87:1 and #6D7580
-     is 4.53:1, so both stops clear 4.5:1 body text, not just the 3:1
-     large-text floor the focal words actually need. */
-  --support-strong: color-mix(in srgb, var(--support) 62%, var(--ink));
+  /* Space Grey darkened for use as text on a light surface. Currently unused:
+     --grad-core-strong below was built from it so that gradient text could
+     clear the contrast floor on --canvas, and the brand decision was to use
+     the true --grad-core everywhere instead so it matches the nav button
+     exactly. Both are kept, measured and ready, because that trade-off is a
+     brand call that may be revisited — see the note on .focus-word. */
+  --support-strong: color-mix(in srgb, var(--support) 40%, var(--ink));
 
   /* ---- Gradients. One per section. Never combined. ---- */
   --grad-core:           linear-gradient(105deg, #D380EB, #B1BDCE);
-  /* The core gradient for text on LIGHT surfaces. The raw one cannot be used
-     there: --accent alone is ~2:1 on --canvas and the Space Grey stop is
-     paler still, so literal core-gradient text would measure about 1.6:1.
-     Dark sections keep --grad-core, where both stops are bright on
-     --chamber and there is nothing to fix. */
+  /* A contrast-safe twin of --grad-core for text on LIGHT surfaces: #834F92
+     is 5.87:1 and #464C52 is 8.55:1 on --canvas, where the true gradient
+     measures 2.54:1 and 1.85:1. NOT currently applied — the brand call was
+     that gradient text must match the nav CONTACT button exactly, and this
+     does not. Kept as the measured alternative if that is ever revisited. */
   --grad-core-strong:    linear-gradient(105deg, var(--accent-strong), var(--support-strong));
   --grad-performance:    linear-gradient(105deg, #FFADBD, #CFD0F7);
   --grad-insight:        linear-gradient(105deg, #B7F4E6, #CFD0F7);
@@ -42,6 +44,11 @@
   --lead:       clamp(1.125rem, 1.5vw, 1.375rem);
   --body:       1.125rem;   /* HARD CAP — never raise */
   --micro:      0.6875rem;
+  /* Section eyebrows sit a step above the micro labels (user, 2026-08-16).
+     They open a section and were reading as fine print next to the display
+     headline underneath them. Separate from --micro so pills, step indices
+     and the footer legal line stay where they are. */
+  --eyebrow:    0.8125rem;
 
   --track-display: -0.04em;
   --track-tight:   -0.02em;

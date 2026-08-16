@@ -56,7 +56,7 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
    WebGL backdrop and got worse under it (2.84:1). --ink-2 measures 8.13:1
    on --canvas and 6.1:1 against the gradient field at its tint ceiling. */
 .eyebrow {
-  font-size: var(--micro); font-weight: 600; text-transform: uppercase;
+  font-size: var(--eyebrow); font-weight: 600; text-transform: uppercase;
   letter-spacing: var(--track-micro); color: var(--ink-2); margin: 0 0 1.5rem;
 }
 
@@ -307,18 +307,35 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 
 @supports (background-clip: text) or (-webkit-background-clip: text) {
   .focus-word {
-    background-image: var(--grad-core-strong);
+    /* The TRUE core gradient on every surface — the same paint as the nav
+       CONTACT button (user, 2026-08-16, asked twice and confirmed).
+       KNOWN AND ACCEPTED: on light sections this measures 2.54:1 at the
+       purple stop and 1.85:1 at the Space Grey stop against --canvas, under
+       the 3:1 large-text floor. --grad-core-strong was built to solve exactly
+       that and was rejected as not matching the button. This is a deliberate
+       brand decision, recorded here rather than quietly reintroduced. */
+    background-image: var(--grad-core);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
+    /* Fixed at 100%, and it must stay that way: the whole ramp sits inside
+       the glyphs, exactly as it does on the buttons. Anything larger pushes
+       part of the gradient outside the text and the word reads as flat
+       purple — which is what an earlier 200%-with-moving-position version
+       did, on every surface, because the dark-section rule overrides
+       background-image but not background-size. Asserted in
+       gradient-text.test.mjs. */
+    background-size: 100% 100%;
+    background-position: 0 0;
+    background-repeat: no-repeat;
   }
-  /* Must restate the colour here: `.theme-dark .focus-word` above is a
+  /* Must restate the fill here: `.theme-dark .focus-word` above is a
      two-class selector and outspecifies the single-class rule in this block,
      so without this the dark sections would keep a solid --accent fill and
-     paint straight over their own gradient. */
+     paint straight over their own gradient. The gradient itself is now the
+     same on both surfaces, so only the fill needs restating. */
   .theme-dark .focus-word {
-    background-image: var(--grad-core);
     color: transparent;
     -webkit-text-fill-color: transparent;
   }
@@ -438,9 +455,11 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
   letter-spacing: var(--track-display);
   font-size: clamp(2.75rem, 5.2vw, 4.25rem);
 }
-/* The lead figure is the section's headline, not a stat among six. */
+/* The lead figure is the section's headline, not a stat among six. Every
+   OTHER figure now shares one size (user, 2026-08-16): a third intermediate
+   step made the mosaic read as four tiers of importance when there are only
+   two — the headline number, and the five that support it. */
 .bento__cell--lead .bento__figure { font-size: clamp(4.5rem, 11vw, 9.5rem); }
-.bento__cell--wide .bento__figure { font-size: clamp(3.25rem, 6.5vw, 5.5rem); }
 .bento__label { display: block; font-size: 1.0625rem; font-weight: 600; margin-top: .5rem; }
 /* --ink-2, not --ink-3: these sit on a translucent surface over a live
    gradient, and --ink-3 measures 3.77:1 even on flat --canvas. */
@@ -491,13 +510,21 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 .fork__panel { position: relative; isolation: isolate; }
 .fork__panel::after {
   content: ''; position: absolute; inset: 0; z-index: 1;
-  border-radius: inherit; padding: 1.5px;
+  /* 4px, not the 1.5px hairline it started as: at hairline weight the moving
+     gradient was barely readable as a stroke at all (user, 2026-08-16). The
+     padding IS the stroke width — the two masks below cancel everything
+     except this band. */
+  border-radius: inherit; padding: 4px;
   pointer-events: none;
+  /* A longer lit arc as well as a thicker one. The old sweep was transparent
+     for 42% of its rotation, so for much of the loop there was nothing on the
+     lower edges to see. */
   background: conic-gradient(
     from var(--trace-a),
-    transparent 0 42%,
-    var(--support) 64%,
-    var(--accent) 80%,
+    transparent 0 18%,
+    var(--support) 42%,
+    var(--accent) 62%,
+    var(--support) 78%,
     transparent 96%
   );
   /* `black` is a mask stencil, not a colour anyone sees — only its alpha
@@ -528,27 +555,36 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
   list-style: none; margin: clamp(3rem, 8vh, 5.5rem) 0 0;
   display: grid; grid-template-columns: repeat(12, 1fr);
   gap: clamp(.75rem, 1.4vw, 1.25rem);
-  /* The steps are offset by transform, which does not affect layout, so the
-     lowest one would hang over the pullquote below. Reserve its travel —
-     must track the largest --step-y set on the cells. */
-  padding: 0 0 clamp(3rem, 8vh, 6rem);
+  padding: 0;
 }
 .howworks__step {
-  display: flex; flex-direction: column; gap: .6rem; justify-content: flex-end;
+  /* Top-packed, not bottom-packed (user, 2026-08-16: "not aligned still").
+     The three cells are the same height, but their copy runs 2, 3 and 4 lines,
+     so justify-content:flex-end pushed each index and heading to a different
+     offset from its own box top — 160px, 136px and 90px. Equal boxes with
+     ragged interiors still read as misaligned. Packing from the top puts the
+     index, eyebrow and heading on one line across all three, and lets the
+     slack fall to the bottom where nothing is aligned to anything. */
+  display: flex; flex-direction: column; gap: .6rem; justify-content: flex-start;
   padding: clamp(1.5rem, 2.4vw, 2.25rem);
   border: 1px solid var(--hairline); border-radius: var(--r-card);
   background: color-mix(in srgb, var(--canvas) 72%, transparent);
   min-height: clamp(13rem, 26vh, 19rem);
 }
-/* The step down is a TRANSFORM offset, not a margin (user, 2026-08-16: the
-   three boxes must be the same height). All three share one grid row, so a
-   margin-top made each cell stretch to the row height MINUS its own margin —
-   three different heights, from three different margins, for cells that are
-   meant to read as one set. --step-y moves them without touching layout, so
-   the grid stretches all three identically and the stagger survives. */
-.howworks__steps > :nth-child(1) { grid-column: 1 / 6; }
-.howworks__steps > :nth-child(2) { grid-column: 6 / 10; --step-y: clamp(1.5rem, 4vh, 3rem); }
-.howworks__steps > :nth-child(3) { grid-column: 10 / 13; --step-y: clamp(3rem, 8vh, 6rem); }
+/* The descent is GONE (user, 2026-08-16, after two rounds on this row): all
+   three tops and bottoms are level. The stagger had been a margin-top, which
+   was also making the cells different heights — each stretched to the row
+   height minus its own margin. That was fixed by moving it to --step-y, a
+   transform offset outside layout, and then the step itself was dropped.
+   --step-y stays in the [data-lift] transform chain: it costs nothing at its
+   0 default and is how any other section would stagger a row without
+   reintroducing the height bug. */
+/* Four columns each: equal in width as well as height (user, 2026-08-16).
+   They were 5, 4 and 3 of 12, which was the other thing making the row look
+   irregular once the tops were levelled. */
+.howworks__steps > :nth-child(1) { grid-column: 1 / 5; }
+.howworks__steps > :nth-child(2) { grid-column: 5 / 9; }
+.howworks__steps > :nth-child(3) { grid-column: 9 / 13; }
 .howworks__step .eyebrow { margin: 0; }
 /* --accent-strong, not --accent: these sit on a light surface, where raw
    accent measures about 2:1. */
@@ -611,7 +647,16 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 .monitor__num { display: block; font-weight: 700; font-size: clamp(6rem, 18vw, 13rem); line-height: .9; letter-spacing: var(--track-display); }
 .monitor__caption { color: var(--support); font-size: var(--lead); max-width: 34ch; margin: 0; }
 .monitor__meter { width: min(520px, 80%); height: 4px; margin: 2.5rem auto 0; border-radius: var(--r-pill); background: var(--hairline-inv); overflow: clip; }
-.monitor__fill { display: block; height: 100%; width: 57%; border-radius: inherit; background: var(--grad-core); }
+html.motion-on .monitor__fill { --fill: 0; }
+/* Draws to its value on scroll. scaleX, not width — animating width would
+   relayout the bar every frame. Default --fill is 1, so with no JS or under
+   ?shot=1 the meter simply reads 57% as it always did. */
+.monitor__fill {
+  display: block; height: 100%; width: 57%; border-radius: inherit;
+  background-image: var(--grad-core);
+  transform: scaleX(var(--fill, 1));
+  transform-origin: left center;
+}
 .monitor__note { margin: 2rem auto 0; max-width: 54ch; }
 .monitor__cta { margin-top: 2.5rem; }
 
@@ -636,7 +681,20 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 .global__label { font-size: var(--lead); font-weight: 600; color: var(--ink-2); margin-top: 1rem; }
 .global__para { margin-bottom: clamp(2rem, 5vh, 3rem); }
 .global__offices { list-style: none; margin: 0; padding: 0; }
-.global__offices li { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--hairline); padding-block: 1.1rem; font-weight: 600; font-size: 1.25rem; }
+/* The divider is a drawable rule, not a border: a border cannot be animated
+   without relayout, and this one draws left-to-right ahead of its city.
+   Default --rule-s is 1, so the list is complete with no JS. */
+.global__offices li {
+  position: relative;
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding-block: 1.1rem; font-weight: 600; font-size: 1.25rem;
+}
+.global__offices li::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: var(--hairline);
+  transform: scaleX(var(--rule-s, 1));
+  transform-origin: left center;
+}
 .global__meta { color: var(--ink-3); font-weight: 400; font-size: .875rem; }
 
 /* ---- 11 · Insights ---- */
@@ -684,6 +742,8 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
    anything inherited into it — so retracting it there left the rules stuck
    at 0 with the tween running against a value nothing was reading. */
 html.motion-on .careers__values .value { --rule-s: 0; }
+/* Same retracted-only-while-motion-is-on contract for the offices rules. */
+html.motion-on .global__offices li { --rule-s: 0; }
 
 .careers__img { aspect-ratio: 4 / 5; }
 /* The picture needs a definite height for the image's percentage height to
@@ -696,8 +756,13 @@ html.motion-on .careers__values .value { --rule-s: 0; }
    run past the picture's edge. .card already clips. */
 .careers__img img { display: block; width: 100%; height: 114%; margin-top: -7%; object-fit: cover; }
 /* A photograph resolves deeper than a text card does — same entrance the
-   surface kit drives, just further out of focus to begin with. */
-html.motion-on .careers__img { --enter-y: 34px; --enter-s: .96; filter: blur(12px); }
+   surface kit drives, just further out of focus to begin with.
+   The [data-lift] attribute is in the selector to WIN, not to describe:
+   `html.motion-on [data-lift]` further down this file has identical
+   specificity, so at equal weight the later rule won and these values were
+   silently dead — the photo was entering on the generic 26px/blur(7px) card
+   settings. Measured, not assumed. */
+html.motion-on .careers__img[data-lift] { --enter-y: 46px; --enter-s: .94; filter: blur(14px); }
 
 /* ---- 13 · Contact + footer ---- */
 #contact { padding-bottom: 0; }
@@ -733,9 +798,6 @@ html.motion-on .careers__img { --enter-y: 34px; --enter-s: .96; filter: blur(12p
   .bento > :nth-child(1) { grid-column: auto / span 12 !important; }
   .bento > :nth-child(7) { display: none; }
   .fork__grid { grid-template-columns: 1fr; }
-  /* Stacked single-column: the step down means nothing here, and the
-     container's reserved travel is dead space. */
-  .howworks__steps { padding-bottom: 0; }
   .howworks__steps > * { grid-column: 1 / -1 !important; --step-y: 0px; }
   .global__grid, .careers__grid { grid-template-columns: 1fr; gap: 2.5rem; align-items: start; }
   .insights__grid { grid-template-columns: 1fr; }
@@ -841,6 +903,48 @@ section[data-tint='core']           { --tint: var(--grad-core); }
    thing on the page and it is asking for the click. Its own veil, checked by
    the composited-contrast guard like everything else. */
 #contact { --veil: color-mix(in srgb, var(--canvas) 62%, transparent); padding-block: clamp(6rem, 14vh, 10rem); }
+
+/* ---- Fluid surface: the gradient follows the pointer ----
+   On the closing CTA and the loyalty-gap section. The brand's own two stops,
+   moved — not a second gradient laid over the first, which the brand book
+   forbids. JS eases --fx/--fy toward the cursor; the easing is the whole
+   point, since a radial pinned exactly under the pointer reads as a spotlight
+   glued to the mouse rather than a field responding.
+
+   Sits BEHIND the copy on a negative z-index, and its peak alpha is held low
+   enough that the surface underneath still carries the contrast. The light
+   one is the constraint: #contact is the densest colour on the page and the
+   least forgiving place to add light. Measured in fluid-contrast.test.mjs at
+   the worst position, on every [data-fluid] section. */
+[data-fluid] { position: relative; isolation: isolate; }
+[data-fluid]::after {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(
+    45vmax 45vmax at var(--fx, 50%) var(--fy, 45%),
+    color-mix(in srgb, var(--accent) 26%, transparent) 0%,
+    color-mix(in srgb, var(--support) 16%, transparent) 45%,
+    transparent 72%
+  );
+  opacity: 0;
+  transition: opacity 700ms var(--ease-out-strong);
+}
+[data-fluid].is-fluid::after { opacity: 1; }
+
+/* A dark surface can take far more light than a light one before anything
+   becomes hard to read — on --chamber the glow at these strengths still
+   leaves white copy at ~13:1 and --support captions at ~7:1, where the same
+   values on --canvas would be near the floor. So the loyalty-gap section
+   carries a brighter, wider glow than the closing CTA does, and reads as the
+   purple-to-grey it is rather than as a faint wash. */
+.theme-dark[data-fluid]::after {
+  background-image: radial-gradient(
+    55vmax 55vmax at var(--fx, 50%) var(--fy, 45%),
+    color-mix(in srgb, var(--accent) 42%, transparent) 0%,
+    color-mix(in srgb, var(--support) 22%, transparent) 40%,
+    transparent 70%
+  );
+}
 section[data-tint='performance']    { --tint: var(--grad-performance); }
 section[data-tint='insight']        { --tint: var(--grad-insight); }
 section[data-tint='creativity']     { --tint: var(--grad-creativity); }
@@ -906,20 +1010,29 @@ html.motion-on #hero .eyebrow,
 html.motion-on #hero .hero__ctas .btn { opacity: 0; transform: translateY(14px); }
 
 /* ---- Gradient figures ----
-   The two biggest numbers carry the brand gradient in the digits themselves.
-   Only the largest: applied to all six it stops being emphasis and becomes
-   decoration. background-clip:text needs a transparent fill, and the
-   fallback colour matters — if the clip is unsupported the text must not
-   vanish, so --ink is set first and only overridden where the clip works. */
-.bento > :nth-child(1) .bento__figure,
-.bento > :nth-child(2) .bento__figure { color: var(--ink); }
+   ALL six statistics carry the brand gradient now (user, 2026-08-16 — the
+   same gradient the buttons took). It used to be the largest two only, on the
+   argument that applying it to all six turns emphasis into decoration; with
+   the five supporting figures now sharing one size, the gradient is no longer
+   what separates them and the lead figure carries that job alone through
+   scale and placement.
+
+   The TRUE core gradient, matching the nav CONTACT button exactly (user,
+   2026-08-16). #proof is an untinted light section, where this measures
+   2.54:1 and 1.85:1 against --canvas — under the 3:1 large-text floor. Same
+   accepted brand decision as .focus-word above; see the note there.
+
+   background-clip:text needs a transparent fill, and the fallback colour
+   matters — if the clip is unsupported the text must not vanish, so --ink is
+   set first and only overridden where the clip works. */
+.bento__figure { color: var(--ink); }
 @supports (background-clip: text) or (-webkit-background-clip: text) {
-  .bento > :nth-child(1) .bento__figure,
-  .bento > :nth-child(2) .bento__figure {
+  .bento__figure {
     background-image: var(--grad-core);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    -webkit-text-fill-color: transparent;
   }
 }
 

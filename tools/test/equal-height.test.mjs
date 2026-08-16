@@ -65,10 +65,14 @@ test('the spend / reward / return steps are all the same height', async () => {
   }
 });
 
-test('the steps still descend even though they are the same height', async () => {
-  // The equal-height fix must not flatten the stagger — that was the point of
-  // moving it into transform rather than deleting it.
-  const tops = await withPage(async (page) => {
+test('the steps sit level, and their interiors line up with each other', async () => {
+  // The descent was dropped on the user's call after two rounds on this row.
+  // Level tops are not enough on their own: the cells were ALSO packing their
+  // content from the bottom, and the three copy blocks run 2, 3 and 4 lines,
+  // so each index and heading sat at a different offset from its own box top
+  // (160px / 136px / 90px). Equal boxes with ragged interiors still read as
+  // misaligned, which is what "not aligned still" meant.
+  const r = await withPage(async (page) => {
     await page.waitForTimeout(400);
     await page.evaluate(() => {
       const s = document.getElementById('how-it-works');
@@ -76,11 +80,32 @@ test('the steps still descend even though they are the same height', async () =>
     });
     await page.waitForTimeout(900);
     return page.evaluate(() =>
-      [...document.querySelectorAll('.howworks__step')].map((el) => el.getBoundingClientRect().top)
+      [...document.querySelectorAll('.howworks__step')].map((el) => {
+        const box = el.getBoundingClientRect();
+        return {
+          top: box.top,
+          // Offsets measured from each cell's OWN top, so this holds whether
+          // or not the row is ever staggered again.
+          idx: el.querySelector('.howworks__idx').getBoundingClientRect().top - box.top,
+          h3: el.querySelector('h3').getBoundingClientRect().top - box.top,
+        };
+      })
     );
   });
-  assert.ok(tops[1] > tops[0] + 8, `step 2 does not sit below step 1 (${tops[0].toFixed(0)} -> ${tops[1].toFixed(0)})`);
-  assert.ok(tops[2] > tops[1] + 8, `step 3 does not sit below step 2 (${tops[1].toFixed(0)} -> ${tops[2].toFixed(0)})`);
+
+  const spread = (xs) => Math.max(...xs) - Math.min(...xs);
+  assert.ok(
+    spread(r.map((s) => s.top)) < 1,
+    `the step tops are not level: ${r.map((s) => s.top.toFixed(1)).join(', ')}`
+  );
+  assert.ok(
+    spread(r.map((s) => s.idx)) < 1,
+    `the 01/02/03 indices sit at different heights inside their cells: ${r.map((s) => s.idx.toFixed(1)).join(', ')}`
+  );
+  assert.ok(
+    spread(r.map((s) => s.h3)) < 1,
+    `the headings sit at different heights inside their cells: ${r.map((s) => s.h3.toFixed(1)).join(', ')}`
+  );
 });
 
 test('the three insight cards are all the same height', async () => {

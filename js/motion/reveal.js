@@ -25,21 +25,64 @@ export function initReveals() {
   // The hero headline is excluded: initHeroIntro owns it and runs on load.
   // Leaving it here too would give one element two timelines racing for the
   // same properties.
+  // How far a heading's lines lean in, by the section's declared direction.
+  // The body copy below already varies this way; matching it on the title
+  // means a section arrives as one gesture rather than as two unrelated ones.
+  const LEAN = { left: -22, right: 22, rise: 0, lift: 0, settle: 0 };
+
   gsap.utils.toArray('[data-focus-pull]').forEach((el) => {
     if (el.closest('#hero')) return;
+    const section = el.closest('section');
+    const lean = LEAN[section?.dataset.enter] ?? 0;
+
     const tl = gsap.timeline({
       scrollTrigger: { trigger: el, start: 'top 85%', once: true },
     });
+
+    // The eyebrow announces the section before the headline lands. It used to
+    // be static while everything around it moved, which is what made the
+    // titles feel like they simply appeared.
+    const eyebrow = section?.querySelector('.eyebrow');
+    // fromTo, not a CSS hidden state: eyebrows also live inside [data-lift]
+    // cells that the surface kit owns, and a blanket `html.motion-on .eyebrow`
+    // rule would hide those permanently since nothing here ever reveals them.
+    // Same approach [data-reveal] already takes for body copy.
+    if (eyebrow && !eyebrow.closest('[data-lift]')) {
+      tl.fromTo(eyebrow, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out' }, 0);
+    }
+
     tl.to(el, {
       opacity: 1, filter: 'blur(0px)', scale: 1,
-      duration: 0.9, ease: 'expo.out',
-    }, 0);
+      duration: 1.0, ease: 'expo.out',
+    }, 0.1);
+
     const lines = el.querySelectorAll('.line > span');
     if (lines.length) {
-      tl.to(lines, {
-        y: '0%', duration: 0.9, ease: 'expo.out', stagger: 0.06,
-      }, 0);
+      // Stagger raised from 0.06 to 0.12: at the old value the lines of a
+      // two-line headline overlapped so heavily that they read as one block
+      // moving, which is the opposite of arriving in sequence.
+      tl.fromTo(
+        lines,
+        { x: lean },
+        { y: '0%', x: 0, duration: 1.0, ease: 'expo.out', stagger: 0.12 },
+        0.1
+      );
     }
+
+    // REMOVED: a gradient sweep on the focal word.
+    //
+    // It animated background-size from 260% down to 100% so the gradient
+    // appeared to resolve as the headline landed. gsap.fromTo applies its
+    // START value immediately at init, not when the ScrollTrigger fires, so
+    // every focal word below the fold sat at 260% — with only the accent end
+    // of the ramp inside the glyphs. That is precisely the "just purple, no
+    // gradient band" fault this was supposed to be clear of, reintroduced for
+    // any word the reader had not scrolled to yet.
+    //
+    // Deferring it with immediateRender:false would only trade that for a
+    // visible jump to 260% at trigger time. The requirement is that the word
+    // is the button's gradient, exactly, at all times — so there is no sweep.
+    // The headline still arrives with its own motion above.
   });
 
   // Body copy — quieter register (RULING 1): no blur, that belongs to
