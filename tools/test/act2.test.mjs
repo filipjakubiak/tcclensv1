@@ -123,12 +123,20 @@ test('Act 2 swaps the storefront for the brand gradient, and Act 1 puts it back'
   const r = await withPage(async (page) => {
     await boot(page);
     return page.evaluate(() => {
-      const d = window.__tccDirector, a1 = window.__tccAct1, f = window.__tccField;
+      const d = window.__tccDirector, a1 = window.__tccAct1;
+      const f = window.__tccField, fl = window.__tccFluid;
       const snap = () => ({
         gate: a1.doorL.visible,
+        // Act 1 runs the morphing SHADER field; the painted canvas field owns
+        // Acts 2-4, where its measured light-section tint ceilings apply.
+        // Exactly one of the two is ever up.
         field: f.mesh.visible,
-        // Opaque means fading has to be done in colour, not alpha.
+        fluid: fl.mesh.visible,
+        // Opaque means fading has to be done in colour, not alpha — both
+        // backdrops are refraction content for the glass mark, and three.js
+        // renders only opaque objects into the transmission target.
         fieldOpaque: f.mesh.material.transparent === false,
+        fluidOpaque: fl.mesh.material.transparent === false,
       });
       setLocal(d, 'threshold', 0.7);
       const inAct1 = snap();
@@ -138,9 +146,13 @@ test('Act 2 swaps the storefront for the brand gradient, and Act 1 puts it back'
       return { inAct1, inAct2, backInAct1: snap() };
     });
   });
-  assert.deepEqual(r.inAct1, { gate: true, field: true, fieldOpaque: true });
-  assert.deepEqual(r.inAct2, { gate: false, field: true, fieldOpaque: true });
-  assert.deepEqual(r.backInAct1, r.inAct1, 'scrolling back up did not restore the storefront');
+  assert.deepEqual(r.inAct1, {
+    gate: true, field: false, fluid: true, fieldOpaque: true, fluidOpaque: true,
+  });
+  assert.deepEqual(r.inAct2, {
+    gate: false, field: true, fluid: false, fieldOpaque: true, fluidOpaque: true,
+  });
+  assert.deepEqual(r.backInAct1, r.inAct1, 'scrolling back up did not restore the curtain and its field');
 });
 
 test('the gradient field gives the glass something to refract', async () => {

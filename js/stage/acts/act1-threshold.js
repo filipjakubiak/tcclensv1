@@ -3,13 +3,12 @@ import * as THREE from '../../vendor/three.module.js';
 /**
  * Act 1 — Threshold.
  *
- * The brand's core gradient fills the whole hero. A pair of glass gate leaves
- * stands in it, right of the headline, and parts on X while the camera
- * dollies through; the head-and-heart mark waits beyond them and comes
- * forward as they clear.
+ * A full-bleed glass curtain covers the hero, and parts to left and right as
+ * the reader starts scrolling, revealing the head-and-heart mark and the
+ * morphing brand field behind it.
  *
- * Two earlier versions of this act are worth knowing about, because both
- * were wrong in ways that are easy to repeat:
+ * Three earlier versions are worth knowing about, because each was wrong in a
+ * way that is easy to repeat:
  *
  * 1. It opened on three store-aisle photographs receding on Z. Replaced with
  *    the gradient at the user's direction — and it is better optics anyway,
@@ -18,49 +17,40 @@ import * as THREE from '../../vendor/three.module.js';
  *
  * 2. The gradient was then confined to an aperture in a --chamber storefront
  *    wall. That wall is gone: it left the page opening on a black screen,
- *    which is not what a brand gradient hero is. The gradient is the hero now,
- *    and the gate is an object standing in it rather than a hole cut through it.
+ *    which is not what a brand gradient hero is.
+ *
+ * 3. The gate was a 3-unit pair standing 2.6 units RIGHT of centre. Two
+ *    separate faults came out of that. It sat far off the view axis, so the
+ *    perspective frustum saw it from the side and it read as slanted — fixed
+ *    at the time by yawing the gate to face the camera. And with both leaves
+ *    shut it covered the headline as one flat pale slab: it never read as a
+ *    pair of doors at all, so the reveal it was built for never happened
+ *    (user, 2026-08-16: "fix the doors so they are a reveal moment, they will
+ *    be front facing and just appear and open to left and right when we start
+ *    scrolling").
+ *
+ * The curtain is centred on the view axis, which is what makes it front-facing
+ * — there is no angle to correct when the object is on the axis you are
+ * looking down. The yaw-to-camera code is kept because it costs nothing at
+ * zero and is what stops any future off-centre framing reading as slanted.
  */
 
-// Core gradient strength behind the gate, shut → open. The hero is
-// .theme-dark with white copy on it, so brightness is steered by WHERE it
-// falls (the field weights its bottom-left down, under the text) rather than
-// by holding the whole field dim.
-const FIELD_SHUT = 0.62;
-const FIELD_OPEN = 0.9;
-
 const CAM_START_Z = 8;
-const CAM_END_Z = 0.55;
-const GATE_Z = 1.0;
+// The camera no longer dollies THROUGH the gate. The reveal is the curtain
+// parting, not the camera pushing past it, and stopping short of the gate
+// plane keeps the leaves square to the lens for the whole act.
+const CAM_END_Z = 6.1;
+const GATE_Z = 2.4;
 
-// The gate stands right of centre, clear of the headline.
-const GATE_X = 2.6;
-const GATE_W = 3.0;
-const GATE_H = 4.6;
+// Full-bleed: each leaf covers half the frame at the gate plane, with margin
+// so no edge is ever visible while shut. Derived from the frustum at build
+// time rather than guessed — a hardcoded width becomes a gap the moment the
+// viewport changes.
+const GATE_MARGIN = 1.25;
 
-// The gate turns to face the camera instead of being seen from the side.
-//
-// The leaves used to sit axis-aligned in world space at x = 2.6 while the
-// camera dollied up the centre line and aimed two units PAST them. An object
-// that far off the view axis is seen at an angle by any perspective frustum,
-// so the gate read as slanted and its leaves appeared to slide diagonally
-// across their own faces (user, 2026-08-16: "change perspective so they are
-// not slanted but rather front facing so they just open straight on").
-//
-// Fixing it by moving the camera onto the gate's axis would have pulled the
-// gate into the centre of frame and put it over the headline, and would have
-// changed this act's exported END — which Act 2 blends from, and which has
-// popped three times before. The user's call was to hold every other
-// composition and change only the doors. So the CAMERA IS UNTOUCHED: the
-// leaves are parented to a group that yaws to face wherever the camera is,
-// and they part along that group's local X, inside their own plane.
-//
-// Clamped rather than tracked to the end: the camera dollies THROUGH the
-// threshold, so once it is level with the gate plane the exact facing angle
-// swings past 90 degrees and would whip the gate around. atan2 stays
-// continuous across that crossing (dx is never 0 here), so clamping caps the
-// swing without introducing a jump. By the time the clamp engages the leaves
-// are nearly clear of the opening and on their way out of frame.
+// The gate is centred, so its facing angle is zero and this clamp never
+// engages. Kept as the guard it was written to be: if the gate is ever moved
+// off the view axis again, this is what stops it whipping round.
 const GATE_MAX_YAW = 0.46; // rad (~26deg)
 
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -69,17 +59,19 @@ const lerp = (a, b, t) => a + (b - a) * t;
 // values rather than its own guesses — act-boundary continuity is the thing
 // most likely to break the scroll, and neither act can see the other.
 export const END = {
-  cam: [GATE_X * 0.72, 0.16, CAM_END_Z],
-  look: [GATE_X * 0.9, 0, -2],
-  mark: [GATE_X * 0.92, 0.05, -2.6],
+  cam: [0, 0.1, CAM_END_Z],
+  look: [0, 0, 0],
+  // Right of centre and above the copy, so the revealed mark is clear of the
+  // headline in the bottom-left. Act 2 walks it in to the origin from here.
+  mark: [1.5, 0.34, -2.2],
   markRotY: 0.08,
   markScale: 1.0,
 };
 
-let gate, doorL, doorR, aisleGlow, spill, doorMat;
+let gate, doorL, doorR, aisleGlow, spill, doorMat, edgeMat;
 let doorShut = 0, doorOpen = 0;
 
-/** World size of the camera frustum at a world Z, for the camera at its dolly start. */
+/** World size of the camera frustum at a world Z, seen from the dolly start. */
 function frustumAt(camera, z, fromZ = CAM_START_Z) {
   const h = 2 * (fromZ - z) * Math.tan((camera.fov * Math.PI) / 180 / 2);
   return { h, w: h * camera.aspect };
@@ -97,6 +89,10 @@ export default {
     const { stage } = ctx;
 
     const { w: frameW, h: frameH } = frustumAt(stage.camera, GATE_Z);
+    // Wide enough that a leaf still covers its half on an ultra-wide viewport,
+    // tall enough that neither top nor bottom edge enters frame.
+    const leafW = (frameW / 2) * GATE_MARGIN;
+    const leafH = frameH * GATE_MARGIN;
 
     // Doors: reflective envmap glass, NOT transmissive. Only the LensMark
     // runs a transmission pass — the single largest per-frame WebGL cost,
@@ -110,44 +106,73 @@ export default {
       clearcoat: 1.0,
       clearcoatRoughness: 0.02,
       transparent: true,
-      opacity: 0.22,
+      // Heavier than the 0.22 it carried as a small side object. A curtain
+      // covering the whole frame has to read as a surface you are looking
+      // THROUGH, not as a haze — but the hero's white copy sits over this, so
+      // it is deliberately short of frosted. Checked by the composited
+      // contrast guard, which screenshots the real page.
+      opacity: 0.3,
       depthWrite: false,
     });
 
     // A leaf of width W is shut when its centre sits at W/2, so its inner
-    // edge lands on the aperture's centre line. Deriving it beats a constant
-    // that silently becomes a gap the moment the aperture changes.
-    const leafW = GATE_W / 2;
+    // edge lands on the centre line. Deriving it beats a constant that
+    // silently becomes a gap the moment the frame changes.
     doorShut = leafW / 2;
-    doorOpen = GATE_W / 2 + leafW / 2 + 0.05; // fully clear of the opening
+    doorOpen = leafW * 1.5 + 0.1; // fully clear of frame
 
-    // The leaves live in the gate's LOCAL space now, so their x is an offset
-    // from the gate centre rather than a world position. Sliding them in
-    // local x means they always part along the gate's own plane, whatever
-    // angle it is facing.
-    const geo = new THREE.BoxGeometry(leafW, GATE_H, 0.05);
+    // The leaves live in the gate's LOCAL space, so their x is an offset from
+    // the gate centre rather than a world position. Sliding them in local x
+    // means they always part along the gate's own plane.
+    const geo = new THREE.BoxGeometry(leafW, leafH, 0.05);
     doorL = new THREE.Mesh(geo, doorMat);
     doorR = new THREE.Mesh(geo, doorMat);
     doorL.position.set(-doorShut, 0, 0);
     doorR.position.set(doorShut, 0, 0);
 
+    // A lit edge down each leaf's INNER side.
+    //
+    // Without it the shut curtain is a single even sheet of glass across the
+    // frame — it reads as a haze over the hero, not as two doors about to
+    // part, which is exactly how the previous gate failed. The seam is the
+    // only thing that says "this opens". Once the leaves move, these are the
+    // two bright lines travelling apart, and they are what the eye follows.
+    //
+    // Parented to the leaves, so they carry the seam with them rather than
+    // needing their own animation to stay put.
+    const edgeGeo = new THREE.BoxGeometry(0.045, leafH, 0.06);
+    edgeMat = new THREE.MeshBasicMaterial({
+      color: 0xd380eb, // --accent
+      transparent: true,
+      opacity: 0.85,
+      depthWrite: false,
+    });
+    const edgeL = new THREE.Mesh(edgeGeo, edgeMat);
+    const edgeR = new THREE.Mesh(edgeGeo, edgeMat);
+    edgeL.position.set(leafW / 2, 0, 0.04);   // inner (right) side of the left leaf
+    edgeR.position.set(-leafW / 2, 0, 0.04);  // inner (left) side of the right leaf
+    doorL.add(edgeL);
+    doorR.add(edgeR);
+
     gate = new THREE.Group();
-    gate.position.set(GATE_X, 0, GATE_Z);
+    gate.position.set(0, 0, GATE_Z);
     gate.add(doorL, doorR);
     stage.scene.add(gate);
 
-    // Spill from beyond the doorway, sitting between the gradient and the
-    // mark so the glass has a near source to streak, plus a cool fill so
-    // the shadow side never goes fully black.
+    // Spill from beyond the curtain, sitting between the field and the mark
+    // so the glass has a near source to streak, plus a cool fill so the
+    // shadow side never goes fully black.
     aisleGlow = new THREE.PointLight(0xd380eb, 30, 34); // --accent
-    aisleGlow.position.set(GATE_X, 1.1, -3.0);
+    aisleGlow.position.set(0.6, 1.1, -3.0);
     spill = new THREE.AmbientLight(0xb1bdce, 0.35); // --support
     stage.scene.add(aisleGlow, spill);
 
     stage.addDisposer(() => {
       stage.scene.remove(aisleGlow, spill, gate);
       geo.dispose();
+      edgeGeo.dispose();
       doorMat.dispose();
+      edgeMat.dispose();
     });
 
     // REMOVED: an idle spin that ran before the first scroll.
@@ -159,11 +184,9 @@ export default {
     // the frequency only changed how fast it ran away.
     //
     // A correct version would assign an offset from a stored base rotation
-    // rather than adding to the live value. Removed rather than fixed,
-    // because the act already owns this transform and the scroll
-    // choreography is the motion this shot is built around.
+    // rather than adding to the live value.
 
-    window.__tccAct1 = { gate, doorL, doorR };
+    window.__tccAct1 = { gate, doorL, doorR, leafW, leafH };
   },
 
   // Every act declares the full backdrop state on enter, so the swap is
@@ -173,11 +196,10 @@ export default {
     // Acts 2-4 hide the leaves individually, so re-showing the group is not
     // enough on the way back up.
     for (const o of [doorL, doorR]) o.visible = true;
-    // The gradient field runs from the very first frame now — the store
-    // photography behind the doors is gone (user direction, 2026-08-15).
-    // It is also the mark's refraction content from frame one, which is
-    // strictly better than the dim plates it replaces.
-    ctx.field?.show();
+    // The hero runs the morphing shader field; the painted canvas field owns
+    // Acts 2-4, where its measured tint ceilings apply.
+    ctx.fluid?.show();
+    ctx.field?.hide();
     // Act 1 is the only act where the mark is a single assembled object, so
     // it owns putting the halves back together for anyone scrolling up.
     for (const p of [ctx.lens.headPivot, ctx.lens.heartPivot]) {
@@ -186,25 +208,40 @@ export default {
     }
   },
 
+  exit(ctx) {
+    // Hand the backdrop back before Act 2 blends its own colours in.
+    ctx.fluid?.hide();
+    ctx.field?.show();
+  },
+
   update(t, ctx) {
     const { stage, lens } = ctx;
 
-    // Hold shut, then part decisively across the middle of the act.
-    // LOCAL x — the gate group carries the world position and the facing
-    // angle, so the leaves only ever describe how far apart they are.
-    const slide = THREE.MathUtils.smoothstep(t, 0.10, 0.78);
+    // Shut and still at the top of the page, then parting decisively as soon
+    // as the reader starts moving. The hold is short on purpose: the curtain
+    // is the first thing on the page and waiting on it is not a reveal.
+    const slide = THREE.MathUtils.smoothstep(t, 0.04, 0.72);
     doorL.position.x = -lerp(doorShut, doorOpen, slide);
     doorR.position.x = lerp(doorShut, doorOpen, slide);
 
-    // The dolly through the threshold, aimed at the aperture rather than
-    // dead ahead so the doorway stays the subject as we close on it.
+    // The leaves fade back as they clear, so the last of the glass does not
+    // sit as a hard edge at the frame margin.
+    const clearing = THREE.MathUtils.smoothstep(t, 0.45, 0.95);
+    doorMat.opacity = lerp(0.3, 0.06, clearing);
+    // The seam fades with them. It is the brightest thing on screen while the
+    // curtain is shut, and it has no business still glowing at the frame
+    // edges once the reveal is over.
+    edgeMat.opacity = lerp(0.85, 0, clearing);
+
+    // A short push, not a dolly through the threshold. The curtain parting is
+    // the move; the camera only leans in behind it.
     const push = THREE.MathUtils.smoothstep(t, 0, 1);
     stage.camera.position.set(
-      lerp(0, GATE_X * 0.72, push),
-      lerp(0, 0.16, push),
+      lerp(0, END.cam[0], push),
+      lerp(0, END.cam[1], push),
       lerp(CAM_START_Z, CAM_END_Z, push)
     );
-    stage.camera.lookAt(GATE_X * 0.9, 0, -2);
+    stage.camera.lookAt(END.look[0], END.look[1], END.look[2]);
 
     // Square the gate to the lens. Must run AFTER the camera is placed for
     // this frame, or it faces where the camera was last frame.
@@ -214,34 +251,23 @@ export default {
     // offset over the depth offset. Assigned outright from the camera's
     // position — never accumulated onto the live rotation, which is how the
     // idle spin ran away (see the removal note in build()).
+    //
+    // With the gate centred this resolves to 0 every frame. It is kept as the
+    // guard described at the top of the file, not as an active transform.
     const facing = Math.atan2(
-      stage.camera.position.x - GATE_X,
+      stage.camera.position.x - gate.position.x,
       stage.camera.position.z - GATE_Z
     );
     gate.rotation.y = THREE.MathUtils.clamp(facing, -GATE_MAX_YAW, GATE_MAX_YAW);
 
-    // Full brand saturation, not the pale tint the light body sections get:
-    // the hero is .theme-dark, so its copy is white and the backdrop wants
-    // the real colours. Legibility is handled by WHERE the brightness falls —
-    // the field weights its bottom-left down, under the text — rather than by
-    // holding the whole thing dim, which is what made it read as a grey slab.
-    // Constant for the whole act. Ramping it brighter as the gate opened
-    // read well in isolation but the hero copy is still on screen through all
-    // of it, and the brighter end measured 2.92:1 against a 4.5:1 floor. The
-    // reveal is the gate parting and the mark coming forward — it does not
-    // also need the backdrop to change.
-    ctx.field?.setHeroGradient('core', 0.9, 0.55);
-
-    // The mark waits beyond the doorway and drifts forward as they clear.
+    // The mark waits beyond the curtain and comes forward as it clears.
     lens.group.position.set(
-      // Stays right of the headline for the whole act — drifting to 0.62 of
-      // the gate position walked it straight across the copy.
-      lerp(GATE_X, GATE_X * 0.92, push),
-      lerp(-0.15, END.mark[1], slide),
-      lerp(-4.2, END.mark[2], slide)
+      lerp(0.4, END.mark[0], slide),
+      lerp(-0.1, END.mark[1], slide),
+      lerp(-5.0, END.mark[2], slide)
     );
     lens.group.rotation.y = lerp(-0.6, END.markRotY, slide);
-    lens.group.scale.setScalar(lerp(0.9, END.markScale, slide));
+    lens.group.scale.setScalar(lerp(0.86, END.markScale, slide));
     aisleGlow.intensity = lerp(30, 46, slide);
   },
 };

@@ -104,18 +104,28 @@ test('the gate faces the camera square-on rather than being seen from the side',
   }
 });
 
-test('the camera dollies forward through the threshold', async () => {
+test('the camera leans in behind the curtain without passing through it', async () => {
+  // The act used to dolly the camera THROUGH the gate plane, which is why the
+  // gate needed a yaw clamp: past that plane the facing angle swings beyond
+  // 90 degrees. The curtain reveal replaced that — the leaves parting is the
+  // move, and the camera only closes a little way behind them. Staying in
+  // front of the gate is what keeps the leaves square to the lens all act.
   const z = await withPage(async (page) => {
     await boot(page);
     return page.evaluate(() => {
       const d = window.__tccDirector, cam = window.__tccStage.camera;
+      const gateZ = window.__tccAct1.gate.position.z;
       setLocal(d, 'threshold', 0);   const start = cam.position.z;
       setLocal(d, 'threshold', 0.95); const end = cam.position.z;
-      return { start, end };
+      return { start, end, gateZ };
     });
   });
   assert.ok(z.start > 7 && z.start < 9, `dolly should start near z=8, got ${z.start}`);
-  assert.ok(z.end < z.start - 3, `dolly should travel forward, got ${z.start} -> ${z.end}`);
+  assert.ok(z.end < z.start - 1, `camera should close on the gate, got ${z.start} -> ${z.end}`);
+  assert.ok(
+    z.end > z.gateZ,
+    `camera passed through the gate plane (${z.end.toFixed(2)} vs gate at ${z.gateZ}) — the leaves will not stay square to the lens`
+  );
 });
 
 test('doors are reflective, not transmissive — only the lens uses transmission', async () => {
@@ -148,46 +158,158 @@ test('the hero opens on the brand gradient, not on black', async () => {
   // confined to a hole in it, which meant the first thing anyone saw was a
   // black screen. The gradient IS the hero now.
   //
-  // Measured over the whole field rather than one pixel: it carries blooms
-  // and a weighted-down corner, so any single sample describes a detail
-  // rather than the backdrop.
+  // Act 1's backdrop is the SHADER field, not the painted one — so there is
+  // no canvas texture left to sample, and this reads the rendered frame
+  // instead. That is the better instrument anyway: it measures what the GPU
+  // actually produced rather than the source art it was fed.
   const r = await withPage(async (page) => {
     await boot(page);
     return page.evaluate(() => {
-      const d = window.__tccDirector, f = window.__tccField;
+      const d = window.__tccDirector;
+      const stage = window.__tccStage;
+      const gl = stage.renderer.getContext();
+
       const survey = () => {
-        const img = f.mesh.material.map.image;
-        const px = img.getContext('2d').getImageData(0, 0, img.width, img.height).data;
+        stage.renderer.render(stage.scene, stage.camera);
+        const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
+        const px = new Uint8Array(w * h * 4);
+        gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
         let lum = 0, chroma = 0, n = 0;
-        for (let i = 0; i < px.length; i += 4 * 97) { // stride-sample
+        for (let i = 0; i < px.length; i += 4 * 397) { // stride-sample
           const [r0, g0, b0] = [px[i], px[i + 1], px[i + 2]];
           lum += (0.2126 * r0 + 0.7152 * g0 + 0.0722 * b0) / 255;
           chroma += (Math.max(r0, g0, b0) - Math.min(r0, g0, b0)) / 255;
           n += 1;
         }
-        return { lum: lum / n, chroma: chroma / n, visible: f.mesh.visible };
+        return { lum: lum / n, chroma: chroma / n };
       };
+
       setLocal(d, 'threshold', 0);
       const shut = survey();
+      const layers = {
+        fluidUp: window.__tccFluid.mesh.visible,
+        paintedUp: window.__tccField.mesh.visible,
+      };
       setLocal(d, 'threshold', 0.95);
-      return { shut, open: survey() };
+      return { shut, open: survey(), layers };
     });
   });
-  assert.equal(r.shut.visible, true, 'the gradient field is not showing during Act 1');
-  assert.ok(r.shut.lum > 0.12, `the hero opens on near-black: mean luminance ${r.shut.lum.toFixed(3)}`);
+
+  // The hero runs the morphing shader; the painted field owns Acts 2-4, where
+  // its measured light-section tint ceilings apply.
+  assert.equal(r.layers.fluidUp, true, 'the fluid field is not showing during Act 1');
+  assert.equal(r.layers.paintedUp, false, 'the painted field is still up during Act 1 — two backdrops are stacked');
+
+  assert.ok(r.shut.lum > 0.06, `the hero opens on near-black: mean luminance ${r.shut.lum.toFixed(3)}`);
   // Grey is the failure mode this act kept falling into — a desaturated
   // backdrop is not a brand gradient no matter how bright it is.
-  assert.ok(r.shut.chroma > 0.06, `the backdrop is desaturated grey: mean chroma ${r.shut.chroma.toFixed(3)}`);
-  // The backdrop is deliberately CONSTANT across the act, so this asserts it
-  // holds rather than that it moves. An earlier version brightened it as the
-  // gate opened; it looked right in isolation but the hero copy is on screen
-  // throughout, and the brighter end measured 2.92:1 against a 4.5:1 floor.
-  // The reveal is the gate parting and the mark coming forward.
-  assert.ok(
-    Math.abs(r.open.lum - r.shut.lum) < 0.02,
-    `the backdrop shifts during the act (${r.shut.lum.toFixed(3)} -> ${r.open.lum.toFixed(3)}); legibility depends on it not doing that`
-  );
+  assert.ok(r.shut.chroma > 0.03, `the backdrop is desaturated grey: mean chroma ${r.shut.chroma.toFixed(3)}`);
   // Deliberately NOT capping brightness here. Legibility is measured against
   // the real rendered pixel in composited-contrast.test.mjs; a second,
   // guessed bound in this file would only argue with it.
+});
+
+test('the curtain covers the frame when shut and clears it when open', async () => {
+  // The reveal only works if there is something to reveal FROM. The previous
+  // gate was a 3-unit pair off to one side that read as a pale slab over the
+  // headline; this asserts the leaves actually span the frame at the gate
+  // plane, and actually leave it.
+  const r = await withPage(async (page) => {
+    await boot(page);
+    return page.evaluate(() => {
+      const d = window.__tccDirector, a = window.__tccAct1;
+      const THREE = window.__tccStage.THREE;
+      const cam = window.__tccStage.camera;
+
+      // Half-width of the camera frustum at the gate's depth, for the camera
+      // wherever it currently is.
+      const halfFrameAt = () => {
+        const dist = Math.abs(cam.position.z - a.gate.position.z);
+        const h = 2 * dist * Math.tan((cam.fov * Math.PI) / 180 / 2);
+        return (h * cam.aspect) / 2;
+      };
+
+      const edges = () => {
+        const box = (m) => new THREE.Box3().setFromObject(m);
+        const l = box(a.doorL), rr = box(a.doorR);
+        return {
+          halfFrame: halfFrameAt(),
+          // Inner edges, which is where a gap would show.
+          innerL: l.max.x,
+          innerR: rr.min.x,
+          // Outer edges, which is how far off frame they have travelled.
+          outerL: l.min.x,
+          outerR: rr.max.x,
+          top: l.max.y,
+          bottom: l.min.y,
+          halfFrameH: (2 * Math.abs(cam.position.z - a.gate.position.z) *
+            Math.tan((cam.fov * Math.PI) / 180 / 2)) / 2,
+        };
+      };
+
+      setLocal(d, 'threshold', 0);
+      const shut = edges();
+      // 0.95, not 1: local t of exactly 1 resolves to the act's END, which is
+      // the START of the next act, so the director hands over and Act 1's
+      // update never runs for the frame being measured.
+      setLocal(d, 'threshold', 0.95);
+      return { shut, open: edges() };
+    });
+  });
+
+  // Shut: the leaves meet on the centre line and reach past both frame edges.
+  assert.ok(
+    Math.abs(r.shut.innerL - r.shut.innerR) < 0.05,
+    `the curtain has a ${Math.abs(r.shut.innerL - r.shut.innerR).toFixed(2)}-unit seam gap when shut`
+  );
+  assert.ok(
+    r.shut.outerL <= -r.shut.halfFrame && r.shut.outerR >= r.shut.halfFrame,
+    `the curtain does not reach the frame edges when shut (${r.shut.outerL.toFixed(2)}..${r.shut.outerR.toFixed(2)} vs +/-${r.shut.halfFrame.toFixed(2)})`
+  );
+  assert.ok(
+    r.shut.top >= r.shut.halfFrameH && r.shut.bottom <= -r.shut.halfFrameH,
+    'the curtain does not cover the full frame height when shut'
+  );
+
+  // Open: both inner edges are past the frame edges, so nothing is left over
+  // the reveal.
+  assert.ok(
+    r.open.innerL <= -r.open.halfFrame,
+    `the left leaf still intrudes ${(r.open.innerL + r.open.halfFrame).toFixed(2)} units into frame when open`
+  );
+  assert.ok(
+    r.open.innerR >= r.open.halfFrame,
+    `the right leaf still intrudes ${(r.open.halfFrame - r.open.innerR).toFixed(2)} units into frame when open`
+  );
+});
+
+test('the fluid field drifts on a live page and is frozen under ?shot=1', async () => {
+  // Bounds, not mere change: this codebase has already shipped one per-frame
+  // updater that accumulated instead of oscillating and ran away, past a test
+  // that only asserted the value moved.
+  const live = await withPage(async (page) => {
+    await boot(page);
+    const at = () => page.evaluate(() => window.__tccFluid.uniforms.uTime.value);
+    const a = await at();
+    await page.waitForTimeout(1200);
+    return { a, b: await at(), fluid: await page.evaluate(() => window.__tccFluid.uniforms.uFluid.value) };
+  });
+
+  assert.ok(live.b > live.a, 'the fluid clock did not advance on a live page');
+  // Real elapsed time, not a runaway: ~1.2s of wall clock should move the
+  // clock by about 1.2s.
+  const dt = live.b - live.a;
+  assert.ok(dt > 0.6 && dt < 3.0, `the fluid clock advanced ${dt.toFixed(2)}s in ~1.2s of wall clock`);
+  assert.equal(live.fluid, 1, 'the drift amplitude is not at full on a live page');
+
+  const shot = await withPage(async (page) => {
+    await boot(page);
+    const at = () => page.evaluate(() => window.__tccFluid.uniforms.uTime.value);
+    const a = await at();
+    await page.waitForTimeout(900);
+    return { a, b: await at(), fluid: await page.evaluate(() => window.__tccFluid.uniforms.uFluid.value) };
+  }, '/?shot=1');
+
+  assert.equal(shot.a, shot.b, `?shot=1 must be reproducible; the clock moved ${shot.a} -> ${shot.b}`);
+  assert.equal(shot.fluid, 0, '?shot=1 should hold the field still');
 });

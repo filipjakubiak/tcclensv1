@@ -2,7 +2,7 @@
 
 **Started:** 2026-08-14 · **Last worked:** 2026-08-16
 **Working dir:** `C:\Users\filip\Desktop\neststudio\tcc-lens\`
-**Branch:** `build/tcc-lens` · suite **102/102 green**
+**Branch:** `build/tcc-lens` · suite **104/104 green**
 
 ---
 
@@ -26,7 +26,7 @@ independent look**; the final whole-branch review is the only one planned, and i
 ## Commands
 
 ```
-cd tools && npm test            # 102 tests, ~4 min (concurrency pinned to 3)
+cd tools && npm test            # 104 tests, ~4 min (concurrency pinned to 3)
 node tools/serve.mjs 4192       # or START.bat
 ```
 - `http://localhost:4192/` · `?debug=1` act scrub slider · `?shot=1` all motion off, settled
@@ -39,7 +39,7 @@ node tools/serve.mjs 4192       # or START.bat
 |---|---|---|
 | 1–11 | Scaffold → glass LensMark | ✅ |
 | 12 | SceneDirector + `?debug=1` scrub | ✅ |
-| 13 | Act 1 Threshold | ✅ (rebuilt twice since) |
+| 13 | Act 1 Threshold | ✅ (rebuilt three times — now a full-bleed curtain) |
 | 14 | Act 2 Head & Heart + GradientField | ✅ |
 | 15 | Act 3 Prism + capability spectrum | ✅ |
 | 16 | Act 4 Close — glass → solid logo | ✅ |
@@ -98,7 +98,12 @@ acts by name and local t via `setLocal(director, id, t)`** — never a hardcoded
 
 # 3. Standing rules
 
-- **Opaque backdrops only** for anything the glass refracts (§2.1).
+- **Opaque backdrops only** for anything the glass refracts (§2.1). Both backdrops obey it:
+  `GradientField` (painted canvas, Acts 2–4) and `FluidField` (shader, hero only).
+  **Exactly one is visible at a time**, asserted in `act2.test.mjs`.
+- The hero's morphing field is a **separate layer on purpose**. The painted field carries
+  measured light-section contrast ceilings (`MAX_TINT`); animating it would put those back in
+  play for a change that only concerns the dark hero.
 - **Measure the composited page**, not the WebGL buffer (§2.2).
 - **One group, one job** in `LensMark` (§2.3).
 - **No hex outside `css/tokens.css`** — guard test enforces. WebGL JS may use hex *with a
@@ -144,6 +149,13 @@ Done on 2026-08-16, round one (eleven requests): hero gate front-facing · Act 2
 fixed · core gradient on buttons and focal words · `#careers` motion · mobile menu illumination ·
 equal-height steps and insight cards · fork-panel edge trace · hero CTA hover swap ·
 monitor CTA spacing · `#global` untinted so the mark shows through.
+
+Done on 2026-08-16, round three: the hero is a **full-bleed glass curtain** that parts left and
+right as you start scrolling, with a lit `--accent` seam down each leaf's inner edge — the
+thing that makes it read as doors rather than a haze. Behind it, `FluidField`: a shader
+backdrop of drifting brand-colour bodies morphing into each other. Camera no longer dollies
+through the gate plane; the director parks at the act's start so the curtain is shut on first
+paint.
 
 Done on 2026-08-16, round two (ten more): the gradient system settled on `--grad-core`
 everywhere · all six stat figures gradient, one size except `1B+` · bento resolves per-cell on

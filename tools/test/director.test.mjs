@@ -63,7 +63,12 @@ test('an act is active and updated before any scroll happens', async () => {
     });
   });
   assert.equal(r.id, 'threshold', 'no act was active on load');
-  assert.ok(r.progress > 0 && r.progress < 0.22, `progress ${r.progress} is not inside Act 1`);
+  // Act 1's START is a valid parking position, and is now the intended one:
+  // the hero curtain has to be shut and still on first paint so that parting
+  // it is something the reader causes. The old `> 0` here only held because
+  // main.js used to park 14% into the act, which had the curtain already
+  // opening before anyone touched the page.
+  assert.ok(r.progress >= 0 && r.progress < 0.22, `progress ${r.progress} is not inside Act 1`);
   assert.ok(r.updatesOnReplay !== null, 'setProgress did not drive the active act update');
 });
 

@@ -10,6 +10,7 @@ import { buildEnvironment } from './stage/env.js';
 import { createLensMark } from './stage/LensMark.js';
 import { createDirector, mountDebugScrub } from './stage/SceneDirector.js';
 import { createGradientField } from './stage/GradientField.js';
+import { createFluidField } from './stage/FluidField.js';
 import act1 from './stage/acts/act1-threshold.js';
 import act2 from './stage/acts/act2-headheart.js';
 import act3 from './stage/acts/act3-prism.js';
@@ -63,6 +64,15 @@ async function initStage() {
   // back to refracting flat --chamber and reads as plastic again.
   const field = createGradientField(stage);
 
+  // The hero's own backdrop: the same brand pair, drifting and merging on a
+  // shader. Separate from the painted field above because that one carries
+  // measured contrast ceilings for the LIGHT body sections, and animating it
+  // would put those back in play for a change that only concerns the hero.
+  const fluid = createFluidField(stage);
+  // One reproducible frame for screenshots and for anyone who asked not to be
+  // moved. The composition stays — only the drift stops.
+  if (!motionEnabled()) fluid.freeze();
+
   // The glass leans on the environment map for its refraction and
   // dispersion, but a soft key light gives the clearcoat something
   // crisp to specular-highlight against. The camera itself is owned by the
@@ -78,7 +88,7 @@ async function initStage() {
   // Task 12: the act director replaces Task 11's temporary idle rotation.
   // Acts are registered as placeholders here and swapped for real modules
   // by Tasks 13–16, keeping the same id and range.
-  const ctx = { stage, lens, env, field, THREE: stage.THREE };
+  const ctx = { stage, lens, env, field, fluid, THREE: stage.THREE };
   const director = createDirector(stage, ctx);
   director.register(act1);
   director.register(act2);
@@ -99,8 +109,12 @@ async function initStage() {
   // the document to about 6%, and a hardcoded 0.04 put the opening frame
   // two-thirds of the way through the act — doors already parting, backdrop
   // already lifted, on first paint.
-  const [a1Start, a1End] = act1.range;
-  director.setProgress(a1Start + (a1End - a1Start) * 0.14);
+  //
+  // Parks at the very START of the act now, not 14% in: the curtain has to be
+  // shut and still on first paint so that parting it is something the reader
+  // causes by scrolling. At 0.14 it was already past the opening of its slide.
+  const [a1Start] = act1.range;
+  director.setProgress(a1Start);
   if (motionEnabled()) director.attachScroll();
   mountDebugScrub(director);
 
