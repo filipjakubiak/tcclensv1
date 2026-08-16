@@ -3,6 +3,7 @@ import { initLenis, initReveals, initHeroIntro, motionEnabled } from './motion/r
 import { initCursor, initMagnetic } from './motion/cursor.js';
 import { initCounters } from './motion/counters.js';
 import { initSurfaceReveals, initSurfacePointer } from './motion/elements.js';
+import { initCareers } from './motion/careers.js';
 import { createStage } from './stage/Stage.js';
 import { buildEnvironment } from './stage/env.js';
 import { createLensMark } from './stage/LensMark.js';
@@ -22,6 +23,7 @@ initMagnetic();
 initCounters();
 initSurfaceReveals();
 initSurfacePointer();
+initCareers();
 
 if (!motionEnabled()) document.documentElement.classList.add('motion-off');
 

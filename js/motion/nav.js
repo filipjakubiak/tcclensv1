@@ -77,4 +77,64 @@ export function initNav() {
   menu.querySelectorAll('a').forEach((a) =>
     a.addEventListener('click', () => setOpen(false))
   );
+
+  initMenuIllumination(menu);
+}
+
+/**
+ * Light each menu link with the gradient of the section it opens.
+ *
+ * The hover, focus and press states are CSS. What needs JS is the two things
+ * CSS cannot know: WHICH gradient belongs to a link, and which section the
+ * reader is currently in.
+ *
+ * Deliberately an IntersectionObserver rather than a ScrollTrigger — this is
+ * an orientation cue, not choreography, so it has to keep working with motion
+ * off, under prefers-reduced-motion and under ?shot=1, where GSAP's scroll
+ * machinery is never started.
+ */
+function initMenuIllumination(menu) {
+  const links = [...menu.querySelectorAll('.menu__link[href^="#"]')];
+  if (!links.length) return;
+
+  const targets = new Map();
+  for (const link of links) {
+    const section = document.querySelector(link.getAttribute('href'));
+    if (!section) continue;
+    // Read the gradient off the section itself rather than repeating the
+    // assignment in the markup, so the menu cannot drift out of step with
+    // the page. Untinted sections fall through to the core gradient the CSS
+    // already sets.
+    const grad = section.dataset.tint;
+    if (grad && grad !== 'core') link.dataset.grad = grad;
+    targets.set(section, link);
+  }
+  if (!targets.size) return;
+
+  // Nearest section to the top of the viewport wins, so exactly one link is
+  // ever current — with several sections on screen at once, marking each
+  // intersecting one would light half the menu.
+  const visible = new Set();
+  const sync = () => {
+    let best = null;
+    let bestTop = Infinity;
+    for (const section of visible) {
+      const top = Math.abs(section.getBoundingClientRect().top);
+      if (top < bestTop) { bestTop = top; best = section; }
+    }
+    for (const [section, link] of targets) {
+      if (section === best) link.setAttribute('aria-current', 'true');
+      else link.removeAttribute('aria-current');
+    }
+  };
+
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) visible.add(e.target);
+      else visible.delete(e.target);
+    }
+    sync();
+  }, { threshold: 0.15 });
+
+  for (const section of targets.keys()) io.observe(section);
 }

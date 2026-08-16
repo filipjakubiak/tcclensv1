@@ -143,20 +143,38 @@ test('--accent-strong meets 3:1 large-text contrast against --canvas', async () 
   assert.ok(ratio >= 3, `--accent-strong vs --canvas contrast is ${ratio.toFixed(2)}:1, need >= 3:1`);
 });
 
-test('theme-dark sections keep the true --accent on .focus-word', async () => {
-  const { darkFocus, accent } = await withPage((page) =>
+test('theme-dark sections keep the true brand purple on .focus-word', async () => {
+  // The focal word carries the core gradient rather than a flat fill now
+  // (user, 2026-08-16), so its computed `color` is transparent by design and
+  // the old equality check against --accent could only fail.
+  //
+  // The contract this test exists to defend is unchanged and still worth
+  // guarding: dark sections get the TRUE brand purple, light sections get the
+  // darkened twin. So it checks the paint the word actually carries, and the
+  // fallback underneath it, rather than being deleted along with the flat fill.
+  const r = await withPage((page) =>
     page.evaluate(() => {
       const el = document.querySelector('.theme-dark .focus-word');
+      const light = [...document.querySelectorAll('.focus-word')].find((n) => !n.closest('.theme-dark'));
       const probe = document.createElement('div');
       document.body.appendChild(probe);
-      probe.style.color = 'var(--accent)';
-      const accent = getComputedStyle(probe).color;
+      const paint = (value) => { probe.style.backgroundImage = value; return getComputedStyle(probe).backgroundImage; };
+      const core = paint('var(--grad-core)');
+      const strong = paint('var(--grad-core-strong)');
       probe.remove();
-      return { darkFocus: el ? getComputedStyle(el).color : null, accent };
+      return {
+        dark: el && getComputedStyle(el).backgroundImage,
+        light: light && getComputedStyle(light).backgroundImage,
+        core,
+        strong,
+      };
     })
   );
-  assert.ok(darkFocus, 'no .focus-word found inside a .theme-dark section to check');
-  assert.equal(darkFocus, accent, 'dark-section focus-word should stay the true brand purple');
+  assert.ok(r.dark, 'no .focus-word found inside a .theme-dark section to check');
+  assert.ok(r.light, 'no .focus-word found on a light section to check');
+  assert.equal(r.dark, r.core, 'dark-section focus-word should carry the true core gradient');
+  assert.equal(r.light, r.strong, 'light-section focus-word should carry the darkened core gradient');
+  assert.notEqual(r.core, r.strong, 'the two core gradients resolved identically — the darkened twin is not being applied');
 });
 
 // ---- M9: every wordmark must preserve the source aspect ratio ----

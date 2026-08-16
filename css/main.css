@@ -84,7 +84,12 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
   transition: transform var(--dur-ui) var(--ease-out-strong),
               box-shadow var(--dur-ui) var(--ease-out-strong);
 }
-.btn--solid { background: var(--accent); color: var(--ink); box-shadow: 0 8px 20px var(--accent-shadow); }
+/* The core gradient, not flat purple (user, 2026-08-16 — the gradient under
+   the loyalty-gap numbers, applied outward). background-color stays as the
+   fallback beneath it, so a failed gradient is still a brand-purple button
+   rather than a transparent one. --ink on the two stops measures 8.1:1 and
+   11.0:1, so the label is safe across the whole sweep. */
+.btn--solid { background-color: var(--accent); background-image: var(--grad-core); color: var(--ink); box-shadow: 0 8px 20px var(--accent-shadow); }
 .btn--solid:hover { box-shadow: 0 14px 30px var(--accent-shadow); }
 .btn--ghost { background: transparent; color: currentColor; border: 1px solid var(--hairline); }
 .theme-dark .btn--ghost { border-color: var(--hairline-inv); }
@@ -178,11 +183,72 @@ h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: var(--track-tight); li
 }
 .menu.is-open { opacity: 1; visibility: visible; pointer-events: auto; }
 .menu__list { list-style: none; margin: 0; padding: 0; }
+/* The menu links had no hover, focus or current state at all — flat white on
+   --chamber, with nothing to say which section you were in or which one you
+   were about to open (user, 2026-08-16). Lit by the brand gradient now:
+   pointing at one, tabbing to it, pressing it, or simply being in that
+   section on the page.
+   The wash bleeds from the left edge rather than filling a chip, so it reads
+   as light falling on the word — the lens idea at the scale of a menu. */
 .menu__link {
-  display: block; padding-block: .5em;
+  position: relative;
+  display: block; padding-block: .5em; padding-inline: var(--gutter);
+  margin-inline: calc(var(--gutter) * -1);
   font-size: var(--subheading); font-weight: 600;
   letter-spacing: var(--track-tight);
   color: inherit; text-decoration: none;
+  --lit: var(--grad-core);
+  --lit-o: 0;
+  transition: opacity var(--dur-ui) var(--ease-out-strong);
+}
+/* Each link is lit by the gradient of the section it opens, so the menu is a
+   preview of the page's own colour order. Links whose target carries no tint
+   keep the core gradient set above. */
+.menu__link[data-grad='insight']        { --lit: var(--grad-insight); }
+.menu__link[data-grad='performance']    { --lit: var(--grad-performance); }
+.menu__link[data-grad='creativity']     { --lit: var(--grad-creativity); }
+.menu__link[data-grad='sustainability'] { --lit: var(--grad-sustainability); }
+.menu__link[data-grad='operational']    { --lit: var(--grad-operational); }
+
+.menu__link::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background-image: var(--lit);
+  opacity: var(--lit-o);
+  /* Fades out to the right and softens at the edges, so it is a spill of
+     light rather than a rectangle behind the text. */
+  -webkit-mask-image: linear-gradient(90deg, black, transparent 78%);
+  mask-image: linear-gradient(90deg, black, transparent 78%);
+  border-radius: var(--r-card);
+  transition: opacity var(--dur-ui) var(--ease-out-strong);
+}
+/* A hairline of the same gradient along the left edge — the part that stays
+   legible when the wash itself is very faint. */
+.menu__link::after {
+  content: ''; position: absolute; left: 0; top: .35em; bottom: .35em;
+  width: 3px; border-radius: var(--r-pill);
+  background-image: var(--lit);
+  opacity: 0; transform: scaleY(.4); transform-origin: center;
+  transition: opacity var(--dur-ui) var(--ease-out-strong),
+              transform var(--dur-ui) var(--ease-out-strong);
+}
+.menu__link:hover, .menu__link:focus-visible, .menu__link[aria-current='true'] { --lit-o: .16; }
+.menu__link:active { --lit-o: .3; }
+.menu__link:hover::after,
+.menu__link:focus-visible::after,
+.menu__link[aria-current='true']::after { opacity: 1; transform: scaleY(1); }
+
+/* The word itself takes the gradient. --canvas is set first and only
+   overridden where the clip works, so an unsupported browser gets a white
+   link rather than an invisible one. The menu is always --chamber, so the
+   true gradient applies — no darkened twin needed here. */
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .menu__link:hover, .menu__link:focus-visible, .menu__link[aria-current='true'] {
+    background-image: var(--lit);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
 }
 .menu__footer {
   position: absolute; left: var(--gutter); right: var(--gutter); bottom: var(--gutter);
@@ -223,6 +289,13 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
    --accent-strong instead; dark (.theme-dark) sections keep the true
    brand purple, which already has enough contrast against --chamber. */
 .focus-word { color: var(--accent-strong); }
+/* The focal word carries the core gradient rather than flat purple (user,
+   2026-08-16). Same pattern as the bento figures: --accent-strong is set
+   FIRST as the fallback, and only overridden where the clip is supported, so
+   an unsupported browser gets a solid purple word instead of an invisible
+   one. Gradient text is confined to headline-scale words — the 11px step
+   indices and eyebrows stay solid, where a two-stop sweep would cost
+   legibility for no gain. */
 /* Brief's literal prescription (`:not(.theme-dark) .focus-word`) does not
    work: :not(.theme-dark) also matches <body>/<html> as an ancestor of
    every .focus-word (they never carry that class either), so it wins
@@ -231,6 +304,25 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
    `.theme-dark` directly is the correct equivalent of "dark sections keep
    --accent". */
 .theme-dark .focus-word { color: var(--accent); }
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .focus-word {
+    background-image: var(--grad-core-strong);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  /* Must restate the colour here: `.theme-dark .focus-word` above is a
+     two-class selector and outspecifies the single-class rule in this block,
+     so without this the dark sections would keep a solid --accent fill and
+     paint straight over their own gradient. */
+  .theme-dark .focus-word {
+    background-image: var(--grad-core);
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+}
 
 /* Generic card surface. Not in Task 6's component list — added here
    because several sections (fork, insights, careers, capabilities) need a
@@ -242,7 +334,9 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
   font-size: var(--subheading); font-weight: 700; letter-spacing: var(--track-tight);
   line-height: 1.2; max-width: 24ch; margin: clamp(3rem, 7vh, 5rem) 0 0;
 }
-.pullquote::before { content: ''; display: block; width: 44px; height: 3px; background: var(--accent); margin-bottom: 1.25rem; }
+/* Graphic rule, not text — it takes the true core gradient on any surface,
+   since there is no contrast floor for a 3px bar the way there is for a word. */
+.pullquote::before { content: ''; display: block; width: 44px; height: 3px; background-image: var(--grad-core); margin-bottom: 1.25rem; }
 
 /* ---- 1 · Hero ---- */
 #hero {
@@ -260,6 +354,37 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 #hero .display { font-size: clamp(3.25rem, 8.6vw, 10.5rem); }
 #hero .lead { max-width: 40ch; margin-top: 1.5rem; }
 .hero__ctas { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: clamp(2rem, 4vh, 3rem); }
+
+/* ---- Hero CTAs: the fill moves between the two buttons on hover ----
+   "For retailers" and "For brands" are the page's two audiences, and the
+   section below is literally about not ranking one over the other. So the
+   gradient fill follows the pointer instead of being permanently awarded to
+   the first button: hover the ghost and the two swap.
+
+   Cross-faded on a pseudo-element, because background-image does not
+   transition — swapping the gradient directly would cut rather than blend.
+   The pseudo sits behind the label with the button as its stacking context. */
+#hero .hero__ctas .btn { position: relative; isolation: isolate; overflow: hidden; }
+#hero .hero__ctas .btn::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit;
+  background-image: var(--grad-core);
+  opacity: 0;
+  transition: opacity var(--dur-ui) var(--ease-out-strong);
+}
+#hero .hero__ctas .btn--solid { background-image: none; background-color: transparent; box-shadow: none; }
+#hero .hero__ctas .btn--solid::before { opacity: 1; }
+/* The hovered button takes the fill and the dark label... */
+#hero .hero__ctas .btn:hover::before { opacity: 1; }
+#hero .hero__ctas .btn:hover { color: var(--ink); box-shadow: 0 14px 30px var(--accent-shadow); }
+/* ...and its sibling gives them up. :has() scopes this to the row, so the
+   swap only happens between these two and nothing else on the page moves. */
+#hero .hero__ctas:has(.btn:hover) .btn:not(:hover)::before { opacity: 0; }
+#hero .hero__ctas:has(.btn:hover) .btn:not(:hover) {
+  color: var(--canvas);
+  border: 1px solid var(--hairline-inv);
+  box-shadow: none;
+}
 
 /* ---- 2 · Thesis ---- */
 .thesis__heading { margin-top: 1.25rem; max-width: 18ch; }
@@ -351,6 +476,47 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 .fork__points li::before { content: ''; position: absolute; left: 0; top: .5em; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
 .fork__body .link { margin-top: auto; padding-top: .5rem; align-self: flex-start; }
 
+/* ---- Fork panels: the brand gradient traces the edge on highlight ----
+   A light travelling around the border, which is the page's own idea (a lens,
+   a moving highlight) at the scale of a whole panel rather than a card face.
+
+   Drawn as a conic sweep clipped to a hairline ring: the pseudo-element is
+   inset 0 with a 1.5px padding, and the two masks cancel everything except
+   that padding band, leaving the panel's own surface untouched. */
+@property --trace-a {
+  syntax: '<angle>';
+  initial-value: 0turn;
+  inherits: false;
+}
+.fork__panel { position: relative; isolation: isolate; }
+.fork__panel::after {
+  content: ''; position: absolute; inset: 0; z-index: 1;
+  border-radius: inherit; padding: 1.5px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--trace-a),
+    transparent 0 42%,
+    var(--support) 64%,
+    var(--accent) 80%,
+    transparent 96%
+  );
+  /* `black` is a mask stencil, not a colour anyone sees — only its alpha
+     matters. Written as a keyword rather than a hex so the no-rogue-hex
+     guard stays meaningful instead of learning to ignore this file. */
+  -webkit-mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
+          mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0;
+  transition: opacity var(--dur-ui) var(--ease-out-strong);
+}
+.fork__panel:hover::after,
+.fork__panel:focus-within::after {
+  opacity: 1;
+  animation: trace-edge 4s linear infinite;
+}
+@keyframes trace-edge { to { --trace-a: 1turn; } }
+
 /* ---- 6 · How it works ---- */
 .howworks__head { max-width: 62ch; }
 .howworks__intro { margin-top: 1.5rem; }
@@ -359,9 +525,13 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
    step DOWN as they go: each one is offset a little further, and the reader
    descends the process rather than scanning three equal columns. */
 .howworks__steps {
-  list-style: none; margin: clamp(3rem, 8vh, 5.5rem) 0 0; padding: 0;
+  list-style: none; margin: clamp(3rem, 8vh, 5.5rem) 0 0;
   display: grid; grid-template-columns: repeat(12, 1fr);
   gap: clamp(.75rem, 1.4vw, 1.25rem);
+  /* The steps are offset by transform, which does not affect layout, so the
+     lowest one would hang over the pullquote below. Reserve its travel —
+     must track the largest --step-y set on the cells. */
+  padding: 0 0 clamp(3rem, 8vh, 6rem);
 }
 .howworks__step {
   display: flex; flex-direction: column; gap: .6rem; justify-content: flex-end;
@@ -370,9 +540,15 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
   background: color-mix(in srgb, var(--canvas) 72%, transparent);
   min-height: clamp(13rem, 26vh, 19rem);
 }
+/* The step down is a TRANSFORM offset, not a margin (user, 2026-08-16: the
+   three boxes must be the same height). All three share one grid row, so a
+   margin-top made each cell stretch to the row height MINUS its own margin —
+   three different heights, from three different margins, for cells that are
+   meant to read as one set. --step-y moves them without touching layout, so
+   the grid stretches all three identically and the stagger survives. */
 .howworks__steps > :nth-child(1) { grid-column: 1 / 6; }
-.howworks__steps > :nth-child(2) { grid-column: 6 / 10; margin-top: clamp(1.5rem, 4vh, 3rem); }
-.howworks__steps > :nth-child(3) { grid-column: 10 / 13; margin-top: clamp(3rem, 8vh, 6rem); }
+.howworks__steps > :nth-child(2) { grid-column: 6 / 10; --step-y: clamp(1.5rem, 4vh, 3rem); }
+.howworks__steps > :nth-child(3) { grid-column: 10 / 13; --step-y: clamp(3rem, 8vh, 6rem); }
 .howworks__step .eyebrow { margin: 0; }
 /* --accent-strong, not --accent: these sit on a light surface, where raw
    accent measures about 2:1. */
@@ -415,7 +591,14 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 .capability[data-gradient] .capability__visual { background: color-mix(in srgb, var(--canvas) 28%, transparent); }
 
 /* ---- 8 · Loyalty Monitor ---- */
-#loyalty-monitor { min-height: 100vh; display: grid; align-items: center; overflow: clip; padding-block: 0; }
+/* padding-block was 0 so the 100vh grid could centre the two figures. But the
+   two statistics are display-scale and stacked, so the content runs taller
+   than the viewport on most screens — and with no padding the CTA at the
+   bottom sat hard against #clients (user, 2026-08-16). Restoring the standard
+   section rhythm costs nothing while the content fits, because the section is
+   centred inside whatever height is left, and guarantees the gap when it
+   does not. */
+#loyalty-monitor { min-height: 100vh; display: grid; align-items: center; overflow: clip; padding-block: var(--section); }
 .monitor__inner { text-align: center; }
 .monitor__inner .heading { margin-inline: auto; max-width: 20ch; }
 /* Both statistics show concurrently, stacked — matching the stat-wall
@@ -458,9 +641,18 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 
 /* ---- 11 · Insights ---- */
 .insights__intro { max-width: 58ch; margin-bottom: clamp(2.5rem, 6vh, 4rem); }
-.insights__grid { display: grid; grid-template-columns: 5fr 3.5fr 3.5fr; gap: 1.25rem; align-items: start; }
-.insight { display: block; color: inherit; text-decoration: none; }
-.insight__img { aspect-ratio: 4 / 3; }
+/* Stretch, not start (user, 2026-08-16: the three boxes must be the same
+   height). With align-items:start each card was only as tall as its own copy,
+   so three cards carrying a report, a case study and a case study of
+   different lengths ended on three different baselines. Stretching makes the
+   grid row set the height and the cards agree; the lead card keeps its wider
+   column and taller crop, which is the intended emphasis and is separate
+   from how tall the card is. */
+.insights__grid { display: grid; grid-template-columns: 5fr 3.5fr 3.5fr; gap: 1.25rem; align-items: stretch; }
+.insight { display: flex; flex-direction: column; color: inherit; text-decoration: none; }
+/* The crop is fixed by its aspect ratio — never let the flex column steal
+   height from it to fit the copy. */
+.insight__img { aspect-ratio: 4 / 3; flex: 0 0 auto; }
 .insight:first-child .insight__img { aspect-ratio: 16 / 10; }
 .insight__img img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 600ms var(--ease-out-strong); }
 @media (hover: hover) and (pointer: fine) { .insight:hover .insight__img img { transform: scale(1.04); } }
@@ -474,8 +666,38 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 .careers__values { list-style: none; margin: 0 0 2.75rem; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem 3rem; }
 .careers__values .value h3 { font-size: 1.125rem; margin-bottom: .35rem; }
 .careers__values .value p { color: var(--ink-3); font-size: .875rem; line-height: 1.55; margin: 0; }
+
+/* The four values are the section's argument — "loyalty is built by people"
+   is a claim about four named behaviours, so they arrive one at a time with a
+   rule drawing under each rather than appearing together as a block.
+   scaleX from a left origin, not width, so nothing reflows while it draws. */
+.careers__values .value::before {
+  content: ''; display: block; height: 2px; margin-bottom: .9rem;
+  background-image: var(--grad-core); border-radius: var(--r-pill);
+  transform: scaleX(var(--rule-s, 1));
+  transform-origin: left center;
+}
+/* Default is DRAWN: with no JS, or with motion off, the rules are simply
+   there. Only html.motion-on retracts them for the entrance to play.
+   Set on the <li>, NOT on ::before: GSAP animates the property on the
+   element, and a value declared directly on the pseudo-element wins over
+   anything inherited into it — so retracting it there left the rules stuck
+   at 0 with the tween running against a value nothing was reading. */
+html.motion-on .careers__values .value { --rule-s: 0; }
+
 .careers__img { aspect-ratio: 4 / 5; }
-.careers__img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* The picture needs a definite height for the image's percentage height to
+   resolve against — as an unstyled inline wrapper it has none, and the
+   overflow the drift depends on would collapse to nothing. */
+.careers__img picture { display: block; width: 100%; height: 100%; }
+/* Taller than its frame so there is something to drift THROUGH. 114% with a
+   -7% offset centres it, leaving 7% of slack at each end; the scrub travels
+   ±5% of the image's own height (±5.7% of the frame), so the frame can never
+   run past the picture's edge. .card already clips. */
+.careers__img img { display: block; width: 100%; height: 114%; margin-top: -7%; object-fit: cover; }
+/* A photograph resolves deeper than a text card does — same entrance the
+   surface kit drives, just further out of focus to begin with. */
+html.motion-on .careers__img { --enter-y: 34px; --enter-s: .96; filter: blur(12px); }
 
 /* ---- 13 · Contact + footer ---- */
 #contact { padding-bottom: 0; }
@@ -511,7 +733,10 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
   .bento > :nth-child(1) { grid-column: auto / span 12 !important; }
   .bento > :nth-child(7) { display: none; }
   .fork__grid { grid-template-columns: 1fr; }
-  .howworks__steps > * { grid-column: 1 / -1 !important; margin-top: 0 !important; }
+  /* Stacked single-column: the step down means nothing here, and the
+     container's reserved travel is dead space. */
+  .howworks__steps { padding-bottom: 0; }
+  .howworks__steps > * { grid-column: 1 / -1 !important; --step-y: 0px; }
   .global__grid, .careers__grid { grid-template-columns: 1fr; gap: 2.5rem; align-items: start; }
   .insights__grid { grid-template-columns: 1fr; }
   .insight:first-child .insight__img { aspect-ratio: 4 / 3; }
@@ -550,6 +775,8 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 @media (prefers-reduced-motion: reduce) {
   .marquee__track { animation: none; }
   .insight:hover .insight__img img { transform: none; }
+  /* The edge trace still marks the panel; it just stops travelling. */
+  .fork__panel:hover::after, .fork__panel:focus-within::after { animation: none; }
 }
 
 /* ---- Stage (Task 10) — hero background only goes transparent once the
@@ -635,7 +862,12 @@ section[data-tint='sustainability'] { --tint: var(--grad-sustainability); }
     perspective(900px)
     rotateX(var(--tilt-x, 0deg))
     rotateY(var(--tilt-y, 0deg))
-    translate3d(0, var(--enter-y, 0px), 0)
+    /* --enter-y is the entrance (GSAP-driven, settles to 0); --step-y is a
+       STATIC layout offset a section can give a cell to stagger it visually.
+       Summed into the one translate rather than added as a second transform,
+       for the same reason the tilt composes here: two owners of `transform`
+       means whichever wrote last wins. */
+    translate3d(0, calc(var(--enter-y, 0px) + var(--step-y, 0px)), 0)
     scale(var(--enter-s, 1));
   transform-style: preserve-3d;
   transition:

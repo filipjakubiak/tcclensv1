@@ -14,9 +14,20 @@
      alone sits ~2:1 against --canvas, below the 3:1 large-text threshold.
      62% keeps it recognisably purple while clearing the bar (measured). */
   --accent-strong: color-mix(in srgb, var(--accent) 62%, var(--ink));
+  /* Same 62% darkening applied to Space Grey, so the core gradient has a
+     light-surface twin. Measured on --canvas: #834F92 is 5.87:1 and #6D7580
+     is 4.53:1, so both stops clear 4.5:1 body text, not just the 3:1
+     large-text floor the focal words actually need. */
+  --support-strong: color-mix(in srgb, var(--support) 62%, var(--ink));
 
   /* ---- Gradients. One per section. Never combined. ---- */
   --grad-core:           linear-gradient(105deg, #D380EB, #B1BDCE);
+  /* The core gradient for text on LIGHT surfaces. The raw one cannot be used
+     there: --accent alone is ~2:1 on --canvas and the Space Grey stop is
+     paler still, so literal core-gradient text would measure about 1.6:1.
+     Dark sections keep --grad-core, where both stops are bright on
+     --chamber and there is nothing to fix. */
+  --grad-core-strong:    linear-gradient(105deg, var(--accent-strong), var(--support-strong));
   --grad-performance:    linear-gradient(105deg, #FFADBD, #CFD0F7);
   --grad-insight:        linear-gradient(105deg, #B7F4E6, #CFD0F7);
   --grad-creativity:     linear-gradient(105deg, #FDFFCF, #F8C1F7);

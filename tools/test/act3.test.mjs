@@ -148,20 +148,51 @@ test('the backdrop follows the capability in view', async () => {
 });
 
 test('nothing jumps across the Act 2 to Act 3 boundary', async () => {
+  // This test used to sample the camera and the mark group ONLY, and passed
+  // the whole time the two halves were snapping 1.5 rad at this boundary —
+  // Act 3 opened by assigning pivot rotation 0 while Act 2 left it at ±1.5.
+  // The boundary lands at the top of #what-we-do, so that was visible on the
+  // page as the sequence breaking mid-scroll. Everything an act hands over is
+  // sampled now, not just the parts that were easy to reach.
   const r = await withPage(async (page) => {
     await boot(page);
     return page.evaluate(() => {
       const d = window.__tccDirector, S = window.__tccStage, l = window.__tccLens;
-      const sample = () => ({ cam: S.camera.position.toArray(), mark: l.group.position.toArray() });
+      const sample = () => ({
+        cam: S.camera.position.toArray(),
+        mark: l.group.position.toArray(),
+        markRot: l.group.rotation.toArray().slice(0, 3),
+        scale: l.group.scale.x,
+        headPos: l.headPivot.position.toArray(),
+        heartPos: l.heartPivot.position.toArray(),
+        headRot: l.headPivot.rotation.toArray().slice(0, 3),
+        heartRot: l.heartPivot.rotation.toArray().slice(0, 3),
+      });
       setLocal(d, 'headheart', 0.999);
       const before = sample();
       setLocal(d, 'prism', 0.001);
       const after = sample();
       const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
-      return { cam: dist(before.cam, after.cam), mark: dist(before.mark, after.mark), act: d.activeAct.id };
+      return {
+        act: d.activeAct.id,
+        cam: dist(before.cam, after.cam),
+        mark: dist(before.mark, after.mark),
+        markRot: dist(before.markRot, after.markRot),
+        scale: Math.abs(before.scale - after.scale),
+        headPos: dist(before.headPos, after.headPos),
+        heartPos: dist(before.heartPos, after.heartPos),
+        headRot: dist(before.headRot, after.headRot),
+        heartRot: dist(before.heartRot, after.heartRot),
+      };
     });
   });
   assert.equal(r.act, 'prism');
   assert.ok(r.cam < 0.25, `camera jumped ${r.cam.toFixed(2)} units across the boundary`);
   assert.ok(r.mark < 0.25, `mark jumped ${r.mark.toFixed(2)} units across the boundary`);
+  assert.ok(r.scale < 0.1, `mark scale jumped ${r.scale.toFixed(2)} across the boundary`);
+  assert.ok(r.markRot < 0.1, `mark rotation jumped ${r.markRot.toFixed(2)} rad across the boundary`);
+  assert.ok(r.headPos < 0.25, `head pivot jumped ${r.headPos.toFixed(2)} units across the boundary`);
+  assert.ok(r.heartPos < 0.25, `heart pivot jumped ${r.heartPos.toFixed(2)} units across the boundary`);
+  assert.ok(r.headRot < 0.1, `head pivot rotation jumped ${r.headRot.toFixed(2)} rad across the boundary`);
+  assert.ok(r.heartRot < 0.1, `heart pivot rotation jumped ${r.heartRot.toFixed(2)} rad across the boundary`);
 });

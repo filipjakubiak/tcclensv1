@@ -344,7 +344,12 @@
   </section>
 
   <!-- ============ 10 · Global ============ -->
-  <section id="global" data-enter="left" data-tint="sustainability">
+  <!-- No data-tint: a tinted section paints an opaque veil plus its gradient,
+       which covers the live canvas completely. This one stays transparent so
+       the head-and-heart sequence carries on behind the offices list (user,
+       2026-08-16). Its legibility is therefore measured by the composited
+       screenshot guard, like every other untinted section. -->
+  <section id="global" data-enter="left">
     <div class="container global__grid">
       <div class="global__num-wrap">
         <p class="eyebrow">Local insight, global scale</p>
@@ -419,7 +424,7 @@
 
   <!-- ============ 12 · Careers ============ -->
   <section id="careers" data-enter="right" data-tint="creativity">
-    <div class="container careers__grid">
+    <div class="container careers__grid" data-surface-group>
       <div class="careers__body">
         <p class="eyebrow">Life at TCC</p>
         <h2 class="heading" data-focus-pull>
@@ -435,7 +440,7 @@
         </ul>
         <a class="btn btn--ghost" data-magnetic href="https://www.tccglobal.com/careers" target="_blank" rel="noopener">Join TCC →</a>
       </div>
-      <div class="careers__img card">
+      <div class="careers__img card" data-lift>
         <picture>
           <source type="image/avif" srcset="assets/img/optimized/careers-640.avif 640w, assets/img/optimized/careers-1024.avif 1024w" sizes="(max-width: 860px) 100vw, 40vw">
           <source type="image/webp" srcset="assets/img/optimized/careers-640.webp 640w, assets/img/optimized/careers-1024.webp 1024w" sizes="(max-width: 860px) 100vw, 40vw">

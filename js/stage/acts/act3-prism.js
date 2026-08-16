@@ -89,8 +89,14 @@ export default {
     const join = 1 - THREE.MathUtils.smoothstep(t, 0, 0.32);
     lens.headPivot.position.set(-ACT2_END.split * join, ACT2_END.splitY * join, 0);
     lens.heartPivot.position.set(ACT2_END.split * join, -ACT2_END.splitY * join, 0);
-    lens.headPivot.rotation.y = 0;
-    lens.heartPivot.rotation.y = 0;
+    // Unwind the counter-rotation Act 2 leaves behind, on the same curve as
+    // the recombination. Assigning 0 here instead — which is what this did —
+    // snapped both halves through 1.5 rad on the first frame of the act, and
+    // the boundary lands at the top of #what-we-do, so that snap was the
+    // "sequence breaking" the user reported. The positions were already
+    // blended from ACT2_END; only the rotation was not.
+    lens.headPivot.rotation.y = ACT2_END.spin * join;
+    lens.heartPivot.rotation.y = -ACT2_END.spin * join;
 
     // Then the whole mark rotates edge-on and becomes a prism slab.
     const edge = THREE.MathUtils.smoothstep(t, 0.28, 0.72);

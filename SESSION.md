@@ -1,8 +1,8 @@
 # TCC Lens — Session Log
 
-**Started:** 2026-08-14 · **Last worked:** 2026-08-15 (session closed)
+**Started:** 2026-08-14 · **Last worked:** 2026-08-16
 **Working dir:** `C:\Users\filip\Desktop\neststudio\tcc-lens\`
-**Branch:** `build/tcc-lens` · **HEAD:** `0271e8f` · working tree clean · suite **81/81 green**
+**Branch:** `build/tcc-lens` · suite **99/99 green**
 
 ---
 
@@ -26,7 +26,7 @@ independent look**; the final whole-branch review is the only one planned, and i
 ## Commands
 
 ```
-cd tools && npm test            # 82 tests, ~2 min (concurrency pinned to 3)
+cd tools && npm test            # 99 tests, ~3 min (concurrency pinned to 3)
 node tools/serve.mjs 4192       # or START.bat
 ```
 - `http://localhost:4192/` · `?debug=1` act scrub slider · `?shot=1` all motion off, settled
@@ -110,7 +110,18 @@ acts by name and local t via `setLocal(director, id, t)`** — never a hardcoded
 - Exactly three `theme-dark` sections: `hero`, `film`, `loyalty-monitor`; asserted.
 - **Colour blending in three.js is LINEAR** — an amount of 0.16 renders ~0.44 in sRGB.
 - Act boundaries: each act exports its `END` state and the next blends from it. The continuity
-  test has caught a real pop three times.
+  test has caught a real pop four times — and the fourth got through because the test sampled
+  only the camera and the mark group. **A boundary test must sample everything an act hands
+  over**, pivots included.
+- **Anything off the view axis is seen at an angle.** The hero gate reads front-on because the
+  leaves are parented to a group that yaws to face the camera, not because the camera moved.
+- **`color-mix()` resolves to `color(srgb 0.51 0.31 0.57)` — 0-1 floats, not 0-255.** A stop
+  parser that assumes `rgb()` reads them as near-black and passes every contrast check. And a
+  custom property read with `getPropertyValue` comes back UNRESOLVED; paint it on a probe
+  element to get real numbers.
+- **Measure layout with `offsetHeight`, not `getBoundingClientRect()`**, wherever an entrance
+  scales the element — the rect includes the transform, and a staggered entrance then reports
+  identical boxes as different heights.
 
 ---
 
@@ -120,20 +131,22 @@ Done on 2026-08-15: Act 4, the element motion kit, varied per-section entrances,
 load-in, the bento regrid, `#how-it-works` as a stepped bento, gradient figures, the insight
 hover glow, the CTA/footer repair.
 
+Done on 2026-08-16 (eleven requests): hero gate front-facing · Act 2→3 boundary snap fixed ·
+core gradient on buttons and focal words · `#careers` motion · mobile menu illumination ·
+equal-height steps and insight cards · fork-panel edge trace · hero CTA hover swap ·
+monitor CTA spacing · `#global` untinted so the mark shows through.
+
 **Still open:**
 
-1. **`#careers`** — *"loyalty is built by people, ze zdjecie z prawej strony… trzeba to fajnie
-   zanimowac."* The one section the user named that has no bespoke motion yet.
-2. **Core gradient on flat `--accent` highlights** (`.focus-word`, `.btn--solid`, `.pill`).
-   Needs `background-clip: text` and its own contrast check — `--accent` alone is ~2:1 on
-   `--canvas`, which is why `--accent-strong` exists. The bento figures already do this
-   correctly, with an `@supports` fallback; copy that pattern.
-3. **More gradients** where they suit. Six assigned (`#thesis` core · `#how-it-works` insight ·
-   `#insights` performance · `#global` sustainability · `#careers` creativity · `#contact`
-   core). Each gradient used once — the brand book forbids combining two.
-4. **Run `impeccable` and a taste skill** over the whole page. There is no `/taste` skill
+1. **`.pill` is deliberately still flat.** All five live inside `.capability` cards that already
+   paint their own gradient, and the brand book forbids combining two (asserted in
+   `act3.test.mjs`). Needs a call from the user before it changes.
+2. **More gradients** where they suit. `#global` gave up its sustainability tint to let the
+   canvas through, so five remain assigned (`#thesis` core · `#how-it-works` insight ·
+   `#insights` performance · `#careers` creativity · `#contact` core).
+3. **Run `impeccable` and a taste skill** over the whole page. There is no `/taste` skill
    installed; candidates are `design-taste-frontend`, `gpt-taste`, `impeccable`.
-5. **Tasks 17, 18, 20.**
+4. **Tasks 17, 18, 20.**
 
 ## Motion contracts now in place — read before adding animation
 
@@ -148,6 +161,18 @@ hover glow, the CTA/footer repair.
   focus-pull pass so one element never gets two timelines.
 - Every act exports an `END` state and the next blends from it. The Act 1→2 continuity test has
   caught a real pop three times, most recently a 0.78-unit jump.
+
+## Gradient rules as of 2026-08-16
+
+- `--grad-core` is the page's one accent gradient: `.btn--solid`, `.focus-word` on dark
+  sections, `.pullquote::before`, the careers value rules, the menu wash, the fork edge trace.
+- **`--grad-core-strong` for text on light surfaces.** Both stops mixed 62% toward `--ink`,
+  the same treatment `--accent-strong` gets. The raw gradient measures ~1.6:1 as text on
+  `--canvas` and must never be used there.
+- **Gradient text is headline-scale only.** Micro labels stay solid.
+- Every gradient-clipped rule sets a solid fallback colour FIRST and overrides it inside
+  `@supports (background-clip: text)`, so an unsupported browser gets a coloured word rather
+  than an invisible one.
 
 ## Layout observations to act on later (asked for, recorded not fixed)
 
@@ -164,8 +189,14 @@ hover glow, the CTA/footer repair.
 ## Known-good instruments in `tools/test/`
 
 - `composited-contrast.test.mjs` — screenshots at nine scroll positions, samples the PNG. The
-  only honest contrast measure. Slowest test (~30s) and worth it.
+  only honest contrast measure. Slowest test (~37s) and worth it.
 - `tinted-contrast.test.mjs` — token maths for the opaque tinted sections.
+- `gradient-text.test.mjs` — both stops of every gradient used as text, against both surfaces.
+  Handles `rgb()`, hex and `color(srgb …)`; the last one is where mixed tokens land.
 - `act1/2/3.test.mjs` — act behaviour, boundary continuity, backdrop swaps.
+- `equal-height.test.mjs` — row-mates measure the same height at five widths, and the
+  `#how-it-works` stagger survives it.
+- `careers.test.mjs` — the photo drift is bounded so it never exposes its frame.
+- `menu.test.mjs` — the overlay menu on a 420px viewport: illumination, scroll-spy, contrast.
 - Scratch probes used this session live in the session scratchpad, not the repo: mark-presence
   differ, glass absorption sweep, hero gradient sweep, real-scroll screenshotter.

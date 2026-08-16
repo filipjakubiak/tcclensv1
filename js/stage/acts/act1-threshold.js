@@ -38,6 +38,31 @@ const GATE_X = 2.6;
 const GATE_W = 3.0;
 const GATE_H = 4.6;
 
+// The gate turns to face the camera instead of being seen from the side.
+//
+// The leaves used to sit axis-aligned in world space at x = 2.6 while the
+// camera dollied up the centre line and aimed two units PAST them. An object
+// that far off the view axis is seen at an angle by any perspective frustum,
+// so the gate read as slanted and its leaves appeared to slide diagonally
+// across their own faces (user, 2026-08-16: "change perspective so they are
+// not slanted but rather front facing so they just open straight on").
+//
+// Fixing it by moving the camera onto the gate's axis would have pulled the
+// gate into the centre of frame and put it over the headline, and would have
+// changed this act's exported END — which Act 2 blends from, and which has
+// popped three times before. The user's call was to hold every other
+// composition and change only the doors. So the CAMERA IS UNTOUCHED: the
+// leaves are parented to a group that yaws to face wherever the camera is,
+// and they part along that group's local X, inside their own plane.
+//
+// Clamped rather than tracked to the end: the camera dollies THROUGH the
+// threshold, so once it is level with the gate plane the exact facing angle
+// swings past 90 degrees and would whip the gate around. atan2 stays
+// continuous across that crossing (dx is never 0 here), so clamping caps the
+// swing without introducing a jump. By the time the clamp engages the leaves
+// are nearly clear of the opening and on their way out of frame.
+const GATE_MAX_YAW = 0.46; // rad (~26deg)
+
 const lerp = (a, b, t) => a + (b - a) * t;
 
 // Where this act leaves everything at t = 1. Act 2 starts from these exact
@@ -51,7 +76,7 @@ export const END = {
   markScale: 1.0,
 };
 
-let doorL, doorR, aisleGlow, spill, doorMat;
+let gate, doorL, doorR, aisleGlow, spill, doorMat;
 let doorShut = 0, doorOpen = 0;
 
 /** World size of the camera frustum at a world Z, for the camera at its dolly start. */
@@ -96,12 +121,20 @@ export default {
     doorShut = leafW / 2;
     doorOpen = GATE_W / 2 + leafW / 2 + 0.05; // fully clear of the opening
 
+    // The leaves live in the gate's LOCAL space now, so their x is an offset
+    // from the gate centre rather than a world position. Sliding them in
+    // local x means they always part along the gate's own plane, whatever
+    // angle it is facing.
     const geo = new THREE.BoxGeometry(leafW, GATE_H, 0.05);
     doorL = new THREE.Mesh(geo, doorMat);
     doorR = new THREE.Mesh(geo, doorMat);
-    doorL.position.set(GATE_X - doorShut, 0, GATE_Z);
-    doorR.position.set(GATE_X + doorShut, 0, GATE_Z);
-    stage.scene.add(doorL, doorR);
+    doorL.position.set(-doorShut, 0, 0);
+    doorR.position.set(doorShut, 0, 0);
+
+    gate = new THREE.Group();
+    gate.position.set(GATE_X, 0, GATE_Z);
+    gate.add(doorL, doorR);
+    stage.scene.add(gate);
 
     // Spill from beyond the doorway, sitting between the gradient and the
     // mark so the glass has a near source to streak, plus a cool fill so
@@ -112,7 +145,7 @@ export default {
     stage.scene.add(aisleGlow, spill);
 
     stage.addDisposer(() => {
-      stage.scene.remove(aisleGlow, spill, doorL, doorR);
+      stage.scene.remove(aisleGlow, spill, gate);
       geo.dispose();
       doorMat.dispose();
     });
@@ -130,12 +163,15 @@ export default {
     // because the act already owns this transform and the scroll
     // choreography is the motion this shot is built around.
 
-    window.__tccAct1 = { doorL, doorR };
+    window.__tccAct1 = { gate, doorL, doorR };
   },
 
   // Every act declares the full backdrop state on enter, so the swap is
   // correct in either scroll direction without needing exit hooks.
   enter(ctx) {
+    gate.visible = true;
+    // Acts 2-4 hide the leaves individually, so re-showing the group is not
+    // enough on the way back up.
     for (const o of [doorL, doorR]) o.visible = true;
     // The gradient field runs from the very first frame now — the store
     // photography behind the doors is gone (user direction, 2026-08-15).
@@ -154,9 +190,11 @@ export default {
     const { stage, lens } = ctx;
 
     // Hold shut, then part decisively across the middle of the act.
+    // LOCAL x — the gate group carries the world position and the facing
+    // angle, so the leaves only ever describe how far apart they are.
     const slide = THREE.MathUtils.smoothstep(t, 0.10, 0.78);
-    doorL.position.x = GATE_X - lerp(doorShut, doorOpen, slide);
-    doorR.position.x = GATE_X + lerp(doorShut, doorOpen, slide);
+    doorL.position.x = -lerp(doorShut, doorOpen, slide);
+    doorR.position.x = lerp(doorShut, doorOpen, slide);
 
     // The dolly through the threshold, aimed at the aperture rather than
     // dead ahead so the doorway stays the subject as we close on it.
@@ -167,6 +205,20 @@ export default {
       lerp(CAM_START_Z, CAM_END_Z, push)
     );
     stage.camera.lookAt(GATE_X * 0.9, 0, -2);
+
+    // Square the gate to the lens. Must run AFTER the camera is placed for
+    // this frame, or it faces where the camera was last frame.
+    //
+    // A Y-rotation of θ maps the leaves' +Z face onto (sin θ, cos θ), so the
+    // angle that points that face at the camera is atan2 of the horizontal
+    // offset over the depth offset. Assigned outright from the camera's
+    // position — never accumulated onto the live rotation, which is how the
+    // idle spin ran away (see the removal note in build()).
+    const facing = Math.atan2(
+      stage.camera.position.x - GATE_X,
+      stage.camera.position.z - GATE_Z
+    );
+    gate.rotation.y = THREE.MathUtils.clamp(facing, -GATE_MAX_YAW, GATE_MAX_YAW);
 
     // Full brand saturation, not the pale tint the light body sections get:
     // the hero is .theme-dark, so its copy is white and the backdrop wants

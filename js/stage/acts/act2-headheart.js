@@ -17,6 +17,12 @@ import { END as ACT1_END } from './act1-threshold.js';
 const lerp = (a, b, t) => a + (b - a) * t;
 const SPLIT = 1.55;
 
+// The counter-rotation the two halves carry, as a function of how far the
+// split has gone and how far through the act we are. Defined once and used
+// both by update() and by END below — writing the end value as a literal is
+// how it silently stopped matching what the act actually leaves on screen.
+const spinAt = (split, t) => split * 0.9 + t * 0.6;
+
 // Where this act settles the camera and the mark once it has taken over.
 const CAM_SETTLED = [0, 0.12, 5.4];
 const LOOK_SETTLED = [0, 0, 0];
@@ -30,6 +36,12 @@ export const END = {
   mark: [0, 0, 0],
   split: 1.55,
   splitY: 0.35,
+  // The halves are still counter-rotating when this act hands over. Act 3
+  // must unwind from this value; it used to assign 0 on its first frame,
+  // which snapped both halves 1.5 rad at the top of #what-we-do — the exact
+  // point the boundary lands (user, 2026-08-16: "the 3d suddenly breaks the
+  // motion when scrolling so the sequence kind of breaks").
+  spin: spinAt(1, 1),
 };
 
 let headLight, heartLight;
@@ -101,7 +113,7 @@ export default {
     lens.heartPivot.position.set(lerp(0, SPLIT, split), lerp(0, -0.35, split), 0);
 
     // Counter-rotation through the stat wall.
-    const spin = split * 0.9 + t * 0.6;
+    const spin = spinAt(split, t);
     lens.headPivot.rotation.y = spin;
     lens.heartPivot.rotation.y = -spin;
 
