@@ -93,26 +93,51 @@ test('the dot has exactly one owner of its transform', async () => {
   );
 });
 
-test('hovering a link actually swells the dot', async () => {
-  const scale = await withPage(async (page) => {
+test('hovering a link swells the dot, and it is drawn at the size it is shown', async () => {
+  const r = await withPage(async (page) => {
     await boot(page);
-    await page.locator('.nav__links .link').first().hover();
+    const measure = () =>
+      page.evaluate(() => {
+        const el = document.querySelector('.cursor');
+        const box = el.getBoundingClientRect();
+        const m = new DOMMatrixReadOnly(getComputedStyle(el).transform);
+        return { drawn: +box.width.toFixed(1), scale: +Math.hypot(m.a, m.b).toFixed(3) };
+      });
     // Counted in frames for the same reason as everything else here.
-    await page.evaluate(
-      () =>
-        new Promise((res) => {
-          let n = 0;
-          const t = () => (n++ < 30 ? requestAnimationFrame(t) : res());
-          requestAnimationFrame(t);
-        })
-    );
-    return page.evaluate(() => {
-      const m = new DOMMatrixReadOnly(getComputedStyle(document.querySelector('.cursor')).transform);
-      return Math.hypot(m.a, m.b); // rendered scale, whoever wrote it
-    });
+    const settle = () =>
+      page.evaluate(
+        () =>
+          new Promise((res) => {
+            let n = 0;
+            const t = () => (n++ < 30 ? requestAnimationFrame(t) : res());
+            requestAnimationFrame(t);
+          })
+      );
+
+    await page.mouse.move(700, 500);
+    await settle();
+    const rest = await measure();
+    await page.locator('.nav__links .link').first().hover();
+    await settle();
+    return { rest, hot: await measure() };
   });
-  // 44/12 is the designed swell. A flat 1 means the class was clobbered.
-  assert.ok(scale > 3, `the dot did not swell on a link: rendered scale ${scale.toFixed(3)}`);
+
+  // The OUTCOME, not the mechanism. An earlier version of this test asserted
+  // the transform's scale factor, which passed only as long as scaling was
+  // how the swell happened to be built — and scaling is exactly what had to
+  // go. Rendered diameter is what the reader sees either way.
+  assert.ok(r.hot.drawn > 40, `the dot did not swell on a link: drawn ${r.hot.drawn}px`);
+  assert.ok(r.rest.drawn < 20, `the resting dot is not small: drawn ${r.rest.drawn}px`);
+
+  // And it must get there by BEING that size, not by stretching a smaller
+  // raster to it. A 12px circle has no 44px of detail to stretch: that is
+  // what made the swelled dot look soft and stair-stepped.
+  for (const [name, s] of [['resting', r.rest], ['swelled', r.hot]]) {
+    assert.ok(
+      Math.abs(s.scale - 1) < 0.01,
+      `the ${name} dot is rendered at scale ${s.scale}, so its raster is being resampled`
+    );
+  }
 });
 
 test('the dot lands within a few frames of the pointer stopping', async () => {

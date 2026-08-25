@@ -890,32 +890,51 @@ html.motion-on .careers__img[data-lift] { --enter-y: 46px; --enter-s: .94; filte
 }
 
 /* ---- Cursor (Task 9) — blend-difference dot, fine pointers only ---- */
-/* Swell is done with transform: scale, not width/height/margin, so it
-   never triggers layout — .cursor is a fixed 12px dot GPU-transformed up
-   to ~44px visually (44/12 ≈ 3.667).
+/* THE DOT IS NEVER SCALED. It is laid out at the size it is drawn at, and
+   the swell changes that size.
+   The previous version drew a 12px box and stretched it to 44px with
+   transform: scale(3.667) to keep the swell off the layout path. That is
+   twelve pixels of circle carrying a forty-four pixel circle: the raster has
+   no detail to stretch, so the swelled dot came out visibly soft and
+   stair-stepped at the edge. Upscaling cannot invent the missing detail, and
+   no amount of easing or layer-promotion changes that.
+   Sizing it honestly costs a layout and a paint on hover in and hover out —
+   twice per hover, on ONE position: fixed, out-of-flow, pointer-events: none
+   element whose box never touches the document's layout. That is a real cost
+   and it is the right one to pay; a per-frame cost would not have been.
+   Centring moved into the transform (translate(-50%, -50%)) so it no longer
+   depends on the box size — that is what lets the size animate freely
+   without a margin animating in lockstep with it.
    NOTHING here may touch `transform`. cursor.js owns that property outright
-   and writes translate and scale as one string every frame; a `transition:
-   transform` alongside it re-interpolated each of those per-frame writes
-   over another 240ms (measured: 768ms to arrive after the pointer stopped),
-   and a `.cursor--swell { transform: scale() }` rule was silently outranked
-   by the inline transform, so the swell never rendered at all. Both are
-   pinned by tools/test/cursor-latency.test.mjs. */
+   and writes it every frame; a `transition: transform` alongside it
+   re-interpolated each of those per-frame writes over another 240ms
+   (measured: 768ms to arrive after the pointer stopped), and a
+   `.cursor--swell { transform: scale() }` rule was silently outranked by the
+   inline transform, so the swell never rendered at all. Both are pinned by
+   tools/test/cursor-latency.test.mjs. */
 .cursor {
-  position: fixed; top: 0; left: 0; width: 12px; height: 12px; margin: -6px 0 0 -6px;
+  position: fixed; top: 0; left: 0; width: 12px; height: 12px;
   border-radius: 50%; background: var(--canvas); mix-blend-mode: difference;
   pointer-events: none; z-index: 100;
   /* Hidden until the pointer is first seen — otherwise the dot sits in the
-     top-left corner from load. opacity only: it is not `transform`, it is
-     composited, and no script animates it. */
+     top-left corner from load. opacity and the swell size only: neither is
+     `transform`, and no script animates either. */
   opacity: 0;
-  transition: opacity 160ms linear;
+  transition:
+    opacity 160ms linear,
+    width var(--dur-ui) var(--ease-out-strong),
+    height var(--dur-ui) var(--ease-out-strong);
   /* The one place on this page a permanent will-change is right. The
      objection recorded at [data-lift] is about keeping a layer alive for
-     every card; this is a single 12px element that moves on almost every
-     frame the reader is present. */
+     every card; this is a single small element that moves on almost every
+     frame the reader is present. Safe now in a way it was not while the dot
+     was scaled: promoting a layer pins its raster scale, which is precisely
+     what preserved the stretched 12px bitmap. Nothing is scaled any more, so
+     the raster is always at the size it is shown. */
   will-change: transform;
 }
 .cursor.is-placed { opacity: 1; }
+.cursor.is-swollen { width: 44px; height: 44px; }
 @media (pointer: coarse) { .cursor { display: none; } }
 /* The dot REPLACES the system cursor rather than accompanying it. Applied to
    descendants too, since elements carry their own cursor values (links get

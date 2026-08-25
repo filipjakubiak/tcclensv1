@@ -34,23 +34,25 @@ export function initCursor() {
   // GSAP is gone from the dot entirely. A tween per axis buys nothing here:
   // this is one element chasing one point, and a bare rAF costs one style
   // write per frame with no tween bookkeeping behind it.
-  const SWELL = 44 / 12; // the dot is 12px; links swell it to a 44px target
   let px = 0, py = 0;         // where the dot is drawn
   let tx = 0, ty = 0;         // where the pointer is
-  let scale = 1, tScale = 1;
   let placed = false;
   let raf = 0;
   let last = 0;
 
-  // Catch-up fractions per 60Hz frame, rescaled by real dt below so the dot
+  // Catch-up fraction per 60Hz frame, rescaled by real dt below so the dot
   // feels identical on a 60Hz panel and a 144Hz one. Framerate-dependent
   // lerps are why "smooth here, laggy there" bugs are so hard to pin down.
   const CHASE = 0.3;
-  const GROW = 0.22;
 
+  // POSITION ONLY. There is no scale term here and there must not be one:
+  // the swell is a size change in CSS, because a 12px circle stretched to
+  // 44px has no detail to stretch and came out soft and stair-stepped. The
+  // trailing translate(-50%, -50%) centres the dot on the pointer whatever
+  // size it currently is, which is what frees the size to animate at all.
   const write = () => {
     dot.style.transform =
-      `translate3d(${px.toFixed(2)}px, ${py.toFixed(2)}px, 0) scale(${scale.toFixed(3)})`;
+      `translate3d(${px.toFixed(2)}px, ${py.toFixed(2)}px, 0) translate(-50%, -50%)`;
   };
 
   const draw = (now) => {
@@ -58,15 +60,14 @@ export function initCursor() {
     last = now;
     px += (tx - px) * (1 - (1 - CHASE) ** dt);
     py += (ty - py) * (1 - (1 - CHASE) ** dt);
-    scale += (tScale - scale) * (1 - (1 - GROW) ** dt);
     write();
 
     // Park once it has arrived. An idle pointer should not hold a rAF open
     // for the life of the page — the stage clock is already running one.
-    if (Math.abs(tx - px) > 0.05 || Math.abs(ty - py) > 0.05 || Math.abs(tScale - scale) > 0.002) {
+    if (Math.abs(tx - px) > 0.05 || Math.abs(ty - py) > 0.05) {
       raf = requestAnimationFrame(draw);
     } else {
-      px = tx; py = ty; scale = tScale;
+      px = tx; py = ty;
       write();
       raf = 0; last = 0;
     }
@@ -101,14 +102,18 @@ export function initCursor() {
   // Delegated, not two listeners on each of the page's ~90 links and buttons.
   // Fewer handlers to run per pointer event is the point; that it also covers
   // anything added to the DOM later is a bonus this page does not need yet.
+  // The swell is a class, and CSS transitions the dot's WIDTH AND HEIGHT.
+  // Not a transform: see the note above and the one in main.css.
   const SWELLS = 'a, button, [data-magnetic]';
   document.addEventListener('pointerover', (e) => {
-    if (e.target.closest?.(SWELLS)) { tScale = SWELL; wake(); }
+    if (e.target.closest?.(SWELLS)) dot.classList.add('is-swollen');
   }, { passive: true });
   document.addEventListener('pointerout', (e) => {
     // pointerout also fires moving BETWEEN two children of the same link, so
     // only reset when the pointer has actually left everything swellable.
-    if (e.target.closest?.(SWELLS) && !e.relatedTarget?.closest?.(SWELLS)) { tScale = 1; wake(); }
+    if (e.target.closest?.(SWELLS) && !e.relatedTarget?.closest?.(SWELLS)) {
+      dot.classList.remove('is-swollen');
+    }
   }, { passive: true });
 }
 
