@@ -892,14 +892,30 @@ html.motion-on .careers__img[data-lift] { --enter-y: 46px; --enter-s: .94; filte
 /* ---- Cursor (Task 9) — blend-difference dot, fine pointers only ---- */
 /* Swell is done with transform: scale, not width/height/margin, so it
    never triggers layout — .cursor is a fixed 12px dot GPU-transformed up
-   to ~44px visually (44/12 ≈ 3.667). */
+   to ~44px visually (44/12 ≈ 3.667).
+   NOTHING here may touch `transform`. cursor.js owns that property outright
+   and writes translate and scale as one string every frame; a `transition:
+   transform` alongside it re-interpolated each of those per-frame writes
+   over another 240ms (measured: 768ms to arrive after the pointer stopped),
+   and a `.cursor--swell { transform: scale() }` rule was silently outranked
+   by the inline transform, so the swell never rendered at all. Both are
+   pinned by tools/test/cursor-latency.test.mjs. */
 .cursor {
   position: fixed; top: 0; left: 0; width: 12px; height: 12px; margin: -6px 0 0 -6px;
   border-radius: 50%; background: var(--canvas); mix-blend-mode: difference;
   pointer-events: none; z-index: 100;
-  transition: transform var(--dur-ui) var(--ease-out-strong);
+  /* Hidden until the pointer is first seen — otherwise the dot sits in the
+     top-left corner from load. opacity only: it is not `transform`, it is
+     composited, and no script animates it. */
+  opacity: 0;
+  transition: opacity 160ms linear;
+  /* The one place on this page a permanent will-change is right. The
+     objection recorded at [data-lift] is about keeping a layer alive for
+     every card; this is a single 12px element that moves on almost every
+     frame the reader is present. */
+  will-change: transform;
 }
-.cursor--swell { transform: scale(3.667); }
+.cursor.is-placed { opacity: 1; }
 @media (pointer: coarse) { .cursor { display: none; } }
 /* The dot REPLACES the system cursor rather than accompanying it. Applied to
    descendants too, since elements carry their own cursor values (links get
