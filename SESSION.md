@@ -371,3 +371,22 @@ The page is framed as a SHOWREEL of what TCC does (user). Added:
 - **#contact**: "Build your programme" planner (`js/motion/planner.js`) — Retailer/Brand +
   goals (the fork promises) light the showreel capabilities; primary CTA moved into it.
 - Suite **142/143** — only the known marquee instrument failure.
+
+## ▶ 2026-09-27 (7) — hero letters, CEO section, calm CTA
+
+- **Hero headline** (`js/motion/hero-text.js`): letters assemble from scattered depth with a
+  colour split that closes as they land, a light bar scans them, and they disperse on scroll
+  with the curtain (centre first, each to its side). Two spans per letter (.hc disperses,
+  .hc__in assembles); split alpha rides --sa/--ds so there is no fringe at rest. Kills
+  initHeroIntro's heading/line tweens. `h1[data-assembled]` marks the landing (tests wait on it
+  — GSAP lag smoothing slows the intro under load).
+- **#ceo** (new section right after #film; content test now lists fourteen): Rick Swinkels's
+  portrait (`assets/img/people/rick-swinkels.jpeg`, SHA-1 identical to the tccglobal.com author
+  image) in a circle with an orbiting name ring and a 64-bar voice ring; the VERIFIED quote
+  ("Performance comes from knowing what drives the head and the heart…", content inventory)
+  transcribed word by word; replay. Calm own surface (`section#ceo` beats the veil).
+- **Removed** the film's quote "Great loyalty isn't about points or prizes…" — it was
+  attributed to the CEO but appears nowhere in TCC's material. The thesis and how-it-works
+  pull quotes are ALSO not in TCC's material (unattributed brand-voice lines) — flagged to user.
+- **#contact** calmer: no `data-fluid`, veil 62% → 88%.
+- Suite green except the known marquee instrument failure.

@@ -30,7 +30,6 @@ const ratio = (a, b) => {
  * section cannot be added later without inheriting this guard.
  */
 const CASES = [
-  { section: 'contact', copy: '.contact__lede' },
   { section: 'loyalty-monitor', copy: '.monitor__note' },
 ];
 

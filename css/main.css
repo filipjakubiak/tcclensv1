@@ -984,7 +984,9 @@ section[data-tint='core']           { --tint: var(--grad-core); }
 /* The closing CTA carries more colour than a body section — it is the last
    thing on the page and it is asking for the click. Its own veil, checked by
    the composited-contrast guard like everything else. */
-#contact { --veil: color-mix(in srgb, var(--canvas) 62%, transparent); padding-block: clamp(6rem, 14vh, 10rem); }
+/* Calmer (user, 2026-09-27): the close carries the planner, so the surface
+   behind it steps back — a faint wash of the core gradient, no pointer field. */
+#contact { --veil: color-mix(in srgb, var(--canvas) 88%, transparent); padding-block: clamp(6rem, 14vh, 10rem); }
 
 /* ---- Fluid surface: the gradient follows the pointer ----
    On the closing CTA and the loyalty-gap section. The brand's own two stops,
@@ -1961,3 +1963,104 @@ html.motion-on .orbit:not(.is-in) .orbit__figures { opacity: 0; transform: trans
   position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
   overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
 }
+
+/* =====================================================================
+   #ceo — in his words (js/motion/ceo.js, 2026-09-27)
+   A live-caption moment: the portrait in its circle, his name orbiting it,
+   a voice ring that moves while he "speaks", and the quote transcribed word
+   by word beside it. Default = the whole quote, still; motion parks it.
+   ===================================================================== */
+#ceo { padding-block: clamp(6rem, 14vh, 10rem); }
+.ceo__grid {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(2.5rem, 6vw, 6rem); align-items: center;
+}
+.ceo__speaker { position: relative; margin: 0; width: min(440px, 100%); aspect-ratio: 1; justify-self: center; }
+.ceo__rings { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ceo__portrait {
+  position: absolute; inset: 19%; border-radius: 50%; overflow: hidden;
+  box-shadow: 0 0 0 6px var(--canvas), 0 0 0 7px color-mix(in srgb, var(--accent) 50%, transparent), 0 30px 60px -30px var(--accent-shadow);
+  clip-path: circle(var(--iris, 50%) at 50% 50%);
+}
+.ceo__portrait img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; transform: scale(var(--push, 1)); }
+.ceo__voice line { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+.ceo__name { transform-box: view-box; transform-origin: 50% 50%; }
+.ceo__name text { font-size: 12.5px; font-weight: 700; letter-spacing: .22em; fill: var(--ink-2); }
+html.motion-on #ceo.is-visible .ceo__name { animation: ceo-orbit 38s linear infinite; }
+@keyframes ceo-orbit { to { transform: rotate(360deg); } }
+.ceo__live {
+  position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: .45rem; padding: .35rem .8rem;
+  border-radius: var(--r-pill); background: var(--ink); color: var(--canvas);
+  font-size: var(--micro); font-weight: 700; letter-spacing: var(--track-micro); text-transform: uppercase;
+  opacity: 0; transition: opacity 300ms ease, transform 400ms var(--ease-out-strong);
+}
+.ceo__live i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: ceo-rec 1.2s ease-in-out infinite; }
+@keyframes ceo-rec { 50% { opacity: .25; } }
+#ceo.is-speaking .ceo__live { opacity: 1; }
+
+.ceo__quote { margin: 0; }
+.ceo__quote p {
+  margin: 0; font-weight: 600; letter-spacing: var(--track-tight);
+  font-size: clamp(1.5rem, 2.5vw, 2.3rem); line-height: 1.28; max-width: 30ch;
+}
+.ceo__key { background: none; color: inherit; }
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .ceo__key { background-image: var(--grad-core); -webkit-background-clip: text; background-clip: text; color: transparent; }
+}
+/* Transcription: a word is faint until it is said, then it lands. */
+.ceo__w { display: inline-block; }
+html.motion-on .ceo__quote .ceo__w { opacity: .14; transition: opacity 260ms var(--ease-out-strong), transform 320ms var(--ease-out-strong), filter 260ms ease; }
+html.motion-on .ceo__quote .ceo__w:not(.is-said) { transform: translateY(.18em); filter: blur(3px); }
+html.motion-on .ceo__quote .ceo__w.is-said { opacity: 1; }
+html.motion-on .ceo__quote .ceo__w.is-now { text-decoration: underline 2px color-mix(in srgb, var(--accent) 70%, transparent); text-underline-offset: .18em; }
+
+.ceo__byline { display: flex; align-items: center; gap: .9rem; margin-top: 2rem; }
+.ceo__avatar { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; flex: 0 0 auto; box-shadow: 0 0 0 1px var(--hairline); }
+.ceo__avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; }
+.ceo__who { display: grid; line-height: 1.3; }
+.ceo__who b { font-weight: 700; }
+.ceo__who span { color: var(--ink-2); font-size: .9375rem; }
+.ceo__replay {
+  margin-left: auto; display: inline-flex; gap: .4rem; align-items: center;
+  padding: .5rem .9rem; border-radius: var(--r-pill); border: 1px solid var(--hairline);
+  background: transparent; font: inherit; font-size: .875rem; font-weight: 600; color: var(--ink); cursor: pointer;
+  transition: border-color 200ms ease, transform var(--dur-press) var(--ease-out-strong);
+}
+.ceo__replay:hover { border-color: var(--accent); }
+.ceo__replay:active { transform: scale(.97); }
+.ceo__replay:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (max-width: 860px) {
+  .ceo__grid { grid-template-columns: 1fr; }
+  .ceo__speaker { width: min(320px, 86%); }
+}
+
+/* =====================================================================
+   Hero headline — light through a lens (js/motion/hero-text.js)
+   Two spans per letter: .hc disperses on scroll, .hc__in assembles on load.
+   The colour split is one text-shadow fed by both; its alpha rides the
+   same variables, so at rest there is no fringe at all.
+   ===================================================================== */
+#hero .display { position: relative; }
+html.motion-on #hero .line { overflow: visible; }
+#hero .display.is-split .hw { display: inline-block; white-space: nowrap; }
+#hero .display.is-split .hc, #hero .display.is-split .hc__in { display: inline-block; }
+#hero .display.is-split .hc__in {
+  --split: calc(var(--ax, 0) + var(--dx, 0));
+  --alpha: min(90%, calc((var(--sa, 0) + var(--ds, 0)) * 90%));
+  text-shadow:
+    calc(var(--split) * -1px) calc(var(--ay, 0) * 1px) 0 color-mix(in srgb, var(--accent) var(--alpha), transparent),
+    calc(var(--split) * 1px) calc(var(--ay, 0) * -1px) 0 color-mix(in srgb, var(--support) var(--alpha), transparent);
+}
+.hero__scan {
+  position: absolute; top: -6%; bottom: -6%; left: -4%; width: 3px; border-radius: 3px;
+  background: linear-gradient(transparent, var(--accent) 30%, var(--support) 70%, transparent);
+  box-shadow: 0 0 28px 8px color-mix(in srgb, var(--accent) 40%, transparent);
+  opacity: 0; pointer-events: none;
+}
+
+.ceo__replay[hidden] { display: none; }
+/* The quote sits on the RIGHT, where the page's veil clears for the glass
+   mark — so this section carries its own calm surface instead. */
+html.stage-live main > section#ceo { background: color-mix(in srgb, var(--canvas) 93%, transparent); }

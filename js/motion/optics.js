@@ -62,11 +62,8 @@ function splitWords(root) {
 
 function initDispersion() {
   gsap.utils.toArray('[data-focus-pull]').forEach((el) => {
-    if (el.closest('#hero')) {
-      // The hero arrives on load (initHeroIntro), so its split does too.
-      gsap.fromTo(el, { '--disp': 1 }, { '--disp': 0, duration: 1.3, delay: 0.2, ease: 'expo.out' });
-      return;
-    }
+    // The hero's letters carry their own split (hero-text.js).
+    if (el.closest('#hero')) return;
     gsap.fromTo(el, { '--disp': 1 }, {
       '--disp': 0, duration: 1.2, ease: 'expo.out', delay: 0.1,
       scrollTrigger: { trigger: el, start: 'top 85%', once: true },

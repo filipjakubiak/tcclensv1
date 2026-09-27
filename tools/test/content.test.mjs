@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withPage } from '../test-support/helpers.mjs';
 
-const IDS = ['hero','thesis','proof','film','what-we-do','how-it-works','capabilities',
+const IDS = ['hero','thesis','proof','film','ceo','what-we-do','how-it-works','capabilities',
              'loyalty-monitor','clients','global','insights','careers','contact'];
 
-test('all thirteen sections exist in spec order', async () => {
+test('all fourteen sections exist in spec order', async () => {
   const ids = await withPage((page) =>
     page.evaluate(() => [...document.querySelectorAll('main section')].map((s) => s.id))
   );

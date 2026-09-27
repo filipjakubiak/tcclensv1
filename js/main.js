@@ -15,6 +15,8 @@ import { initScenes } from './motion/scenes.js';
 import { initCollect } from './motion/collect.js';
 import { initValues } from './motion/values.js';
 import { initPlanner } from './motion/planner.js';
+import { initHeroText } from './motion/hero-text.js';
+import { initCeo } from './motion/ceo.js';
 import { initMarkPointer, initMarquee } from './motion/interact.js';
 import { createStage } from './stage/Stage.js';
 import { buildEnvironment } from './stage/env.js';
@@ -46,7 +48,7 @@ initDeal();
 initUplift();
 // Guarded: these run before the WebGL stage boots, and a decorative
 // failure must never take the stage down with it.
-for (const init of [initAisle, initShowreel, initScenes, initCollect, initValues, initPlanner, initCrowd, initNetwork, initOptics]) {
+for (const init of [initHeroText, initCeo, initAisle, initShowreel, initScenes, initCollect, initValues, initPlanner, initCrowd, initNetwork, initOptics]) {
   try { init(); } catch (err) { console.error(err); }
 }
 

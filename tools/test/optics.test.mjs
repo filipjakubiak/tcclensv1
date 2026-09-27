@@ -78,29 +78,27 @@ test('speed opens the split within bounds, and rest closes it', async () => {
 });
 
 test('statements come into focus in reading order and end fully sharp', async () => {
+  // The film's quote was removed (2026-09-27: it was not TCC's verified
+  // copy); the thesis pull quote carries the focal-plane reading now.
+  const sel = '#thesis .pullquote';
   const r = await withPage(async (page) => {
     await boot(page);
     await page.mouse.move(10, 10);
-    await wheelTo(page, '#film .film__quote blockquote', 0.62);
-    const mid = await page.evaluate(() => [...document.querySelectorAll('#film blockquote .w')]
-      .map((w) => +getComputedStyle(w).opacity));
-    await wheelTo(page, '#film .film__quote blockquote', 0.3);
-    const end = await page.evaluate(() => ({
-      op: [...document.querySelectorAll('#film blockquote .w')].map((w) => +getComputedStyle(w).opacity),
-      focal: getComputedStyle(document.querySelector('#film blockquote .focus-word')).filter,
-      text: document.querySelector('#film blockquote').textContent,
-    }));
+    await wheelTo(page, sel, 0.66);
+    const mid = await page.evaluate((s) => [...document.querySelectorAll(s + ' .w')].map((w) => +getComputedStyle(w).opacity), sel);
+    await wheelTo(page, sel, 0.25);
+    const end = await page.evaluate((s) => ({
+      op: [...document.querySelectorAll(s + ' .w')].map((w) => +getComputedStyle(w).opacity),
+      text: document.querySelector(s).textContent,
+    }), sel);
     return { mid, end };
   });
-  // Mid-read: some words are in focus and some are not, and no word is
-  // sharper than one before it by more than rounding — i.e. no holes.
   assert.ok(r.mid.some((o) => o > 0.9) && r.mid.some((o) => o < 0.5), `not mid-read: ${r.mid}`);
   for (let i = 1; i < r.mid.length; i++) {
     assert.ok(r.mid[i] <= r.mid[i - 1] + 0.35, `word ${i} ahead of word ${i - 1}: ${r.mid}`);
   }
   assert.ok(r.end.op.every((o) => o > 0.99), `not all sharp at the end: ${r.end.op}`);
-  assert.equal(r.end.focal, 'blur(0px)');
-  assert.match(r.end.text, /making people feel seen\. Get that right/);
+  assert.match(r.end.text, /You cannot discount your way to devotion/);
 });
 
 test('eyebrows calibrate back to their exact copy', async () => {
