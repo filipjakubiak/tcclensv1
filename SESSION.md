@@ -289,3 +289,15 @@ Tests rewritten to bounds (act2/act3): 28/28 on act1/2/3/lens. **Full suite not 
 
 Structure proposal from the redesign audit is pending the user's go (see chat 2026-09-27):
 merge `#how-it-works` into `#what-we-do`, merge `#global` into `#clients`, cut eyebrows to ~5.
+
+## ▶ 2026-09-27 (2) — scroll stories
+
+`js/motion/scrollstory.js` + a CSS block at the end of `main.css`. Four scroll-driven pieces,
+each with a job: thesis head/heart underlines (Space Grey then Purple, same order as Act 2's
+lights) · `#how-it-works` loop drawn over the steps, a dot walks spend → reward → return and
+back, lighting each card (desktop scrub; mobile lights each card at 60%) · `#proof` 3–5% cell
+gets an uplift sparkline + range counter · `#loyalty-monitor` meter opens the 57→76 gap on
+scrub with ticks. Default CSS = finished state; only `html.motion-on` parks the start.
+**Trap found:** `pathLength="1"` + `vector-effect: non-scaling-stroke` makes Chrome stop the
+dash-draw short of the end — drawn paths use `vector-effect: none`.
+Full suite **120/121** — only the known marquee instrument failure (see above).

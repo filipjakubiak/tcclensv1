@@ -82,7 +82,7 @@
         <span class="line"><span>head and the <span class="focus-word">heart.</span></span></span>
       </h2>
       <div class="thesis__lede">
-        <p class="lead" data-reveal>Every shopper makes two decisions at once. The head weighs price, convenience and habit — the rational case for choosing one store over another. The heart is quieter and far more powerful: it remembers how a brand made them feel, whether it recognised them, whether it gave something back. Win only the head and you rent a customer. Win the heart as well, and you keep one.</p>
+        <p class="lead" data-reveal>Every shopper makes two decisions at once. <span class="hl hl--head">The head weighs price, convenience and habit</span> — the rational case for choosing one store over another. <span class="hl hl--heart">The heart is quieter and far more powerful</span>: it remembers how a brand made them feel, whether it recognised them, whether it gave something back. Win only the head and you rent a customer. Win the heart as well, and you keep one.</p>
         <p class="lead" data-reveal>For over thirty years this has been our single obsession. We build loyalty and reward campaigns that speak to both — the logic of a better deal and the emotion of being genuinely valued. It's a discipline, not a gimmick: understand what shoppers truly want, recognise them for the choices they make, and turn a routine trip to the store into a relationship worth keeping.</p>
       </div>
       <blockquote class="pullquote" data-reveal>&#8220;You cannot discount your way to devotion. Loyalty is earned one recognised moment at a time.&#8221;</blockquote>
@@ -119,7 +119,12 @@
           <span class="bento__cap">Nine thousand programmes and counting — each tuned to a specific market, moment and shopper mindset.</span>
         </li>
         <li class="bento__cell bento__cell--wide" data-lift>
-          <span class="bento__figure">3–5%</span>
+          <svg class="uplift" viewBox="0 0 240 80" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <rect class="uplift__window" x="92" y="0" width="100" height="80"/>
+            <path class="uplift__base" d="M0 58 H240"/>
+            <path class="uplift__line" pathLength="1" d="M0 58 H74 C92 58 96 24 116 24 H170 C188 24 194 48 240 50"/>
+          </svg>
+          <span class="bento__figure" data-range="3,5" data-suffix="%">3–5%</span>
           <span class="bento__label">Sales uplift, reliably</span>
           <span class="bento__cap">The typical lift our campaigns drive during activation — performance you can plan a year around.</span>
         </li>
@@ -218,6 +223,15 @@
       <p class="lead howworks__intro" data-reveal>The best loyalty feels effortless from the outside and works hard underneath. Every programme we build runs on the same elegant loop — spend, reward, return — engineered to lift performance a little more each time round.</p>
     </div>
     <div class="container">
+      <div class="howworks__loop" aria-hidden="true">
+        <svg viewBox="0 0 1200 120" preserveAspectRatio="none" focusable="false">
+          <path class="loop__route" d="M200 100 H1000 C1000 8 200 8 200 100"/>
+          <path class="loop__fwd" pathLength="1" d="M200 100 H1000"/>
+          <path class="loop__ret" pathLength="1" d="M1000 100 C1000 8 200 8 200 100"/>
+        </svg>
+        <span class="loop__node"></span><span class="loop__node"></span><span class="loop__node"></span>
+        <span class="loop__dot"></span>
+      </div>
       <ol class="howworks__steps" data-surface-group>
         <li class="howworks__step" data-lift>
           <span class="howworks__idx">01</span>
@@ -312,7 +326,9 @@
       </div>
       <div class="monitor__meter" role="img" aria-label="Loyalty gap: 57 percent say loyal, 76 percent would switch">
         <span class="monitor__fill"></span>
+        <span class="monitor__gap"></span>
       </div>
+      <div class="monitor__ticks" aria-hidden="true"><span class="monitor__tick monitor__tick--a">57%</span><span class="monitor__tick monitor__tick--b">76%</span></div>
       <p class="lead monitor__note">That distance between what shoppers feel and what they do is the loyalty gap — and closing it is the entire point of what we do. It isn't a problem to fear. It's the single biggest opportunity in grocery retail, and it's measurable.</p>
       <a class="btn btn--solid monitor__cta" data-magnetic href="https://www.tccglobal.com/loyaltymonitor" target="_blank" rel="noopener">Unlock the global report →</a>
     </div>

@@ -5,6 +5,7 @@ import { initCounters } from './motion/counters.js';
 import { initSurfaceReveals, initSurfacePointer, initFluidSurfaces } from './motion/elements.js';
 import { initCareers } from './motion/careers.js';
 import { initMeter, initOffices } from './motion/sections.js';
+import { initThesisLights, initLoop, initUplift, initLoyaltyGap } from './motion/scrollstory.js';
 import { initMarkPointer, initMarquee, initOfficeRows } from './motion/interact.js';
 import { createStage } from './stage/Stage.js';
 import { buildEnvironment } from './stage/env.js';
@@ -32,6 +33,10 @@ initMeter();
 initOffices();
 initMarquee();
 initOfficeRows();
+initThesisLights();
+initLoop();
+initUplift();
+initLoyaltyGap();
 
 if (!motionEnabled()) document.documentElement.classList.add('motion-off');
 
