@@ -84,25 +84,21 @@ test('capability copy stays legible on its gradient', async () => {
   assert.deepEqual(bad, [], `\n  ${bad.map((b) => `${b.name} ${b.tag} ${b.ratio}:1 at ${b.size}px`).join('\n  ')}\n`);
 });
 
-test('the halves recombine and the mark turns edge-on into a prism', async () => {
+test('the mark stays assembled and turns edge-on into a prism', async () => {
   const r = await withPage(async (page) => {
     await boot(page);
     return page.evaluate(() => {
       const d = window.__tccDirector, l = window.__tccLens;
-      const THREE = window.__tccStage.THREE;
-      const gap = () => {
-        l.group.updateMatrixWorld(true);
-        const c = (o) => new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3());
-        return Math.abs(c(l.heartPivot).x - c(l.headPivot).x);
-      };
+      // Any pivot offset at all means the halves are not seated together.
+      const offset = () => Math.max(...[l.headPivot, l.heartPivot].map((p) =>
+        p.position.length() + Math.abs(p.rotation.y) + Math.abs(p.scale.x - 1)));
       setLocal(d, 'prism', 0.02);
-      const start = gap();
+      const start = offset();
       setLocal(d, 'prism', 0.6);
-      return { start, gap: gap(), rotY: l.group.rotation.y };
+      return { start, end: offset(), rotY: l.group.rotation.y };
     });
   });
-  assert.ok(r.gap < r.start, `halves did not recombine: ${r.start.toFixed(2)} -> ${r.gap.toFixed(2)}`);
-  assert.ok(r.gap < 0.3, `halves are still ${r.gap.toFixed(2)} apart after recombining`);
+  assert.ok(r.start < 1e-6 && r.end < 1e-6, `halves are not at rest: ${r.start} / ${r.end}`);
   assert.ok(Math.abs(r.rotY) > 0.9, `mark did not rotate edge-on: ${r.rotY}`);
 });
 

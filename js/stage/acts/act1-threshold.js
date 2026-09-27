@@ -193,6 +193,7 @@ export default {
     for (const p of [ctx.lens.headPivot, ctx.lens.heartPivot]) {
       p.position.set(0, 0, 0);
       p.rotation.set(0, 0, 0);
+      p.scale.setScalar(1);
     }
   },
 

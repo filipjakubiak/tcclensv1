@@ -276,3 +276,16 @@ keep only the direction assertion, which works and passes, or retire the test.
 - `menu.test.mjs` — the overlay menu on a 420px viewport: illumination, scroll-spy, contrast.
 - Scratch probes used this session live in the session scratchpad, not the repo: mark-presence
   differ, glass absorption sweep, hero gradient sweep, real-scroll screenshotter.
+
+## ▶ 2026-09-27 — Act 2 no longer splits the mark
+
+User: *"instead of head and heart symbol separating from each other we need a more subtle way
+to animate it"*. Act 2 now keeps the mark whole and tells the halves apart by light:
+Z-only depth breath (≤0.16), a bounded sway (±0.3 rad) toward the head light then the heart
+light, emphasis handing over from Space Grey to TCC Purple, and one lub-dub heartbeat on the
+heart pivot (≤4.5% swell). Everything returns to exactly zero at t = 1, so Act 3 no longer
+recombines anything — it just holds the pivots at rest. Act 1 also resets pivot scale.
+Tests rewritten to bounds (act2/act3): 28/28 on act1/2/3/lens. **Full suite not rerun.**
+
+Structure proposal from the redesign audit is pending the user's go (see chat 2026-09-27):
+merge `#how-it-works` into `#what-we-do`, merge `#global` into `#clients`, cut eyebrows to ~5.

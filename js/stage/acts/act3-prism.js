@@ -8,7 +8,7 @@ import { GRADIENTS } from '../GradientField.js';
  * The load-bearing idea of the whole page. The brand book names five
  * secondary gradients — Performance, Insight, Creativity, Operational
  * excellence, Sustainability. That is literally a spectrum of five. A prism
- * splits light into a spectrum. So the halves recombine, the mark turns
+ * splits light into a spectrum. So the mark turns
  * edge-on into a slab, and the capabilities section below it IS the spectrum
  * that slab throws. The mapping already existed inside the brand system;
  * this is the first artefact to draw it.
@@ -83,20 +83,14 @@ export default {
   update(t, ctx) {
     const { stage, lens } = ctx;
 
-    // The halves recombine — picked up from exactly where Act 2 left them
-    // rather than from zero. Act 2 deliberately does NOT reset its split on
-    // exit, because that reset would consume this move before it starts.
-    const join = 1 - THREE.MathUtils.smoothstep(t, 0, 0.32);
-    lens.headPivot.position.set(-ACT2_END.split * join, ACT2_END.splitY * join, 0);
-    lens.heartPivot.position.set(ACT2_END.split * join, -ACT2_END.splitY * join, 0);
-    // Unwind the counter-rotation Act 2 leaves behind, on the same curve as
-    // the recombination. Assigning 0 here instead — which is what this did —
-    // snapped both halves through 1.5 rad on the first frame of the act, and
-    // the boundary lands at the top of #what-we-do, so that snap was the
-    // "sequence breaking" the user reported. The positions were already
-    // blended from ACT2_END; only the rotation was not.
-    lens.headPivot.rotation.y = ACT2_END.spin * join;
-    lens.heartPivot.rotation.y = -ACT2_END.spin * join;
+    // Act 2 hands over an assembled, front-facing mark, so the halves are
+    // simply held at rest. Stated every frame rather than trusted, so a fast
+    // scroll that skips Act 2's last frames still lands whole.
+    for (const p of [lens.headPivot, lens.heartPivot]) {
+      p.position.set(0, 0, 0);
+      p.rotation.set(0, 0, 0);
+      p.scale.setScalar(1);
+    }
 
     // Then the whole mark rotates edge-on and becomes a prism slab.
     const edge = THREE.MathUtils.smoothstep(t, 0.28, 0.72);

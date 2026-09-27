@@ -4,42 +4,77 @@ import { withPage } from '../test-support/helpers.mjs';
 
 const boot = (page) => page.waitForFunction(() => window.__tccReady, null, { timeout: 15000 });
 
-test('head and heart separate to opposite sides', async () => {
-  // Measured in WORLD space against the mark's own height. Asserting on
-  // pivot.position.x passed while the halves visibly never parted, because
-  // the pivots sat above the fit scale and their local units were ~0.09 of
-  // a world unit. A separation is only real if you can see it, so the
-  // yardstick is the mark itself.
+test('the mark stays whole — the halves never part in the picture plane', async () => {
+  // The act used to pull the halves 1.55 units apart. The user asked for a
+  // subtler reading (2026-09-27), so the halves may only breathe along Z.
+  // Sampled across the whole act and measured in WORLD space, in the mark's
+  // own frame (group rotation removed), because the sway turns the mark and
+  // a projected gap would move with it.
   const r = await withPage(async (page) => {
     await boot(page);
     return page.evaluate(() => {
       const d = window.__tccDirector, l = window.__tccLens;
-      const THREE = window.__tccStage.THREE;
-      const centreOf = (o) => {
-        o.updateMatrixWorld(true);
-        return new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3());
-      };
-      const markH = () => {
-        const b = new THREE.Box3().setFromObject(l.group);
-        return b.max.y - b.min.y;
-      };
-      const gap = () => {
-        l.group.updateMatrixWorld(true);
-        return centreOf(l.heartPivot).x - centreOf(l.headPivot).x;
-      };
-      setLocal(d, 'headheart', 0);
-      const joined = gap();
-      const h = markH();
-      setLocal(d, 'headheart', 0.85);
-      return { joined, split: gap(), markHeight: h };
+      let maxXY = 0, maxZ = 0, samples = 0;
+      for (let i = 0; i <= 40; i++) {
+        setLocal(d, 'headheart', i / 40);
+        for (const p of [l.headPivot, l.heartPivot]) {
+          maxXY = Math.max(maxXY, Math.hypot(p.position.x, p.position.y));
+          maxZ = Math.max(maxZ, Math.abs(p.position.z));
+        }
+        samples++;
+      }
+      return { maxXY, maxZ, samples, DEPTH: window.__tccAct2.DEPTH };
     });
   });
-  assert.ok(Math.abs(r.joined) < 0.3, `halves did not start joined — ${r.joined.toFixed(2)} apart`);
-  // A split narrower than the mark is tall would not read as a separation.
-  assert.ok(
-    r.split > r.markHeight,
-    `halves separated by only ${r.split.toFixed(2)} world units against a ${r.markHeight.toFixed(2)}-unit mark`
-  );
+  assert.equal(r.samples, 41);
+  assert.ok(r.maxXY < 1e-6, `a half moved ${r.maxXY.toFixed(3)} units in X/Y — the mark came apart`);
+  // The breath has to exist, and stay a breath.
+  assert.ok(r.maxZ > 0.05, `depth breath peaked at only ${r.maxZ.toFixed(3)} — it does nothing`);
+  assert.ok(r.maxZ <= r.DEPTH + 1e-6, `depth breath reached ${r.maxZ.toFixed(3)}, past its ${r.DEPTH} bound`);
+});
+
+test('the heart beats once, within bounds, and the head never swells', async () => {
+  const r = await withPage(async (page) => {
+    await boot(page);
+    return page.evaluate(() => {
+      const d = window.__tccDirector, l = window.__tccLens;
+      let maxHeart = 0, minHeart = 9, maxHead = 0, minHead = 9;
+      for (let i = 0; i <= 200; i++) {
+        setLocal(d, 'headheart', i / 200);
+        maxHeart = Math.max(maxHeart, l.heartPivot.scale.x);
+        minHeart = Math.min(minHeart, l.heartPivot.scale.x);
+        maxHead = Math.max(maxHead, l.headPivot.scale.x);
+        minHead = Math.min(minHead, l.headPivot.scale.x);
+      }
+      setLocal(d, 'headheart', 0);
+      const start = l.heartPivot.scale.x;
+      setLocal(d, 'headheart', 1);
+      return { maxHeart, minHeart, maxHead, minHead, start, end: l.heartPivot.scale.x };
+    });
+  });
+  assert.ok(r.maxHeart > 1.02, `heart peaked at ${r.maxHeart.toFixed(3)} — no visible beat`);
+  assert.ok(r.maxHeart < 1.08, `heart peaked at ${r.maxHeart.toFixed(3)} — a lurch, not a beat`);
+  assert.ok(r.minHeart >= 1 - 1e-6, `heart shrank to ${r.minHeart.toFixed(3)}`);
+  assert.ok(Math.abs(r.maxHead - 1) < 1e-6 && Math.abs(r.minHead - 1) < 1e-6, 'the head changed scale');
+  assert.ok(Math.abs(r.start - 1) < 1e-3 && Math.abs(r.end - 1) < 1e-3, 'the beat is not at rest at the act edges');
+});
+
+test('emphasis hands over from the head light to the heart light', async () => {
+  const r = await withPage(async (page) => {
+    await boot(page);
+    return page.evaluate(() => {
+      const d = window.__tccDirector, a = window.__tccAct2;
+      const at = (t) => {
+        setLocal(d, 'headheart', t);
+        return { head: a.headLight.intensity, heart: a.heartLight.intensity };
+      };
+      return { early: at(0.35), late: at(0.8) };
+    });
+  });
+  assert.ok(r.early.head > r.early.heart * 1.5, `early on the head is not leading: ${JSON.stringify(r.early)}`);
+  assert.ok(r.late.heart > r.late.head * 1.5, `late on the heart is not leading: ${JSON.stringify(r.late)}`);
+  // The half out of focus dims but never goes dark.
+  assert.ok(r.early.heart > 0 && r.late.head > 0, 'a light went fully dark mid-act');
 });
 
 test('the head is lit Space Grey and the heart TCC Purple', async () => {
@@ -54,16 +89,27 @@ test('the head is lit Space Grey and the heart TCC Purple', async () => {
   assert.equal(c.heart.toLowerCase(), 'd380eb');
 });
 
-test('the halves counter-rotate', async () => {
+test('the sway turns toward each half and stays bounded', async () => {
+  // Pure function of t (SESSION §2.4): assert the range, not merely change.
   const r = await withPage(async (page) => {
     await boot(page);
     return page.evaluate(() => {
-      setLocal(window.__tccDirector, 'headheart', 0.9);
-      const l = window.__tccLens;
-      return { head: l.headPivot.rotation.y, heart: l.heartPivot.rotation.y };
+      const d = window.__tccDirector, l = window.__tccLens;
+      let min = 0, max = 0;
+      for (let i = 0; i <= 100; i++) {
+        setLocal(d, 'headheart', i / 100);
+        if (i / 100 > 0.42) { // past the settle from Act 1's own yaw
+          min = Math.min(min, l.group.rotation.y);
+          max = Math.max(max, l.group.rotation.y);
+        }
+      }
+      setLocal(d, 'headheart', 1);
+      return { min, max, end: l.group.rotation.y, SWAY: window.__tccAct2.SWAY };
     });
   });
-  assert.ok(r.head * r.heart < 0, 'rotations share a sign — not counter-rotating');
+  assert.ok(r.min < -0.1 && r.max > 0.1, `sway did not turn both ways: ${r.min.toFixed(2)}..${r.max.toFixed(2)}`);
+  assert.ok(Math.max(-r.min, r.max) <= r.SWAY + 1e-6, 'sway exceeded its bound');
+  assert.ok(Math.abs(r.end) < 1e-3, `the mark is not front-on at hand-over: ${r.end.toFixed(3)} rad`);
 });
 
 test('separating the halves does not move the mark as a whole', async () => {
