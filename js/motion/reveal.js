@@ -1,3 +1,4 @@
+import { splitHeading, VARIANTS } from './kinetic.js';
 export function motionEnabled() {
   const shot = new URLSearchParams(location.search).get('shot') === '1';
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -65,7 +66,22 @@ export function initReveals() {
     }, 0.1);
 
     const lines = el.querySelectorAll('.line > span');
-    if (lines.length) {
+    // Kinetic: the letters arrive in the section's own direction, and the
+    // original markup is restored the moment they have landed.
+    const kind = section?.dataset.enter ?? 'rise';
+    const split = VARIANTS[kind] ? splitHeading(el) : null;
+    if (split) {
+      const v = VARIANTS[kind];
+      gsap.set(lines, { y: '0%', x: 0 });
+      const to = { duration: v.duration, ease: v.ease, stagger: v.stagger };
+      for (const k of Object.keys(v.from)) if (k !== 'transformOrigin') to[k] = k === 'opacity' ? 1 : 0;
+      tl.fromTo(split.chars, { ...v.from, transformPerspective: 700 }, to, 0.05);
+      tl.eventCallback('onComplete', () => {
+        split.restore();
+        el.style.willChange = 'auto';
+        for (const s of el.querySelectorAll('.line > span')) s.style.willChange = 'auto';
+      });
+    } else if (lines.length) {
       // Stagger raised from 0.06 to 0.12: at the old value the lines of a
       // two-line headline overlapped so heavily that they read as one block
       // moving, which is the opposite of arriving in sequence.

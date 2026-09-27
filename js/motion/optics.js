@@ -2,7 +2,7 @@ import { motionEnabled } from './reveal.js';
 
 /**
  * Optics — the page's text behaves like light through the lens it is built
- * around. One idea, six expressions of it, none of them decoration for its
+ * around. One idea, five expressions of it, none of them decoration for its
  * own sake:
  *
  *   dispersion    a headline resolves with its colour split converging —
@@ -15,8 +15,6 @@ import { motionEnabled } from './reveal.js';
  *   focal plane   statements (pull quotes, the film's one sentence) are read
  *                 into focus word by word as they cross the viewport. The
  *                 focal word resolves last, out of a soft blur.
- *   light         on a fine pointer, a headline catches the cursor as a
- *                 light source — the nearest glyphs take the brand gradient.
  *   calibration   section eyebrows resolve left to right like an instrument
  *                 finding its reading.
  *   recognise     the film's background word is swept by a band of focus as
@@ -145,64 +143,6 @@ function initFocalPlane() {
   });
 }
 
-// ---- 4 · the cursor is a light -------------------------------------------
-
-/**
- * On a fine pointer, a headline catches the cursor as light: the glyphs
- * nearest it take the brand gradient, fading back to ink with distance. It
- * covers nothing and moves nothing — the words stay exactly where they are
- * and fully legible; only the light on them changes. (Replaced a magnifier
- * that sat over the words it was meant to show — user, 2026-09-27.)
- *
- * The light is painted per line span, because each line is its own
- * transformed layer and a background-clip:text on the heading would not
- * reach glyphs composited in a child layer.
- */
-function initLight() {
-  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-
-  gsap.utils.toArray('[data-focus-pull]').forEach((head) => {
-    const spans = [...head.querySelectorAll('.line > span')];
-    if (!spans.length) return;
-    const S = { x: 0, y: 0 };
-    const paint = () => {
-      const hr = head.getBoundingClientRect();
-      for (const s of spans) {
-        const r = s.getBoundingClientRect();
-        s.style.setProperty('--mx', `${(S.x - (r.left - hr.left)).toFixed(1)}px`);
-        s.style.setProperty('--my', `${(S.y - (r.top - hr.top)).toFixed(1)}px`);
-      }
-    };
-    // The light trails the pointer a little — a lamp being carried, not a
-    // decal glued to the cursor.
-    const qx = gsap.quickTo(S, 'x', { duration: 0.45, ease: 'power3.out', onUpdate: paint });
-    const qy = gsap.quickTo(S, 'y', { duration: 0.45, ease: 'power3.out', onUpdate: paint });
-    const at = (e) => { const r = head.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
-
-    head.addEventListener('pointerenter', (e) => {
-      if (parseFloat(getComputedStyle(head).opacity) < 0.95) return;
-      [S.x, S.y] = at(e);
-      paint();
-      head.classList.remove('is-fading');
-      head.classList.add('is-lit');
-    });
-    head.addEventListener('pointermove', (e) => {
-      if (!head.classList.contains('is-lit')) return;
-      const [x, y] = at(e);
-      qx(x); qy(y);
-    });
-    let fade = 0;
-    head.addEventListener('pointerleave', () => {
-      if (!head.classList.contains('is-lit')) return;
-      // Keep the painted light while its radius transitions out.
-      head.classList.add('is-fading');
-      head.classList.remove('is-lit');
-      clearTimeout(fade);
-      fade = setTimeout(() => head.classList.remove('is-fading'), 300);
-    });
-  });
-}
-
 // ---- 5 · calibration ---------------------------------------------------------
 
 function initCalibration() {
@@ -290,7 +230,6 @@ export function initOptics() {
   initDispersion();
   initSpeed();
   initFocalPlane();
-  initLight();
   initCalibration();
   initRecognise();
 }

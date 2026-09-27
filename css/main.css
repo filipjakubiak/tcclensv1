@@ -1323,26 +1323,6 @@ html.motion-on [data-focus-pull] {
    shadow would show through the gradient as a solid ghost. */
 html.motion-on [data-focus-pull] .focus-word { text-shadow: none; }
 
-/* The cursor is a light. The radius is a registered length so it can
-   transition: the light swells in on enter and dies away on leave. */
-@property --lr { syntax: '<length>'; inherits: true; initial-value: 0px; }
-[data-focus-pull] { --lit-ink: var(--ink); --lr: 0px; transition: --lr 260ms var(--ease-out-strong); }
-.theme-dark [data-focus-pull] { --lit-ink: var(--canvas); }
-[data-focus-pull].is-lit { --lr: clamp(150px, 14vw, 240px); transition-duration: 420ms; }
-@supports (background-clip: text) or (-webkit-background-clip: text) {
-  /* Only while lit (and while the light dies away): at any other time the
-     glyphs are plain ink, and the arrival dispersion paints as designed. */
-  html.motion-on [data-focus-pull]:is(.is-lit, .is-fading) .line > span {
-    background-image: radial-gradient(circle var(--lr) at var(--mx, -999px) var(--my, -999px),
-      var(--accent) 0%, var(--support) 55%, var(--lit-ink) 100%);
-    -webkit-background-clip: text; background-clip: text;
-    color: transparent;
-  }
-  /* With transparent glyphs, a dispersion shadow would show through as a
-     solid ghost; the light and the split never need to coexist. */
-  html.motion-on [data-focus-pull]:is(.is-lit, .is-fading) { text-shadow: none; }
-}
-
 /* Calibration: the real text holds the layout (and the accessibility tree);
    the overlay scrambles on top of it and is gone when it resolves. */
 .eb__wrap { position: relative; display: inline-block; }
@@ -1500,3 +1480,240 @@ html.motion-on .fork__points li:not(.is-lit)::before { background: var(--support
   .fork__panel--retail .fork__points li { text-align: right; padding-left: 0; padding-right: 1.4rem; }
   .fork__panel--retail .fork__points li::before { left: auto; right: 0; }
 }
+
+/* Kinetic headlines (js/motion/kinetic.js): letters are inline-blocks only
+   while they are arriving; the original markup returns when they land. */
+.is-kinetic .kw { display: inline-block; white-space: nowrap; }
+.is-kinetic .kc { display: inline-block; will-change: transform, opacity; }
+
+/* =====================================================================
+   #capabilities — the showreel (js/motion/showreel.js, 2026-09-27)
+   Five clips, alternating sides. Each clip's slot plays a live interface
+   of the product it describes while it is on screen. Every rule states the
+   FINISHED frame by default; html.motion-on without .is-on parks the start.
+   ===================================================================== */
+.spectrum { grid-template-columns: 1fr; gap: clamp(1rem, 2.5vw, 1.75rem); counter-reset: cap; }
+.capability {
+  counter-increment: cap;
+  display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  grid-template-rows: auto auto 1fr; align-content: center;
+  column-gap: clamp(1.5rem, 4vw, 3.5rem); row-gap: .75rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+.capability > .capability__visual { grid-row: 1 / span 3; grid-column: 1; margin: 0; }
+.capability > :not(.capability__visual) { grid-column: 2; align-self: end; }
+.capability > h3 { align-self: center; font-size: clamp(1.5rem, 2.6vw, 2.25rem); letter-spacing: var(--track-tight); }
+.capability > p { align-self: start; max-width: 40ch; font-size: 1rem; }
+.capability:nth-child(even) { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+.capability:nth-child(even) > .capability__visual { grid-column: 2; }
+.capability:nth-child(even) > :not(.capability__visual) { grid-column: 1; }
+.capability .pill::before { content: counter(cap, decimal-leading-zero) " \2014  "; white-space: pre; opacity: .6; }
+
+.capability[data-gradient] .capability__visual {
+  background: color-mix(in srgb, var(--canvas) 30%, transparent);
+  display: grid; place-items: center; padding: clamp(.75rem, 2vw, 1.5rem);
+}
+
+/* The window every interface sits in. */
+.scr {
+  width: 100%; height: 100%; display: flex; flex-direction: column;
+  border-radius: 14px; overflow: hidden;
+  background: color-mix(in srgb, var(--canvas) 94%, transparent);
+  box-shadow: 0 1px 0 var(--hairline), 0 24px 48px -30px var(--accent-shadow);
+  font-size: clamp(.6875rem, 1vw, .8125rem); color: var(--ink);
+}
+.scr__bar { display: flex; align-items: center; gap: .35rem; padding: .55rem .8rem; border-bottom: 1px solid var(--hairline); }
+.scr__bar i { width: 7px; height: 7px; border-radius: 50%; background: var(--hairline); }
+.scr__title { margin-left: .5rem; font-weight: 600; }
+.scr__live { margin-left: auto; font-size: .6875rem; font-weight: 600; color: var(--accent-strong); display: inline-flex; align-items: center; gap: .35rem; }
+.scr__live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.scr__body { position: relative; flex: 1; padding: clamp(.6rem, 1.6vw, 1.2rem); display: flex; flex-direction: column; justify-content: center; gap: .75rem; min-height: 0; }
+.scr__chip {
+  position: absolute; right: clamp(.6rem, 1.6vw, 1.2rem); top: clamp(.6rem, 1.6vw, 1.2rem);
+  padding: .3rem .65rem; border-radius: var(--r-pill); font-weight: 600;
+  background-image: var(--grad-core); color: var(--ink);
+  transition: opacity 360ms var(--ease-out-strong) var(--at, 0ms), transform 460ms var(--ease-out-strong) var(--at, 0ms);
+}
+html.motion-on .capability:not(.is-on) .scr__chip { opacity: 0; transform: translateY(8px); transition-delay: 0ms; }
+
+/* 1 · Quest — the path fills, the milestones light, the mission ticks. */
+.quest__map { width: 100%; height: auto; overflow: visible; }
+.quest__track { fill: none; stroke: var(--hairline); stroke-width: 3; stroke-dasharray: 2 7; stroke-linecap: round; }
+.quest__done { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: .25; transition: stroke-dashoffset 1400ms var(--ease-out-strong) 150ms; }
+html.motion-on .capability:not(.is-on) .quest__done { stroke-dashoffset: 1; transition-duration: 0ms; }
+.quest__node circle { fill: var(--canvas); stroke: var(--hairline); stroke-width: 2; }
+.quest__node.is-done circle { fill: var(--accent); stroke: var(--accent); }
+.quest__node.is-done path { fill: none; stroke: var(--canvas); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.quest__node.is-now circle { stroke: var(--accent); stroke-width: 3; }
+.quest__node.is-locked rect, .quest__node.is-locked path { fill: none; stroke: var(--ink-3); stroke-width: 1.5; }
+.quest__node { transition: opacity 360ms var(--ease-out-strong); transition-delay: calc(200ms + var(--n) * 260ms); }
+html.motion-on .capability:not(.is-on) .quest__node { opacity: .25; transition-delay: 0ms; }
+.quest__node .quest__ring { fill: none; stroke: var(--accent); transform-box: fill-box; transform-origin: center; opacity: 0; }
+html.motion-on .capability.is-playing .quest__ring { animation: scr-ring 1.8s var(--ease-out-strong) 1.2s infinite; }
+@keyframes scr-ring { from { transform: scale(1); opacity: .8; } to { transform: scale(2.4); opacity: 0; } }
+.quest__mission { display: grid; grid-template-columns: 1fr auto; gap: .4rem; padding: .6rem .75rem; border: 1px solid var(--hairline); border-radius: 10px; }
+.quest__label { font-weight: 600; }
+.quest__count { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.quest__bar { grid-column: 1 / -1; height: 5px; border-radius: var(--r-pill); background: var(--hairline); overflow: hidden; }
+.quest__bar i { display: block; height: 100%; width: 66%; background-image: var(--grad-core); transform-origin: left; transition: transform 900ms var(--ease-out-strong) 1300ms; }
+html.motion-on .capability:not(.is-on) .quest__bar i { transform: scaleX(0); transition-duration: 0ms; transition-delay: 0ms; }
+.scr--quest .scr__chip { --at: 2100ms; }
+
+/* 2 · Loyalty World — the tier ring fills, points tick, offers arrive. */
+@property --ring { syntax: '<number>'; inherits: false; initial-value: 0.72; }
+.world { flex-direction: row; align-items: center; gap: clamp(.75rem, 2.4vw, 1.75rem); }
+.world__ring {
+  --ring: .72;
+  flex: 0 0 auto; width: clamp(96px, 13vw, 150px); aspect-ratio: 1; border-radius: 50%;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(closest-side, var(--canvas) 80%, transparent 81%),
+    conic-gradient(var(--accent) calc(var(--ring) * 360deg), var(--hairline) 0);
+  transition: --ring 1400ms var(--ease-out-strong) 200ms;
+}
+html.motion-on .capability:not(.is-on) .world__ring { --ring: 0; transition-duration: 0ms; }
+.world__pts { display: grid; text-align: center; line-height: 1.05; }
+.world__pts b { font-size: clamp(1.1rem, 2vw, 1.6rem); font-variant-numeric: tabular-nums; }
+.world__pts small { color: var(--ink-3); font-size: .6875rem; }
+.world__side { display: grid; gap: .45rem; min-width: 0; flex: 1; }
+.world__tier { font-weight: 700; font-size: 1.05em; }
+.world__tier em { display: block; font-style: normal; font-weight: 400; color: var(--ink-2); font-size: .85em; }
+.world__offer {
+  display: flex; align-items: center; gap: .5rem; padding: .45rem .6rem;
+  border: 1px solid var(--hairline); border-radius: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: opacity 420ms var(--ease-out-strong), transform 520ms var(--ease-out-strong);
+  transition-delay: calc(700ms + var(--n) * 140ms);
+}
+.world__offer i { flex: 0 0 auto; width: 14px; height: 14px; border-radius: 4px; background-image: var(--grad-core); }
+html.motion-on .capability:not(.is-on) .world__offer { opacity: 0; transform: translateX(14px); transition-delay: 0ms; }
+
+/* 3 · Games Hub — the library, then a wheel that spins and lands. */
+.games { flex-direction: row; align-items: center; justify-content: space-between; gap: 1rem; }
+.games__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .45rem; width: 44%; }
+.games__grid i {
+  aspect-ratio: 1; border-radius: 9px;
+  background: color-mix(in srgb, var(--accent) calc(12% + var(--n) * 7%), var(--canvas));
+  transition: opacity 360ms var(--ease-out-strong), transform 460ms var(--ease-out-strong);
+  transition-delay: calc(var(--n) * 70ms);
+}
+html.motion-on .capability:not(.is-on) .games__grid i { opacity: 0; transform: scale(.85); transition-delay: 0ms; }
+.games__wheel { position: relative; width: clamp(96px, 14vw, 160px); aspect-ratio: 1; }
+.games__disc {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(
+    var(--accent) 0 60deg, var(--canvas) 0 120deg, var(--support) 0 180deg,
+    var(--canvas) 0 240deg, color-mix(in srgb, var(--accent) 55%, var(--canvas)) 0 300deg, var(--canvas) 0);
+  box-shadow: inset 0 0 0 2px var(--hairline), 0 12px 26px -18px var(--accent-shadow);
+  transform: rotate(1470deg);
+  transition: transform 2600ms cubic-bezier(.16, .84, .2, 1) 400ms;
+}
+html.motion-on .capability:not(.is-on) .games__disc { transform: rotate(0deg); transition-duration: 0ms; transition-delay: 0ms; }
+.games__hub { position: absolute; inset: 38%; border-radius: 50%; background: var(--canvas); box-shadow: 0 0 0 2px var(--hairline); }
+.games__pointer { position: absolute; left: 50%; top: -6px; z-index: 1; width: 0; height: 0; transform: translateX(-50%); border: 7px solid transparent; border-top: 11px solid var(--ink); }
+.games__win { top: auto; bottom: clamp(.6rem, 1.6vw, 1.2rem); --at: 3100ms; }
+
+/* 4 · Mobile — the card flips to its barcode, points drop in. */
+.scr--mobile { background: transparent; box-shadow: none; display: grid; place-items: center; }
+.phone {
+  position: relative; height: 100%; aspect-ratio: 9 / 16; max-height: 100%;
+  display: flex; flex-direction: column; gap: .45rem; padding: 1.4rem .6rem .6rem;
+  border-radius: 22px; background: var(--canvas);
+  box-shadow: 0 0 0 5px var(--ink), 0 24px 40px -24px var(--accent-shadow);
+  font-size: .6875rem; overflow: hidden;
+}
+.phone__notch { position: absolute; top: .45rem; left: 50%; width: 34%; height: .45rem; transform: translateX(-50%); border-radius: var(--r-pill); background: var(--ink); }
+.phone__card { position: relative; flex: 0 0 auto; aspect-ratio: 1.6; perspective: 600px; }
+.phone__front, .phone__back {
+  position: absolute; inset: 0; border-radius: 9px; backface-visibility: hidden;
+  transition: transform 800ms var(--ease-out-strong) 700ms;
+}
+.phone__front { display: flex; flex-direction: column; justify-content: space-between; padding: .5rem; background-image: var(--grad-core); transform: rotateY(-180deg); }
+.phone__front b { font-size: .8125rem; }
+.phone__back {
+  background:
+    repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 5px, transparent 5px 8px) center / 80% 60% no-repeat,
+    var(--canvas);
+  box-shadow: inset 0 0 0 1px var(--hairline); transform: rotateY(0deg);
+}
+html.motion-on .capability:not(.is-on) .phone__front { transform: rotateY(0deg); transition-duration: 0ms; transition-delay: 0ms; }
+html.motion-on .capability:not(.is-on) .phone__back { transform: rotateY(180deg); transition-duration: 0ms; transition-delay: 0ms; }
+.phone__toast {
+  align-self: center; padding: .25rem .6rem; border-radius: var(--r-pill);
+  background: var(--ink); color: var(--canvas); font-weight: 700;
+  transition: opacity 360ms var(--ease-out-strong) 1600ms, transform 460ms var(--ease-out-strong) 1600ms;
+}
+html.motion-on .capability:not(.is-on) .phone__toast { opacity: 0; transform: translateY(-10px); transition-delay: 0ms; }
+.phone__row {
+  display: flex; align-items: center; gap: .4rem; padding: .35rem .4rem; border-radius: 7px;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  transition: opacity 360ms var(--ease-out-strong), transform 460ms var(--ease-out-strong);
+  transition-delay: calc(1900ms + var(--n) * 140ms);
+}
+.phone__row i { width: 10px; height: 10px; border-radius: 3px; background: var(--support); }
+html.motion-on .capability:not(.is-on) .phone__row { opacity: 0; transform: translateY(8px); transition-delay: 0ms; }
+
+/* 5 · Community — the goal fills, the crowd counts, hearts rise. */
+.community__cause { font-weight: 700; font-size: 1.15em; }
+.community__meta { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.community__bar { height: 8px; border-radius: var(--r-pill); background: var(--hairline); overflow: hidden; }
+.community__bar i { display: block; height: 100%; width: 84%; background-image: var(--grad-core); transform-origin: left; transition: transform 1500ms var(--ease-out-strong) 250ms; }
+html.motion-on .capability:not(.is-on) .community__bar i { transform: scaleX(0); transition-duration: 0ms; transition-delay: 0ms; }
+.community__count { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.community__count b { color: var(--ink); }
+.community__hearts { position: absolute; right: 1rem; bottom: 1rem; width: 60px; height: 70%; pointer-events: none; }
+.community__hearts i {
+  position: absolute; bottom: 0; left: calc(var(--n) * 11px); width: 10px; height: 10px;
+  background: var(--accent); transform: rotate(45deg); opacity: 0;
+}
+.community__hearts i::before, .community__hearts i::after { content: ''; position: absolute; width: 10px; height: 10px; border-radius: 50%; background: inherit; }
+.community__hearts i::before { left: -5px; }
+.community__hearts i::after { top: -5px; }
+html.motion-on .capability.is-playing .community__hearts i { animation: scr-heart 2.6s var(--ease-out-strong) infinite; animation-delay: calc(var(--n) * 480ms); }
+@keyframes scr-heart {
+  0% { transform: translateY(0) rotate(45deg) scale(.6); opacity: 0; }
+  20% { opacity: .9; }
+  100% { transform: translateY(-120px) rotate(45deg) scale(1); opacity: 0; }
+}
+
+/* The clip cuts in: its frame opens from a slightly smaller window as it
+   scrolls up (--cut is scrubbed; 0 by default, so no JS reads whole). */
+html.motion-on .capability__visual { clip-path: inset(var(--cut, 0%) round calc(var(--r-card) - 8px)); }
+
+@media (max-width: 860px) {
+  .capability, .capability:nth-child(even) { grid-template-columns: 1fr; }
+  .capability > .capability__visual, .capability:nth-child(even) > .capability__visual { grid-row: auto; grid-column: 1; }
+  .capability > :not(.capability__visual), .capability:nth-child(even) > :not(.capability__visual) { grid-column: 1; }
+}
+/* The copy sits beside its clip as one centred block, not spread down it. */
+.capability { grid-template-rows: 1fr auto auto auto 1fr; }
+.capability > .capability__visual { grid-row: 1 / -1; }
+.capability > .pill { grid-row: 2; justify-self: start; align-self: end; }
+.capability > h3 { grid-row: 3; align-self: start; }
+.capability > p { grid-row: 4; }
+@media (max-width: 860px) {
+  .capability { grid-template-rows: auto; }
+  .capability > .capability__visual, .capability > .pill, .capability > h3, .capability > p { grid-row: auto; }
+}
+
+/* =====================================================================
+   Scenes (js/motion/scenes.js, 2026-09-27) — the sections that stood still
+   ===================================================================== */
+/* Kinetic band: the cut into the showreel. */
+.band { overflow: hidden; margin: 0 0 clamp(3rem, 8vh, 5rem); pointer-events: none; user-select: none; }
+.band__row {
+  display: flex; gap: .45em; white-space: nowrap; width: max-content;
+  font-size: clamp(3rem, 9vw, 8.5rem); font-weight: 700; line-height: 1;
+  letter-spacing: var(--track-display);
+}
+.band__row span::after { content: '\2022'; margin-left: .45em; font-size: .4em; vertical-align: middle; color: var(--accent); -webkit-text-stroke: 0; }
+.band__row span { color: transparent; -webkit-text-stroke: 1px color-mix(in srgb, var(--ink) 35%, transparent); }
+.band__row--rev { margin-top: .05em; }
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .band__row--rev span { -webkit-text-stroke: 0; background-image: var(--grad-core); -webkit-background-clip: text; background-clip: text; }
+}
+
+/* Film: the lens opens on the film. --iris is scrubbed; default fully open. */
+html.motion-on .film__frame { clip-path: circle(var(--iris, 75%) at 50% 50%); }
+
+/* Insights: each photo develops up its frame. */
+.insight__img { overflow: clip; }

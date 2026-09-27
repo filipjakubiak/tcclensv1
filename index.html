@@ -263,6 +263,12 @@
 
   <!-- ============ 7 · Capabilities spectrum ============ -->
   <section id="capabilities" data-enter="lift">
+    <!-- Kinetic cut into the reel: the five capabilities as type, the two
+         rows driven in opposite directions by the scroll. Decorative. -->
+    <div class="band" aria-hidden="true">
+      <div class="band__row"><span>Gamification</span><span>Platform</span><span>Engagement</span><span>Mobile</span><span>Local</span><span>Gamification</span><span>Platform</span><span>Engagement</span><span>Mobile</span><span>Local</span><span>Gamification</span><span>Platform</span><span>Engagement</span><span>Mobile</span><span>Local</span></div>
+      <div class="band__row band__row--rev"><span>Gamification</span><span>Platform</span><span>Engagement</span><span>Mobile</span><span>Local</span><span>Gamification</span><span>Platform</span><span>Engagement</span><span>Mobile</span><span>Local</span><span>Gamification</span><span>Platform</span><span>Engagement</span><span>Mobile</span><span>Local</span></div>
+    </div>
     <div class="container">
       <p class="eyebrow">What we build</p>
       <h2 class="heading" data-focus-pull>
@@ -272,37 +278,87 @@
       <p class="lead" data-reveal>No two retailers share the same shopper, market or moment — so no two programmes should look alike. Our capabilities work as a system: mix the mechanics, platforms and rewards that fit, then scale what works. From gamified quests to always-on digital worlds, this is how loyalty gets built.</p>
       <ul class="spectrum" data-surface-group>
         <li class="capability card" data-gradient="creativity" data-lift>
-          <div class="capability__visual">
-            <picture>
-              <source type="image/avif" srcset="assets/img/optimized/loyalty-quest-1-640.avif 640w, assets/img/optimized/loyalty-quest-1-1024.avif 1024w, assets/img/optimized/loyalty-quest-1-1600.avif 1600w" sizes="(max-width: 860px) 100vw, 25vw">
-              <source type="image/webp" srcset="assets/img/optimized/loyalty-quest-1-640.webp 640w, assets/img/optimized/loyalty-quest-1-1024.webp 1024w, assets/img/optimized/loyalty-quest-1-1600.webp 1600w" sizes="(max-width: 860px) 100vw, 25vw">
-              <img src="assets/img/optimized/loyalty-quest-1-1024.webp" alt="LoyaltyQuest in play" width="1024" height="572" loading="lazy" decoding="async">
-            </picture>
+          <div class="capability__visual" aria-hidden="true">
+            <div class="scr scr--quest"><div class="scr__bar"><i></i><i></i><i></i><span class="scr__title">LoyaltyQuest · Week 3</span><span class="scr__live">Live</span></div>
+              <div class="scr__body">
+                <svg class="quest__map" viewBox="0 0 320 110" focusable="false">
+                  <path class="quest__track" d="M20 85 L90 30 L160 85 L230 30 L300 85"/>
+                  <path class="quest__done" pathLength="1" d="M20 85 L90 30 L160 85 L230 30 L300 85"/>
+                  <g class="quest__node is-done" style="--n:0" transform="translate(20 85)"><circle r="10"/><path d="M-4 0 L-1 3 L4 -3"/></g>
+                  <g class="quest__node is-done" style="--n:1" transform="translate(90 30)"><circle r="10"/><path d="M-4 0 L-1 3 L4 -3"/></g>
+                  <g class="quest__node is-done" style="--n:2" transform="translate(160 85)"><circle r="10"/><path d="M-4 0 L-1 3 L4 -3"/></g>
+                  <g class="quest__node is-now" style="--n:3" transform="translate(230 30)"><circle class="quest__ring" r="10"/><circle r="10"/></g>
+                  <g class="quest__node is-locked" style="--n:4" transform="translate(300 85)"><circle r="10"/><rect x="-4" y="-2" width="8" height="6" rx="1"/><path d="M-2.5 -2 V-4 a2.5 2.5 0 0 1 5 0 V-2"/></g>
+                </svg>
+                <div class="quest__mission"><span class="quest__label">Buy 3 fresh items</span><span class="quest__count"><b data-tick="2">2</b>/3</span><span class="quest__bar"><i></i></span></div>
+                <span class="scr__chip">+50 pts</span>
+              </div>
+            </div>
           </div>
           <span class="pill">Gamification</span>
           <h3>tcc LoyaltyQuest&trade;</h3>
           <p>Gamified campaigns that turn everyday spend into a journey worth completing. Missions, milestones and rewards keep shoppers coming back to progress — and to win.</p>
         </li>
         <li class="capability card" data-gradient="operational" data-lift>
-          <div class="capability__visual" aria-hidden="true"></div>
+          <div class="capability__visual" aria-hidden="true">
+            <div class="scr scr--world"><div class="scr__bar"><i></i><i></i><i></i><span class="scr__title">Loyalty World</span><span class="scr__live">Live</span></div>
+              <div class="scr__body world">
+                <div class="world__ring"><span class="world__pts"><b data-tick="2460" data-from="1980">2,460</b><small>points</small></span></div>
+                <div class="world__side">
+                  <span class="world__tier">Gold member <em>540 to Platinum</em></span>
+                  <span class="world__offer" style="--n:0"><i></i>Double points on fresh</span>
+                  <span class="world__offer" style="--n:1"><i></i>Free coffee on Friday</span>
+                  <span class="world__offer" style="--n:2"><i></i>Your birthday reward</span>
+                </div>
+              </div>
+            </div>
+          </div>
           <span class="pill">Platform</span>
           <h3>Loyalty World&trade;</h3>
           <p>A digital loyalty platform that gives your programme a permanent home. Always-on, personalised and endlessly extendable, it keeps the relationship alive between every store visit.</p>
         </li>
         <li class="capability card" data-gradient="performance" data-lift>
-          <div class="capability__visual" aria-hidden="true"></div>
+          <div class="capability__visual" aria-hidden="true">
+            <div class="scr scr--games"><div class="scr__bar"><i></i><i></i><i></i><span class="scr__title">Games Hub</span><span class="scr__live">Live</span></div>
+              <div class="scr__body games">
+                <div class="games__grid"><i style="--n:0"></i><i style="--n:1"></i><i style="--n:2"></i><i style="--n:3"></i><i style="--n:4"></i><i style="--n:5"></i></div>
+                <div class="games__wheel"><span class="games__pointer"></span><span class="games__disc"></span><span class="games__hub"></span></div>
+                <span class="scr__chip games__win">You won 50 pts</span>
+              </div>
+            </div>
+          </div>
           <span class="pill">Engagement</span>
           <h3>Games Hub</h3>
           <p>A library of ready-to-play digital games that inject fun, surprise and daily reasons to return — dropped straight into your app or programme.</p>
         </li>
         <li class="capability card" data-gradient="insight" data-lift>
-          <div class="capability__visual" aria-hidden="true"></div>
+          <div class="capability__visual" aria-hidden="true">
+            <div class="scr scr--mobile">
+              <div class="phone">
+                <span class="phone__notch"></span>
+                <div class="phone__card"><span class="phone__front"><b>tcc rewards</b><span>•••• 4821</span></span><span class="phone__back"></span></div>
+                <span class="phone__toast">+120 pts</span>
+                <span class="phone__row" style="--n:0"><i></i>Weekly shop</span>
+                <span class="phone__row" style="--n:1"><i></i>Stamp collected</span>
+              </div>
+            </div>
+          </div>
           <span class="pill">Mobile</span>
           <h3>Mobile Loyalty</h3>
           <p>Loyalty that lives where your shoppers already do — in their pocket. Earning, tracking and redeeming rewards, made effortless.</p>
         </li>
         <li class="capability card" data-gradient="sustainability" data-lift>
-          <div class="capability__visual" aria-hidden="true"></div>
+          <div class="capability__visual" aria-hidden="true">
+            <div class="scr scr--community"><div class="scr__bar"><i></i><i></i><i></i><span class="scr__title">Community</span><span class="scr__live">Live</span></div>
+              <div class="scr__body community">
+                <span class="community__cause">Local school sports kit</span>
+                <span class="community__meta"><b data-tick="84">84</b>% funded</span>
+                <span class="community__bar"><i></i></span>
+                <span class="community__count"><b data-tick="12480" data-from="11200">12,480</b> shoppers joined</span>
+                <span class="community__hearts"><i style="--n:0"></i><i style="--n:1"></i><i style="--n:2"></i><i style="--n:3"></i><i style="--n:4"></i></span>
+              </div>
+            </div>
+          </div>
           <span class="pill">Local</span>
           <h3>Community</h3>
           <p>Purpose-led programmes that connect your brand to the causes your shoppers care about — to schools, to neighbourhoods, to the planet.</p>

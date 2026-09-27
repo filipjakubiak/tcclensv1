@@ -336,3 +336,18 @@ Full suite **120/121** — only the known marquee instrument failure (see above)
 - The old open item "fork images are really long" is FIXED: `.fork__img { min-height: 0 }` —
   aspect-ratio was losing to the automatic minimum height.
 - Suite **133/134** — only the known marquee instrument failure.
+
+## ▶ 2026-09-27 (5) — the showreel pass
+
+The page is framed as a SHOWREEL of what TCC does (user). Added:
+- **Kinetic headlines** (`js/motion/kinetic.js`, wired in `reveal.js`): letters arrive per the
+  section's `data-enter` (sweep / flip / drop / rise); original markup restored on landing, so
+  focus-word gradients and screen readers see the untouched DOM. Hero excluded.
+- **#capabilities showreel** (`js/motion/showreel.js`): each card's 16:9 `.capability__visual`
+  holds a live product interface (Quest path, Loyalty World tier ring, Games wheel, Mobile card
+  flip, Community goal). Plays on arrival, resets on leave, replays on return. Clips alternate
+  sides. UI copy/figures inside the mocks are ILLUSTRATIVE — flag for client sign-off.
+- **Scenes** (`js/motion/scenes.js`): kinetic word band as the cut into capabilities, film iris,
+  insight photos develop, contact lines converge, partner logos wave.
+- The cursor-light hover on headlines was REMOVED at the user's request ("bez sensu póki co").
+- Suite **136/137** — only the known marquee instrument failure.

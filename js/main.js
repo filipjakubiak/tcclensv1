@@ -10,6 +10,8 @@ import { initNetwork } from './motion/network.js';
 import { initCrowd } from './motion/crowd.js';
 import { initOptics } from './motion/optics.js';
 import { initAisle } from './motion/aisle.js';
+import { initShowreel } from './motion/showreel.js';
+import { initScenes } from './motion/scenes.js';
 import { initMarkPointer, initMarquee } from './motion/interact.js';
 import { createStage } from './stage/Stage.js';
 import { buildEnvironment } from './stage/env.js';
@@ -41,7 +43,7 @@ initUplift();
 initLoyaltyGap();
 // Guarded: these run before the WebGL stage boots, and a decorative
 // failure must never take the stage down with it.
-for (const init of [initAisle, initCrowd, initNetwork, initOptics]) {
+for (const init of [initAisle, initShowreel, initScenes, initCrowd, initNetwork, initOptics]) {
   try { init(); } catch (err) { console.error(err); }
 }
 

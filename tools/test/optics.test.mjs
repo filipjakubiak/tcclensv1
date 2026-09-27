@@ -117,38 +117,3 @@ test('eyebrows calibrate back to their exact copy', async () => {
   assert.equal(r.fx, '');
   assert.equal(r.calibrating, false);
 });
-
-test('a headline catches the cursor as light, and lets it go', async () => {
-  const r = await withPage(async (page) => {
-    await boot(page);
-    await wheelTo(page, '#careers .heading', 0.35);
-    await page.waitForTimeout(800);
-    const b = await page.evaluate(() => { const q = document.querySelector('#careers .heading').getBoundingClientRect(); return { x: q.left + q.width * 0.3, y: q.top + q.height * 0.6 }; });
-    await page.mouse.move(b.x, b.y, { steps: 5 });
-    await page.waitForTimeout(600);
-    const on = await page.evaluate(() => {
-      const h = document.querySelector('#careers .heading');
-      const s = h.querySelector('.line > span');
-      return {
-        lit: h.classList.contains('is-lit'),
-        bg: getComputedStyle(s).backgroundImage,
-        text: h.textContent.replace(/\s+/g, ' ').trim(),
-        // Nothing may be layered over the words.
-        overlays: h.querySelectorAll('div').length,
-      };
-    });
-    await page.mouse.move(5, 5, { steps: 3 });
-    await page.waitForTimeout(700);
-    const off = await page.evaluate(() => {
-      const h = document.querySelector('#careers .heading');
-      return { cls: h.className, bg: getComputedStyle(h.querySelector('.line > span')).backgroundImage };
-    });
-    return { on, off };
-  });
-  assert.equal(r.on.lit, true);
-  assert.match(r.on.bg, /radial-gradient/);
-  assert.equal(r.on.text, 'Loyalty is built by people.');
-  assert.equal(r.on.overlays, 0);
-  assert.doesNotMatch(r.off.cls, /is-lit|is-fading/);
-  assert.equal(r.off.bg, 'none', 'the light was not released');
-});
