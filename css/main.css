@@ -745,36 +745,6 @@ html.marquee-js .marquee__track { animation: none; }
 .global__num { display: block; font-weight: 700; font-size: clamp(8rem, 20vw, 16rem); line-height: .85; letter-spacing: var(--track-display); margin-top: 1rem; }
 .global__label { font-size: var(--lead); font-weight: 600; color: var(--ink-2); margin-top: 1rem; }
 .global__para { margin-bottom: clamp(2rem, 5vh, 3rem); }
-.global__offices { list-style: none; margin: 0; padding: 0; }
-/* The divider is a drawable rule, not a border: a border cannot be animated
-   without relayout, and this one draws left-to-right ahead of its city.
-   Default --rule-s is 1, so the list is complete with no JS. */
-.global__offices li {
-  position: relative;
-  display: flex; justify-content: space-between; align-items: baseline;
-  padding-block: 1.1rem; font-weight: 600; font-size: 1.25rem;
-}
-.global__offices li::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: var(--hairline);
-  transform: scaleX(var(--rule-s, 1));
-  transform-origin: left center;
-  transition: background var(--dur-ui) var(--ease-out-strong);
-}
-/* The list was inert once it had drawn itself in. Dwelling on a city now
-   lifts its rule to the brand gradient and brings its country up out of the
-   muted tier. :focus-within as well as :hover — the rows carry tabindex, so
-   the same response is reachable from the keyboard, which is the part
-   hover-only effects usually miss. */
-.global__offices li { transition: color var(--dur-ui) var(--ease-out-strong); }
-.global__offices li:hover::before,
-.global__offices li:focus-within::before,
-.global__offices li:focus::before { background-image: var(--grad-core); }
-.global__offices li:hover .global__meta,
-.global__offices li:focus .global__meta { color: var(--ink-2); }
-.global__offices li:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-.global__offices .global__meta { transition: color var(--dur-ui) var(--ease-out-strong); }
-.global__meta { color: var(--ink-3); font-weight: 400; font-size: .875rem; }
 
 /* ---- 11 · Insights ---- */
 .insights__intro { max-width: 58ch; margin-bottom: clamp(2.5rem, 6vh, 4rem); }
@@ -824,7 +794,6 @@ html.marquee-js .marquee__track { animation: none; }
    at 0 with the tween running against a value nothing was reading. */
 html.motion-on .careers__values .value { --rule-s: 0; }
 /* Same retracted-only-while-motion-is-on contract for the offices rules. */
-html.motion-on .global__offices li { --rule-s: 0; }
 
 .careers__img { aspect-ratio: 4 / 5; }
 /* The picture needs a definite height for the image's percentage height to
@@ -1295,109 +1264,6 @@ html.motion-on .monitor__tick { --tick-o: 0; }
 }
 
 /* =====================================================================
-   #global network map (js/motion/network.js, 2026-09-27)
-   An interface panel: status bar, dot-matrix world, lens, readout.
-   Translucent like the bento cells so the section's live canvas still
-   moves behind it.
-   ===================================================================== */
-.netmap {
-  margin: clamp(3rem, 8vh, 5rem) 0 0;
-  border: 1px solid var(--hairline); border-radius: var(--r-card);
-  /* 90%: the glass mark passes right behind this panel, and at the bento
-     cells' 72% it competed with the map it sits under. */
-  background: color-mix(in srgb, var(--canvas) 90%, transparent);
-  overflow: hidden;
-}
-.netmap__bar, .netmap__readout {
-  display: flex; align-items: center; gap: 1.25rem;
-  padding: .85rem clamp(1rem, 2vw, 1.5rem);
-  font-size: var(--micro); letter-spacing: var(--track-micro); font-weight: 600;
-  color: var(--ink-2);
-}
-.netmap__bar { border-bottom: 1px solid var(--hairline); text-transform: uppercase; }
-.netmap__stat { margin-left: auto; font-variant-numeric: tabular-nums; }
-.netmap__stat b { color: var(--ink); font-weight: 700; }
-.netmap__sep { display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: var(--ink-3); vertical-align: middle; margin-inline: .35rem; }
-.netmap__utc { font-variant-numeric: tabular-nums; color: var(--ink-3); }
-.netmap__live { display: inline-flex; align-items: center; gap: .5rem; color: var(--ink); }
-.netmap__live i { position: relative; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-/* The live dot breathes only while the panel is on screen. */
-html.motion-on .netmap.is-visible .netmap__live i::after {
-  content: ''; position: absolute; inset: 0; border-radius: 50%;
-  background: var(--accent); animation: net-live 2.4s var(--ease-out-strong) infinite;
-}
-@keyframes net-live { from { transform: scale(1); opacity: .6; } to { transform: scale(3.2); opacity: 0; } }
-
-.netmap__stage { position: relative; aspect-ratio: 310 / 109; overflow: hidden; }
-.netmap__land, .netmap__net { position: absolute; inset: 0; width: 100%; height: 100%; }
-.netmap__net { overflow: visible; }
-
-.netmap__arc {
-  fill: none; stroke: var(--accent); stroke-width: 1.25; stroke-linecap: round;
-  stroke-dasharray: 1; stroke-dashoffset: var(--draw, 0);
-  opacity: .75;
-}
-.netmap__pin { opacity: var(--pin, 1); }
-.netmap__pin .netmap__core { fill: var(--ink); transform: scale(calc(.6 + .4 * var(--pin, 1))); transition: fill var(--dur-ui) ease; }
-.netmap__pin .netmap__halo { fill: color-mix(in srgb, var(--accent) 22%, transparent); transform: scale(calc(.6 + .4 * var(--pin, 1))); transition: fill var(--dur-ui) ease, transform var(--dur-ui) var(--ease-out-strong); }
-.netmap__pin.is-hq .netmap__core { fill: var(--accent-strong); }
-.netmap__pin.is-hq .netmap__halo { fill: none; stroke: var(--accent); stroke-width: 1.25; }
-.netmap__pin.is-active .netmap__core { fill: var(--accent-strong); }
-.netmap__pin.is-active .netmap__halo { fill: color-mix(in srgb, var(--accent) 34%, transparent); transform: scale(1.5); }
-.netmap__label {
-  font-size: 11px; font-weight: 600; fill: var(--ink-2);
-  paint-order: stroke; stroke: var(--canvas); stroke-width: 3px; stroke-linejoin: round;
-}
-.netmap__pin.is-active .netmap__label { fill: var(--ink); }
-/* Arrival ping when a packet lands. */
-.netmap__pin.is-ping .netmap__halo { animation: net-ping 900ms var(--ease-out-strong); }
-@keyframes net-ping { 0% { transform: scale(1); } 40% { transform: scale(2.6); opacity: .5; } 100% { transform: scale(1.5); opacity: 1; } }
-.netmap__packet { fill: var(--accent-strong); opacity: 0; transition: opacity 160ms ease; }
-
-/* The lens: the page's own device, doing its literal job. */
-.netmap__lens {
-  --size: clamp(76px, 17vw, 232px);
-  position: absolute; top: 0; left: 0; width: var(--size); height: var(--size);
-  border-radius: 50%; overflow: hidden;
-  background: color-mix(in srgb, var(--canvas) 92%, transparent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--canvas) 80%, transparent),
-    inset 0 -18px 32px -24px var(--accent-shadow),
-    0 24px 48px -28px var(--accent-shadow);
-  clip-path: circle(calc(var(--open, 1) * 50%) at 50% 50%);
-  will-change: transform;
-  pointer-events: none;
-}
-.netmap__lens canvas, .netmap__lens svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.netmap__lens svg { overflow: hidden; transform: scale(calc(1.12 - .12 * var(--open, 1))); }
-.netmap__lens .netmap__arc { stroke-width: 1.75; }
-/* A glint across the glass, so it reads as an object and not a hole. */
-.netmap__lens::after {
-  content: ''; position: absolute; inset: 0; border-radius: 50%;
-  background: radial-gradient(120% 70% at 30% 8%, color-mix(in srgb, var(--canvas) 70%, transparent), transparent 45%);
-  pointer-events: none;
-}
-
-.netmap__readout { border-top: 1px solid var(--hairline); gap: .9rem; }
-.netmap__city { font-size: 1rem; letter-spacing: var(--track-tight); color: var(--ink); }
-.netmap__meta { color: var(--ink-3); font-weight: 400; }
-.netmap__clock { margin-left: auto; font-variant-numeric: tabular-nums; }
-.netmap__time { color: var(--ink); font-size: 1rem; }
-.netmap__offset { color: var(--ink-3); }
-.netmap__city, .netmap__meta, .netmap__clock { transition: opacity 140ms ease, filter 140ms ease; }
-.netmap__readout.is-swapping > * { opacity: 0; filter: blur(4px); }
-
-/* The list and the map point at the same office. */
-.global__offices li.is-net-active::before { background-image: var(--grad-core); }
-.global__offices li.is-net-active .global__meta { color: var(--ink-2); }
-
-@media (max-width: 860px) {
-  .netmap__stat { display: none; }
-  .netmap__label { font-size: 9px; }
-}
-
-/* =====================================================================
    #proof 1B+ cell — the crowd and the feed (js/motion/crowd.js)
    ===================================================================== */
 .crowd {
@@ -1437,3 +1303,142 @@ html.motion-on .netmap.is-visible .netmap__live i::after {
 .toast__text span { color: var(--ink-2); font-size: .75rem; }
 .toast time { margin-left: auto; color: var(--ink-3); font-size: .6875rem; font-variant-numeric: tabular-nums; }
 .bento__figure[data-count-billion] { font-variant-numeric: tabular-nums; }
+
+/* =====================================================================
+   Optics — text that behaves like light through the lens
+   (js/motion/optics.js, 2026-09-27). Nothing here exists without
+   html.motion-on: under reduced motion or ?shot=1 the text is simply sharp.
+   ===================================================================== */
+
+/* Dispersion: the colour split converges as a headline focuses (--disp) and
+   opens under scroll speed (--vel). Shadow ALPHA scales with the split too,
+   so at rest there is no fringe at all — not a hairline of colour. */
+html.motion-on [data-focus-pull] {
+  --d: min(1, var(--disp, 0) + var(--vel, 0));
+  text-shadow:
+    calc(var(--d) * -0.07em) 0 0 color-mix(in srgb, var(--accent) calc(var(--d) * 75%), transparent),
+    calc(var(--d) * 0.07em) 0 0 color-mix(in srgb, var(--support) calc(var(--d) * 75%), transparent);
+}
+/* A focal word paints with background-clip:text over transparent glyphs; a
+   shadow would show through the gradient as a solid ghost. */
+html.motion-on [data-focus-pull] .focus-word { text-shadow: none; }
+
+/* The cursor is a light. The radius is a registered length so it can
+   transition: the light swells in on enter and dies away on leave. */
+@property --lr { syntax: '<length>'; inherits: true; initial-value: 0px; }
+[data-focus-pull] { --lit-ink: var(--ink); --lr: 0px; transition: --lr 260ms var(--ease-out-strong); }
+.theme-dark [data-focus-pull] { --lit-ink: var(--canvas); }
+[data-focus-pull].is-lit { --lr: clamp(150px, 14vw, 240px); transition-duration: 420ms; }
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  /* Only while lit (and while the light dies away): at any other time the
+     glyphs are plain ink, and the arrival dispersion paints as designed. */
+  html.motion-on [data-focus-pull]:is(.is-lit, .is-fading) .line > span {
+    background-image: radial-gradient(circle var(--lr) at var(--mx, -999px) var(--my, -999px),
+      var(--accent) 0%, var(--support) 55%, var(--lit-ink) 100%);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+  }
+  /* With transparent glyphs, a dispersion shadow would show through as a
+     solid ghost; the light and the split never need to coexist. */
+  html.motion-on [data-focus-pull]:is(.is-lit, .is-fading) { text-shadow: none; }
+}
+
+/* Calibration: the real text holds the layout (and the accessibility tree);
+   the overlay scrambles on top of it and is gone when it resolves. */
+.eb__wrap { position: relative; display: inline-block; }
+.eb__fx { position: absolute; left: 0; top: 0; white-space: nowrap; }
+.eyebrow.is-calibrating .eb__real { color: transparent; }
+
+/* Focal plane: words are spans so the scroll can bring them into focus. */
+.w { display: inline; }
+
+/* Recognise: the film's background word, swept by a band of focus. */
+html.motion-on .film__word { color: color-mix(in srgb, var(--canvas) 12%, transparent); }
+.film__word span { display: inline-block; }
+
+/* =====================================================================
+   #global — globe + office tiles (js/motion/network.js, 2026-09-27)
+   ===================================================================== */
+.orbit {
+  display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr);
+  gap: clamp(1.5rem, 4vw, 4rem); align-items: center;
+  margin-top: clamp(3rem, 8vh, 5rem);
+}
+.orbit__globe { position: relative; aspect-ratio: 1; touch-action: pan-y; cursor: grab; }
+.orbit__globe.is-dragging { cursor: grabbing; }
+.orbit__globe canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.orbit__bar {
+  display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1rem;
+  font-size: var(--micro); font-weight: 600; letter-spacing: var(--track-micro);
+  text-transform: uppercase; color: var(--ink-2);
+}
+.orbit__stat { margin-left: auto; font-variant-numeric: tabular-nums; }
+.orbit__stat b { color: var(--ink); font-weight: 700; }
+.orbit__sep { display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: var(--ink-3); vertical-align: middle; margin-inline: .35rem; }
+.orbit__utc { font-variant-numeric: tabular-nums; color: var(--ink-3); }
+.orbit__live { display: inline-flex; align-items: center; gap: .5rem; color: var(--ink); }
+.orbit__live i { position: relative; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+html.motion-on .orbit.is-cycling .orbit__live i::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: var(--accent); animation: orbit-live 2.4s var(--ease-out-strong) infinite;
+}
+@keyframes orbit-live { from { transform: scale(1); opacity: .6; } to { transform: scale(3.2); opacity: 0; } }
+
+.orbit__tiles {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem;
+}
+.tile {
+  position: relative; width: 100%; overflow: hidden;
+  display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto;
+  column-gap: .75rem; row-gap: .2rem; align-items: baseline;
+  padding: .95rem 1rem 1.05rem; text-align: left;
+  font: inherit; color: var(--ink); cursor: pointer;
+  border: 1px solid var(--hairline); border-radius: 14px;
+  /* 94%: the glass mark crosses right behind this grid. */
+  background: color-mix(in srgb, var(--canvas) 94%, transparent);
+  transition:
+    border-color var(--dur-ui) ease, background-color var(--dur-ui) ease,
+    box-shadow var(--dur-ui) ease, transform var(--dur-press) var(--ease-out-strong);
+}
+.tile:active { transform: scale(.98); }
+.tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tile__city { font-weight: 600; font-size: 1.0625rem; letter-spacing: var(--track-tight); }
+.tile__meta { grid-row: 2; font-size: .8125rem; color: var(--ink-2); }
+.tile__clock { grid-row: 1 / 3; grid-column: 2; align-self: center; text-align: right; font-variant-numeric: tabular-nums; }
+.tile__time { display: block; font-weight: 600; font-size: .9375rem; }
+.tile__off { display: block; font-size: .6875rem; color: var(--ink-3); }
+.tile--hq .tile__meta { color: var(--accent-strong); font-weight: 600; }
+.tile.is-active {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: var(--canvas);
+  box-shadow: 0 16px 36px -26px var(--accent-shadow);
+}
+/* The line to the next stop: linear, because it is time. */
+.tile__bar {
+  position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
+  background-image: var(--grad-core);
+  transform: scaleX(0); transform-origin: left center;
+}
+.orbit.is-cycling .tile.is-timing .tile__bar { animation: tile-bar 3400ms linear forwards; }
+@keyframes tile-bar { to { transform: scaleX(1); } }
+
+/* Arrival: the tiles come in after the globe has turned to face Europe.
+   Transitions, so scrolling back out reverses them rather than snapping. */
+html.motion-on .orbit__tiles li {
+  transition: opacity 520ms var(--ease-out-strong), transform 620ms var(--ease-out-strong);
+  transition-delay: calc(var(--i, 0) * 55ms);
+}
+html.motion-on .orbit:not(.is-in) .orbit__tiles li {
+  opacity: 0; transform: translateY(18px) scale(.97);
+  transition-duration: 200ms; transition-delay: 0ms;
+}
+html.motion-on .orbit__bar { transition: opacity 400ms ease; }
+html.motion-on .orbit:not(.is-in) .orbit__bar { opacity: 0; }
+
+@media (max-width: 860px) {
+  .orbit { grid-template-columns: 1fr; }
+  .orbit__globe { max-width: 420px; width: 100%; margin-inline: auto; }
+  .orbit__stat { display: none; }
+}

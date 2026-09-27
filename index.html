@@ -153,7 +153,7 @@
       </div>
       <figure class="film__quote">
         <p class="eyebrow">The idea, in one sentence</p>
-        <blockquote>&#8220;Great loyalty isn&#8217;t about points or prizes. It&#8217;s about making people feel seen. Get that right, and everything else follows.&#8221;</blockquote>
+        <blockquote>&#8220;Great loyalty isn&#8217;t about points or prizes. It&#8217;s about making people feel <span class="focus-word">seen.</span> Get that right, and everything else follows.&#8221;</blockquote>
         <figcaption>Rick Swinkels — CEO, TCC Global</figcaption>
       </figure>
     </div>
@@ -376,37 +376,30 @@
       </div>
       <div class="global__body">
         <p class="lead global__para" data-reveal>Loyalty is never one-size-fits-all — a shopper in Warsaw doesn't behave like one in Amsterdam or Adelaide. From our headquarters in Amsterdam and twenty offices worldwide, around 300 of us combine deep local understanding with a single, shared standard of craft. Close enough to know each market intimately; connected enough to bring the best of every other one with us.</p>
-        <ul class="global__offices">
-          <li><span>Amsterdam</span><span class="global__meta">Head office</span></li>
-          <li><span>London</span><span class="global__meta">United Kingdom</span></li>
-          <li><span>New York</span><span class="global__meta">United States</span></li>
-          <li><span>Düsseldorf</span><span class="global__meta">Germany</span></li>
-          <li><span>Milan</span><span class="global__meta">Italy</span></li>
-          <li><span>Mandelieu</span><span class="global__meta">France</span></li>
-          <li><span>Sydney</span><span class="global__meta">Australia</span></li>
-          <li><span>Hong Kong</span><span class="global__meta">Asia Pacific</span></li>
-        </ul>
       </div>
     </div>
     <div class="container">
-      <!-- Decorative: every fact here is in the copy and the list above. -->
-      <figure class="netmap" aria-hidden="true">
-        <div class="netmap__bar">
-          <span class="netmap__live"><i></i>Network</span>
-          <span class="netmap__stat"><b data-net-count="20">20</b> offices <span class="netmap__sep"></span> <b data-net-count="300">300</b> people</span>
-          <span class="netmap__utc">UTC <time>--:--</time></span>
+      <div class="orbit">
+        <!-- The globe is decorative; the tiles beside it carry the offices. -->
+        <div class="orbit__globe" aria-hidden="true"><canvas></canvas></div>
+        <div class="orbit__side">
+          <div class="orbit__bar" aria-hidden="true">
+            <span class="orbit__live"><i></i>Network</span>
+            <span class="orbit__stat"><b data-net-count="20">20</b> offices <span class="orbit__sep"></span> <b data-net-count="300">300</b> people</span>
+            <span class="orbit__utc">UTC <time>--:--</time></span>
+          </div>
+          <ul class="orbit__tiles" aria-label="Offices">
+          <li style="--i:0"><button class="tile tile--hq" type="button" data-office="ams" aria-pressed="false"><span class="tile__city">Amsterdam</span><span class="tile__meta">Head office</span><span class="tile__clock" aria-hidden="true"><span class="tile__time">--:--</span> <span class="tile__off"></span></span><span class="tile__bar" aria-hidden="true"></span></button></li>
+          <li style="--i:1"><button class="tile" type="button" data-office="lon" aria-pressed="false"><span class="tile__city">London</span><span class="tile__meta">United Kingdom</span><span class="tile__clock" aria-hidden="true"><span class="tile__time">--:--</span> <span class="tile__off"></span></span><span class="tile__bar" aria-hidden="true"></span></button></li>
+          <li style="--i:2"><button class="tile" type="button" data-office="nyc" aria-pressed="false"><span class="tile__city">New York</span><span class="tile__meta">United States</span><span class="tile__clock" aria-hidden="true"><span class="tile__time">--:--</span> <span class="tile__off"></span></span><span class="tile__bar" aria-hidden="true"></span></button></li>
+          <li style="--i:3"><button class="tile" type="button" data-office="dus" aria-pressed="false"><span class="tile__city">Düsseldorf</span><span class="tile__meta">Germany</span><span class="tile__clock" aria-hidden="true"><span class="tile__time">--:--</span> <span class="tile__off"></span></span><span class="tile__bar" aria-hidden="true"></span></button></li>
+          <li style="--i:4"><button class="tile" type="button" data-office="mil" aria-pressed="false"><span class="tile__city">Milan</span><span class="tile__meta">Italy</span><span class="tile__clock" aria-hidden="true"><span class="tile__time">--:--</span> <span class="tile__off"></span></span><span class="tile__bar" aria-hidden="true"></span></button></li>
+          <li style="--i:5"><button class="tile" type="button" data-office="man" aria-pressed="false"><span class="tile__city">Mandelieu</span><span class="tile__meta">France</span><span class="tile__clock" aria-hidden="true"><span class="tile__time">--:--</span> <span class="tile__off"></span></span><span class="tile__bar" aria-hidden="true"></span></button></li>
+          <li style="--i:6"><button class="tile" type="button" data-office="syd" aria-pressed="false"><span class="tile__city">Sydney</span><span class="tile__meta">Australia</span><span class="tile__clock" aria-hidden="true"><span class="tile__time">--:--</span> <span class="tile__off"></span></span><span class="tile__bar" aria-hidden="true"></span></button></li>
+          <li style="--i:7"><button class="tile" type="button" data-office="hkg" aria-pressed="false"><span class="tile__city">Hong Kong</span><span class="tile__meta">Asia Pacific</span><span class="tile__clock" aria-hidden="true"><span class="tile__time">--:--</span> <span class="tile__off"></span></span><span class="tile__bar" aria-hidden="true"></span></button></li>
+          </ul>
         </div>
-        <div class="netmap__stage">
-          <canvas class="netmap__land"></canvas>
-          <svg class="netmap__net" focusable="false"></svg>
-          <div class="netmap__lens"><canvas></canvas><svg focusable="false"></svg></div>
-        </div>
-        <div class="netmap__readout">
-          <span class="netmap__city">Amsterdam</span>
-          <span class="netmap__meta">Head office</span>
-          <span class="netmap__clock"><span class="netmap__time">--:--</span> <span class="netmap__offset">UTC</span></span>
-        </div>
-      </figure>
+      </div>
     </div>
   </section>
 

@@ -16,65 +16,58 @@ async function wheelTo(page, sel, frac) {
   await page.waitForTimeout(1500);
 }
 
-const readout = (page) => page.evaluate(() => document.querySelector('.netmap__city').textContent);
-
-test('with motion off the network map is finished and still answers the list', async () => {
-  const r = await withPage(async (page) => {
-    await boot(page);
-    const settled = await page.evaluate(() => ({
-      pins: document.querySelectorAll('.netmap__net .netmap__pin').length,
-      pinOpacity: [...document.querySelectorAll('.netmap__net .netmap__pin')].map((p) => getComputedStyle(p).opacity),
-      arcs: [...document.querySelectorAll('.netmap__net .netmap__arc')].map((a) => parseFloat(getComputedStyle(a).strokeDashoffset)),
-      open: getComputedStyle(document.querySelector('.netmap__lens')).getPropertyValue('--open').trim(),
-      city: document.querySelector('.netmap__city').textContent,
-      landInk: (() => {
-        const c = document.querySelector('.netmap__land');
-        const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-        let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
-        return n;
-      })(),
-    }));
-    // Keyboard: focusing a row selects that office on the map.
-    await page.evaluate(() => [...document.querySelectorAll('.global__offices li')]
-      .find((li) => li.textContent.includes('Sydney')).focus());
-    await page.waitForTimeout(100);
-    const afterFocus = await page.evaluate(() => ({
-      city: document.querySelector('.netmap__city').textContent,
-      active: [...document.querySelectorAll('.netmap__net .netmap__pin.is-active')].map((p) => p.dataset.i),
-    }));
-    return { settled, afterFocus };
-  }, '?shot=1');
-  assert.equal(r.settled.pins, 8, 'one pin per named office');
-  assert.ok(r.settled.pinOpacity.every((o) => o === '1'), `pins not settled: ${r.settled.pinOpacity}`);
-  assert.equal(r.settled.arcs.length, 7);
-  assert.ok(r.settled.arcs.every((a) => a === 0), `arcs not drawn: ${r.settled.arcs}`);
-  assert.equal(r.settled.open, '1.000', 'lens is not open');
-  assert.equal(r.settled.city, 'Amsterdam');
-  assert.ok(r.settled.landInk > 5000, `land barely drawn: ${r.settled.landInk} px`);
-  assert.equal(r.afterFocus.city, 'Sydney');
-  assert.deepEqual(r.afterFocus.active, ['6']);
+const activeTile = (page) => page.evaluate(() => document.querySelector('.tile.is-active')?.dataset.office);
+const inkOf = (page) => page.evaluate(() => {
+  const c = document.querySelector('.orbit__globe canvas');
+  const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+  let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
+  return n;
 });
 
-test('scrolling reveals the network, then the readout cycles on its own', async () => {
+test('with motion off the globe is drawn, the tiles are there, and a tile still turns it', async () => {
+  const r = await withPage(async (page) => {
+    await boot(page);
+    const before = await page.evaluate(() => ({
+      tiles: document.querySelectorAll('.orbit__tiles .tile').length,
+      tileOpacity: [...document.querySelectorAll('.orbit__tiles li')].map((li) => getComputedStyle(li).opacity),
+      active: document.querySelector('.tile.is-active')?.dataset.office,
+    }));
+    const ink = await inkOf(page);
+    const snap = () => page.evaluate(() => document.querySelector('.orbit__globe canvas').toDataURL());
+    const a = await snap();
+    await page.focus('.tile[data-office="syd"]');
+    await page.waitForTimeout(150);
+    const b = await snap();
+    return { before, ink, turned: a !== b, active: await activeTile(page) };
+  }, '?shot=1');
+  assert.equal(r.before.tiles, 8);
+  assert.ok(r.before.tileOpacity.every((o) => o === '1'), `tiles hidden: ${r.before.tileOpacity}`);
+  assert.equal(r.before.active, 'ams');
+  assert.ok(r.ink > 20000, `globe barely drawn: ${r.ink} px`);
+  assert.equal(r.active, 'syd');
+  assert.ok(r.turned, 'focusing Sydney did not redraw the globe');
+});
+
+test('scrolling forms the globe and brings the tiles in; then it tours the offices', async () => {
   const r = await withPage(async (page) => {
     await boot(page);
     await page.mouse.move(10, 10);
-    await wheelTo(page, '.netmap__stage', 0.95);
-    const early = await page.evaluate(() =>
-      getComputedStyle(document.querySelector('.netmap__lens')).getPropertyValue('--open').trim());
-    await wheelTo(page, '.netmap', 0.12);
-    const first = await readout(page);
-    await page.waitForTimeout(3400);
-    const second = await readout(page);
-    // Back up: the reveal is scrubbed, so it must un-draw.
-    await wheelTo(page, '.netmap__stage', 1.05);
-    const back = await page.evaluate(() =>
-      getComputedStyle(document.querySelector('.netmap__lens')).getPropertyValue('--open').trim());
-    return { early, first, second, back };
+    await wheelTo(page, '.orbit__globe', 0.95);
+    const early = await page.evaluate(() => document.querySelector('.orbit').classList.contains('is-in'));
+    await wheelTo(page, '.orbit', 0.1);
+    const settled = await page.evaluate(() => document.querySelector('.orbit').className);
+    const first = await activeTile(page);
+    await page.waitForTimeout(4200);
+    const second = await activeTile(page);
+    await wheelTo(page, '.orbit__globe', 1.05);
+    const back = await page.evaluate(() => document.querySelector('.orbit').classList.contains('is-in'));
+    return { early, settled, first, second, back };
   });
-  assert.equal(r.early, '0.000', 'lens open before the reveal reached it');
-  assert.notEqual(r.first, r.second, `readout did not advance: stayed on ${r.first}`);
-  assert.equal(r.back, '0.000', 'scrolling back up did not close the lens');
+  assert.equal(r.early, false, 'tiles arrived before the globe formed');
+  assert.match(r.settled, /is-in/);
+  assert.match(r.settled, /is-settled/);
+  assert.notEqual(r.first, r.second, `the tour did not advance from ${r.first}`);
+  assert.equal(r.back, false, 'scrolling back up did not withdraw the tiles');
 });
 
 test('the 1B+ cell: settled without motion, live with it', async () => {

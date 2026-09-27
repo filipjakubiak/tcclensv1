@@ -41,34 +41,3 @@ export function initMeter() {
     }
   );
 }
-
-/**
- * The offices list arrives as a list — one row at a time, each hairline
- * drawing before its city.
- *
- * Twenty offices is the section's whole claim, so the reader should feel the
- * list accumulate rather than find it already complete. Same rule-draw the
- * careers values use, which is what keeps this from being a new idea.
- */
-export function initOffices() {
-  if (!motionEnabled()) return;
-  const rows = document.querySelectorAll('.global__offices li');
-  if (!rows.length) return;
-
-  const { gsap, ScrollTrigger } = window;
-  gsap.registerPlugin(ScrollTrigger);
-
-  const tl = gsap.timeline({
-    scrollTrigger: { trigger: rows[0], start: 'top 88%', once: true },
-  });
-
-  // The hairline first, then the city on it — the rule reads as the line the
-  // text lands on rather than as a divider that happens to share its timing.
-  tl.to(rows, { '--rule-s': 1, duration: 0.5, ease: 'power2.out', stagger: 0.06 }, 0);
-  tl.fromTo(
-    rows,
-    { opacity: 0, y: 12 },
-    { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out', stagger: 0.06 },
-    0.08
-  );
-}

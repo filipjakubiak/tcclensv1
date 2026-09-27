@@ -106,21 +106,3 @@ export function initMarquee() {
   marquee.addEventListener('pointerenter', () => ramp(0.25));
   marquee.addEventListener('pointerleave', () => ramp(1));
 }
-
-/**
- * The offices list answers the pointer, and the keyboard.
- *
- * Twenty offices is the section's claim and the list was inert once it had
- * drawn itself in. Hovering a city lifts its rule and its meta; the rows are
- * focusable so the same thing happens on Tab, which is the part hover-only
- * effects usually miss.
- */
-export function initOfficeRows() {
-  const rows = document.querySelectorAll('.global__offices li');
-  if (!rows.length) return;
-  for (const row of rows) {
-    // Focusable so the hover state is reachable without a mouse. Not a
-    // button: these are not actions, they are data the reader can dwell on.
-    row.setAttribute('tabindex', '0');
-  }
-}

@@ -135,27 +135,25 @@ test('the nav reports read progress, with motion on or off', async () => {
   }
 });
 
-test('the offices rows are reachable and respond to the keyboard', async () => {
+test('the office tiles are real buttons the keyboard can reach', async () => {
+  // The offices list became tiles beside the globe (2026-09-27). They are
+  // <button>s, so Tab reaches them and they announce their pressed state.
   const r = await withPage(async (page) => {
     await boot(page);
-    return page.evaluate(() => {
-      const rows = [...document.querySelectorAll('.global__offices li')];
-      const first = rows[0];
-      first.focus();
-      return {
-        count: rows.length,
-        allFocusable: rows.every((el) => el.getAttribute('tabindex') === '0'),
-        focused: document.activeElement === first,
-        // The response is CSS on :focus/:focus-within, so what matters is
-        // that the element can actually hold focus to trigger it.
-        rule: getComputedStyle(first, '::before').backgroundImage,
-      };
-    });
+    const tiles = await page.evaluate(() => [...document.querySelectorAll('.orbit__tiles .tile')]
+      .map((t) => ({ tag: t.tagName, type: t.type, pressed: t.getAttribute('aria-pressed') })));
+    await page.focus('.tile[data-office="nyc"]');
+    await page.waitForTimeout(100);
+    const after = await page.evaluate(() => ({
+      focused: document.activeElement?.dataset.office,
+      pressed: document.querySelector('.tile[data-office="nyc"]').getAttribute('aria-pressed'),
+    }));
+    return { tiles, after };
   });
-  assert.ok(r.count >= 8, `only ${r.count} office rows`);
-  assert.equal(r.allFocusable, true, 'office rows are not keyboard reachable');
-  assert.equal(r.focused, true, 'an office row could not take focus');
-  assert.ok(/gradient/.test(r.rule), `the focused row did not take the gradient rule: ${r.rule}`);
+  assert.equal(r.tiles.length, 8);
+  assert.ok(r.tiles.every((t) => t.tag === 'BUTTON' && t.type === 'button'));
+  assert.equal(r.after.focused, 'nyc');
+  assert.equal(r.after.pressed, 'true');
 });
 
 test('the marquee slows under the pointer without jumping', async () => {

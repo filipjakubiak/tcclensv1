@@ -4,11 +4,12 @@ import { initCursor, initMagnetic } from './motion/cursor.js';
 import { initCounters } from './motion/counters.js';
 import { initSurfaceReveals, initSurfacePointer, initFluidSurfaces } from './motion/elements.js';
 import { initCareers } from './motion/careers.js';
-import { initMeter, initOffices } from './motion/sections.js';
+import { initMeter } from './motion/sections.js';
 import { initThesisLights, initLoop, initUplift, initLoyaltyGap } from './motion/scrollstory.js';
 import { initNetwork } from './motion/network.js';
 import { initCrowd } from './motion/crowd.js';
-import { initMarkPointer, initMarquee, initOfficeRows } from './motion/interact.js';
+import { initOptics } from './motion/optics.js';
+import { initMarkPointer, initMarquee } from './motion/interact.js';
 import { createStage } from './stage/Stage.js';
 import { buildEnvironment } from './stage/env.js';
 import { createLensMark } from './stage/LensMark.js';
@@ -32,16 +33,14 @@ initSurfacePointer();
 initFluidSurfaces();
 initCareers();
 initMeter();
-initOffices();
 initMarquee();
-initOfficeRows();
 initThesisLights();
 initLoop();
 initUplift();
 initLoyaltyGap();
 // Guarded: these run before the WebGL stage boots, and a decorative
 // failure must never take the stage down with it.
-for (const init of [initCrowd, initNetwork]) {
+for (const init of [initCrowd, initNetwork, initOptics]) {
   try { init(); } catch (err) { console.error(err); }
 }
 
