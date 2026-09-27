@@ -301,3 +301,18 @@ scrub with ticks. Default CSS = finished state; only `html.motion-on` parks the 
 **Trap found:** `pathLength="1"` + `vector-effect: non-scaling-stroke` makes Chrome stop the
 dash-draw short of the end — drawn paths use `vector-effect: none`.
 Full suite **120/121** — only the known marquee instrument failure (see above).
+
+## ▶ 2026-09-27 (3) — #global network map + 1B+ crowd
+
+- `js/motion/network.js` + `worldmap-data.js`: `.netmap` panel under the offices list — status
+  bar (live dot, counts, UTC), dot-matrix world from a rasterised coastline mask (0.25°), arcs
+  from Amsterdam to the 8 NAMED offices (none invented), and a steerable LENS magnifying 3.2×
+  (rests on Europe, follows the pointer, glides to the active office). Scrubbed reveal: land
+  wave from HQ → pins by distance → arcs → lens iris. Then autoplay cycles the readout (local
+  time + UTC offset) with a packet along the arc. List rows ↔ map selection in both directions,
+  keyboard included.
+- `js/motion/crowd.js`: 1B+ cell gets a dot crowd filled by scroll, a pointer lens, a
+  Sonner-style notification stack (transitions via data-i, not keyframes) whose arrivals
+  ripple a dot, and a figure counting through the millions to "1B+".
+- Both inits are try/catch-guarded in main.js — they run before the WebGL stage boots.
+- Suite **123/124** — only the known marquee instrument failure.

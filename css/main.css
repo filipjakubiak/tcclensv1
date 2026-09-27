@@ -1293,3 +1293,147 @@ html.motion-on .monitor__tick { --tick-o: 0; }
   .howworks__loop { display: none; }
   .howworks__loop + .howworks__steps { margin-top: clamp(3rem, 8vh, 5.5rem); }
 }
+
+/* =====================================================================
+   #global network map (js/motion/network.js, 2026-09-27)
+   An interface panel: status bar, dot-matrix world, lens, readout.
+   Translucent like the bento cells so the section's live canvas still
+   moves behind it.
+   ===================================================================== */
+.netmap {
+  margin: clamp(3rem, 8vh, 5rem) 0 0;
+  border: 1px solid var(--hairline); border-radius: var(--r-card);
+  /* 90%: the glass mark passes right behind this panel, and at the bento
+     cells' 72% it competed with the map it sits under. */
+  background: color-mix(in srgb, var(--canvas) 90%, transparent);
+  overflow: hidden;
+}
+.netmap__bar, .netmap__readout {
+  display: flex; align-items: center; gap: 1.25rem;
+  padding: .85rem clamp(1rem, 2vw, 1.5rem);
+  font-size: var(--micro); letter-spacing: var(--track-micro); font-weight: 600;
+  color: var(--ink-2);
+}
+.netmap__bar { border-bottom: 1px solid var(--hairline); text-transform: uppercase; }
+.netmap__stat { margin-left: auto; font-variant-numeric: tabular-nums; }
+.netmap__stat b { color: var(--ink); font-weight: 700; }
+.netmap__sep { display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: var(--ink-3); vertical-align: middle; margin-inline: .35rem; }
+.netmap__utc { font-variant-numeric: tabular-nums; color: var(--ink-3); }
+.netmap__live { display: inline-flex; align-items: center; gap: .5rem; color: var(--ink); }
+.netmap__live i { position: relative; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+/* The live dot breathes only while the panel is on screen. */
+html.motion-on .netmap.is-visible .netmap__live i::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: var(--accent); animation: net-live 2.4s var(--ease-out-strong) infinite;
+}
+@keyframes net-live { from { transform: scale(1); opacity: .6; } to { transform: scale(3.2); opacity: 0; } }
+
+.netmap__stage { position: relative; aspect-ratio: 310 / 109; overflow: hidden; }
+.netmap__land, .netmap__net { position: absolute; inset: 0; width: 100%; height: 100%; }
+.netmap__net { overflow: visible; }
+
+.netmap__arc {
+  fill: none; stroke: var(--accent); stroke-width: 1.25; stroke-linecap: round;
+  stroke-dasharray: 1; stroke-dashoffset: var(--draw, 0);
+  opacity: .75;
+}
+.netmap__pin { opacity: var(--pin, 1); }
+.netmap__pin .netmap__core { fill: var(--ink); transform: scale(calc(.6 + .4 * var(--pin, 1))); transition: fill var(--dur-ui) ease; }
+.netmap__pin .netmap__halo { fill: color-mix(in srgb, var(--accent) 22%, transparent); transform: scale(calc(.6 + .4 * var(--pin, 1))); transition: fill var(--dur-ui) ease, transform var(--dur-ui) var(--ease-out-strong); }
+.netmap__pin.is-hq .netmap__core { fill: var(--accent-strong); }
+.netmap__pin.is-hq .netmap__halo { fill: none; stroke: var(--accent); stroke-width: 1.25; }
+.netmap__pin.is-active .netmap__core { fill: var(--accent-strong); }
+.netmap__pin.is-active .netmap__halo { fill: color-mix(in srgb, var(--accent) 34%, transparent); transform: scale(1.5); }
+.netmap__label {
+  font-size: 11px; font-weight: 600; fill: var(--ink-2);
+  paint-order: stroke; stroke: var(--canvas); stroke-width: 3px; stroke-linejoin: round;
+}
+.netmap__pin.is-active .netmap__label { fill: var(--ink); }
+/* Arrival ping when a packet lands. */
+.netmap__pin.is-ping .netmap__halo { animation: net-ping 900ms var(--ease-out-strong); }
+@keyframes net-ping { 0% { transform: scale(1); } 40% { transform: scale(2.6); opacity: .5; } 100% { transform: scale(1.5); opacity: 1; } }
+.netmap__packet { fill: var(--accent-strong); opacity: 0; transition: opacity 160ms ease; }
+
+/* The lens: the page's own device, doing its literal job. */
+.netmap__lens {
+  --size: clamp(76px, 17vw, 232px);
+  position: absolute; top: 0; left: 0; width: var(--size); height: var(--size);
+  border-radius: 50%; overflow: hidden;
+  background: color-mix(in srgb, var(--canvas) 92%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--canvas) 80%, transparent),
+    inset 0 -18px 32px -24px var(--accent-shadow),
+    0 24px 48px -28px var(--accent-shadow);
+  clip-path: circle(calc(var(--open, 1) * 50%) at 50% 50%);
+  will-change: transform;
+  pointer-events: none;
+}
+.netmap__lens canvas, .netmap__lens svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.netmap__lens svg { overflow: hidden; transform: scale(calc(1.12 - .12 * var(--open, 1))); }
+.netmap__lens .netmap__arc { stroke-width: 1.75; }
+/* A glint across the glass, so it reads as an object and not a hole. */
+.netmap__lens::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(120% 70% at 30% 8%, color-mix(in srgb, var(--canvas) 70%, transparent), transparent 45%);
+  pointer-events: none;
+}
+
+.netmap__readout { border-top: 1px solid var(--hairline); gap: .9rem; }
+.netmap__city { font-size: 1rem; letter-spacing: var(--track-tight); color: var(--ink); }
+.netmap__meta { color: var(--ink-3); font-weight: 400; }
+.netmap__clock { margin-left: auto; font-variant-numeric: tabular-nums; }
+.netmap__time { color: var(--ink); font-size: 1rem; }
+.netmap__offset { color: var(--ink-3); }
+.netmap__city, .netmap__meta, .netmap__clock { transition: opacity 140ms ease, filter 140ms ease; }
+.netmap__readout.is-swapping > * { opacity: 0; filter: blur(4px); }
+
+/* The list and the map point at the same office. */
+.global__offices li.is-net-active::before { background-image: var(--grad-core); }
+.global__offices li.is-net-active .global__meta { color: var(--ink-2); }
+
+@media (max-width: 860px) {
+  .netmap__stat { display: none; }
+  .netmap__label { font-size: 9px; }
+}
+
+/* =====================================================================
+   #proof 1B+ cell — the crowd and the feed (js/motion/crowd.js)
+   ===================================================================== */
+.crowd {
+  position: relative; flex: 1 1 auto;
+  min-height: clamp(10rem, 22vh, 15rem);
+  margin-block: 1.25rem;
+}
+.crowd canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* Sonner-style stack, bottom-right of the field. Positions are driven by
+   data-i, and every change is a TRANSITION so a new arrival retargets the
+   ones already moving instead of restarting them. */
+.toasts {
+  list-style: none; margin: 0; padding: 0;
+  position: absolute; right: 0; bottom: 0; width: min(270px, 88%);
+  height: 3.5rem;
+}
+.toast {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: center; gap: .7rem;
+  padding: .7rem .85rem;
+  border: 1px solid var(--hairline); border-radius: 14px;
+  background: color-mix(in srgb, var(--canvas) 94%, transparent);
+  box-shadow: 0 10px 28px -16px var(--accent-shadow);
+  font-size: .8125rem; line-height: 1.25;
+  transform-origin: 50% 0;
+  transition: transform 420ms var(--ease-out-strong), opacity 420ms var(--ease-out-strong);
+}
+.toast[data-i='0'] { transform: translateY(0) scale(1); opacity: 1; z-index: 3; }
+.toast[data-i='1'] { transform: translateY(-11px) scale(.94); opacity: .72; z-index: 2; }
+.toast[data-i='2'] { transform: translateY(-22px) scale(.88); opacity: .42; z-index: 1; }
+.toast[data-i='3'] { transform: translateY(-30px) scale(.82); opacity: 0; z-index: 0; }
+/* Arrivals rise from their own height — never from nothing. */
+.toast[data-i='enter'] { transform: translateY(110%) scale(.96); opacity: 0; z-index: 4; }
+.toast__mark { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 7px; background-image: var(--grad-core); }
+.toast__text { display: flex; flex-direction: column; min-width: 0; }
+.toast__text b { font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toast__text span { color: var(--ink-2); font-size: .75rem; }
+.toast time { margin-left: auto; color: var(--ink-3); font-size: .6875rem; font-variant-numeric: tabular-nums; }
+.bento__figure[data-count-billion] { font-variant-numeric: tabular-nums; }

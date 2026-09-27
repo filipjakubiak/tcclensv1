@@ -6,6 +6,8 @@ import { initSurfaceReveals, initSurfacePointer, initFluidSurfaces } from './mot
 import { initCareers } from './motion/careers.js';
 import { initMeter, initOffices } from './motion/sections.js';
 import { initThesisLights, initLoop, initUplift, initLoyaltyGap } from './motion/scrollstory.js';
+import { initNetwork } from './motion/network.js';
+import { initCrowd } from './motion/crowd.js';
 import { initMarkPointer, initMarquee, initOfficeRows } from './motion/interact.js';
 import { createStage } from './stage/Stage.js';
 import { buildEnvironment } from './stage/env.js';
@@ -37,6 +39,11 @@ initThesisLights();
 initLoop();
 initUplift();
 initLoyaltyGap();
+// Guarded: these run before the WebGL stage boots, and a decorative
+// failure must never take the stage down with it.
+for (const init of [initCrowd, initNetwork]) {
+  try { init(); } catch (err) { console.error(err); }
+}
 
 if (!motionEnabled()) document.documentElement.classList.add('motion-off');
 

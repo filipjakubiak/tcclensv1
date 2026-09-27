@@ -104,7 +104,8 @@
       </div>
       <ul class="bento" data-surface-group="scroll">
         <li class="bento__cell bento__cell--lead" data-lift>
-          <span class="bento__figure" data-count-to="1" data-suffix="B+">1B+</span>
+          <span class="bento__figure" data-count-billion>1B+</span>
+          <div class="crowd" aria-hidden="true"><canvas></canvas><ol class="toasts"></ol></div>
           <span class="bento__label">Shoppers engaged worldwide</span>
           <span class="bento__cap">More than a billion people have taken part in a campaign we designed — real behaviour, at genuine scale.</span>
         </li>
@@ -386,6 +387,26 @@
           <li><span>Hong Kong</span><span class="global__meta">Asia Pacific</span></li>
         </ul>
       </div>
+    </div>
+    <div class="container">
+      <!-- Decorative: every fact here is in the copy and the list above. -->
+      <figure class="netmap" aria-hidden="true">
+        <div class="netmap__bar">
+          <span class="netmap__live"><i></i>Network</span>
+          <span class="netmap__stat"><b data-net-count="20">20</b> offices <span class="netmap__sep"></span> <b data-net-count="300">300</b> people</span>
+          <span class="netmap__utc">UTC <time>--:--</time></span>
+        </div>
+        <div class="netmap__stage">
+          <canvas class="netmap__land"></canvas>
+          <svg class="netmap__net" focusable="false"></svg>
+          <div class="netmap__lens"><canvas></canvas><svg focusable="false"></svg></div>
+        </div>
+        <div class="netmap__readout">
+          <span class="netmap__city">Amsterdam</span>
+          <span class="netmap__meta">Head office</span>
+          <span class="netmap__clock"><span class="netmap__time">--:--</span> <span class="netmap__offset">UTC</span></span>
+        </div>
+      </figure>
     </div>
   </section>
 
