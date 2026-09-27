@@ -91,7 +91,9 @@ test('the steps sit level, and their interiors line up with each other', async (
         };
       })
     );
-  });
+  // Layout, not motion: the cards are dealt in from the left on the scroll
+  // (2026-09-27), so at this position they are mid-flight by design.
+  }, '?shot=1');
 
   const spread = (xs) => Math.max(...xs) - Math.min(...xs);
   assert.ok(

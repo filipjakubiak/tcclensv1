@@ -29,7 +29,6 @@ test('with motion off every scroll story renders finished', async () => {
         ret: cs('.loop__ret', 'stroke-dashoffset'),
         line: cs('.uplift__line', 'stroke-dashoffset'),
         gap: cs('.monitor__gap', 'transform'),
-        ticks: [...document.querySelectorAll('.monitor__tick')].map((t) => getComputedStyle(t).opacity),
         figure: document.querySelector('.bento__figure[data-range]').textContent,
       };
     });
@@ -39,7 +38,6 @@ test('with motion off every scroll story renders finished', async () => {
   assert.ok(parseFloat(r.fwd) === 0 && parseFloat(r.ret) === 0, `loop not drawn: ${r.fwd} / ${r.ret}`);
   assert.equal(parseFloat(r.line), 0, 'uplift line not drawn');
   assert.ok(r.gap === 'none' || r.gap === 'matrix(1, 0, 0, 1, 0, 0)', `gap parked at ${r.gap}`);
-  assert.deepEqual(r.ticks, ['1', '1']);
   assert.equal(r.figure, '3–5%');
 });
 

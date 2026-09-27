@@ -351,3 +351,23 @@ The page is framed as a SHOWREEL of what TCC does (user). Added:
   insight photos develop, contact lines converge, partner logos wave.
 - The cursor-light hover on headlines was REMOVED at the user's request ("bez sensu póki co").
 - Suite **136/137** — only the known marquee instrument failure.
+
+## ▶ 2026-09-27 (6) — seven section reworks (user review)
+
+- **#what-we-do**: wires/spine REMOVED ("ta linia jest dziwna"). TCC is a seal on the seam
+  (`--seam-y` = photo height); promises flow out of the seam per row. Retail list un-mirrored.
+- **#how-it-works**: cards dealt in from the left (`initDeal`, scrubbed, Return travels
+  furthest). Steps lost `data-lift` — the deal owns their transform. The level-tops test now
+  measures under `?shot=1` (it tests layout; at its scroll point the deal is mid-flight).
+- **#loyalty-monitor**: `js/motion/monitor.js` gauge — full-width bar, 0-100 scale, both
+  figures climb to 57 then 76 pulls away, bracket "19-point loyalty gap", leader lines, hatch
+  drifts when settled. Real figures live in `.sr-only`; `.monitor__count` is the animated copy.
+  `sections.js` (initMeter) deleted; `initLoyaltyGap` deleted.
+- **#clients partners**: collectible cards (`js/motion/collect.js`) — dealt face down (TCC
+  back), flip over staggered, pointer tilt + foil glare, "No. 01" serials.
+- **#global**: big gradient figures 20 / 300 above the tiles, counting as the tiles arrive.
+- **#careers**: `js/motion/values.js` story-style roller (tablist, letter roll, segments,
+  photo re-framing per value) replaces the list under motion; list is the fallback.
+- **#contact**: "Build your programme" planner (`js/motion/planner.js`) — Retailer/Brand +
+  goals (the fork promises) light the showreel capabilities; primary CTA moved into it.
+- Suite **142/143** — only the known marquee instrument failure.

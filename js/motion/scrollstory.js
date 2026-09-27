@@ -8,15 +8,13 @@ import { motionEnabled } from './reveal.js';
  *   initThesisLights  understanding — the head and heart phrases underline
  *                     as the reader reaches them, head first, the same order
  *                     Act 2 hands its light from Space Grey to TCC Purple.
+ *   initDeal          the three steps are dealt in from the left (below)
  *   initLoop          understanding — spend → reward → return is a loop, so
  *                     it is drawn as one, and the scroll walks a shopper
  *                     round it, lighting each step as they arrive.
  *   initUplift        understanding — "3–5%" is a lift above a baseline;
  *                     the line draws, rises through the activation window
  *                     and settles higher than it started.
- *   initLoyaltyGap    understanding — the section's claim is the DISTANCE
- *                     between 57 and 76, so the scroll pulls that distance
- *                     open on the meter.
  *
  * Timing follows the skill's decision tree:
  *   - Scrubbed pieces map scroll to progress LINEARLY (ease 'none' — it is
@@ -138,6 +136,46 @@ export function initLoop() {
   });
 }
 
+/**
+ * Spend, reward, return — dealt in from the left.
+ *
+ * The three cards arrive like cards off a deck on the left edge, travelling
+ * right into their slots with the scroll: each starts fully off to the left
+ * of its own slot, tilted, and settles flat. Return has the furthest to go,
+ * so the row reads left to right as the sequence it is. Scrubbed, so the
+ * deal reverses on the way back up. Narrow screens stack the cards, so each
+ * one simply slides in from the left as it arrives.
+ */
+export function initDeal() {
+  if (!motionEnabled()) return;
+  const steps = [...document.querySelectorAll('.howworks__step')];
+  if (steps.length !== 3) return;
+  const { gsap } = gsapReady();
+  const mm = gsap.matchMedia();
+
+  mm.add('(min-width: 861px)', () => {
+    const tl = gsap.timeline({
+      scrollTrigger: { trigger: steps[0].parentElement, start: 'top 98%', end: 'top 38%', scrub: 0.6 },
+    });
+    steps.forEach((s, i) => {
+      // From just past the left edge of the viewport to its own slot.
+      tl.fromTo(s,
+        { x: () => -(s.getBoundingClientRect().left + s.offsetWidth + 40), rotation: -7 - i * 2, opacity: 0.4 },
+        { x: 0, rotation: 0, opacity: 1, ease: 'power2.out', duration: 1 },
+        i * 0.22);
+    });
+    return () => gsap.set(steps, { clearProps: 'transform,opacity' });
+  });
+
+  mm.add('(max-width: 860px)', () => {
+    const tweens = steps.map((s) => gsap.fromTo(s, { x: -60, opacity: 0.3 }, {
+      x: 0, opacity: 1, ease: 'none',
+      scrollTrigger: { trigger: s, start: 'top 95%', end: 'top 60%', scrub: 0.5 },
+    }));
+    return () => { tweens.forEach((t) => t.scrollTrigger?.kill()); gsap.set(steps, { clearProps: 'transform,opacity' }); };
+  });
+}
+
 export function initUplift() {
   const fig = document.querySelector('.bento__figure[data-range]');
   const svg = document.querySelector('.uplift');
@@ -165,23 +203,4 @@ export function initUplift() {
     lo, hi, duration: 1.0, ease: 'power4.out',
     onUpdate: () => { fig.textContent = `${Math.round(n.lo)}–${Math.round(n.hi)}${suffix}`; },
   }, 0.45);
-}
-
-export function initLoyaltyGap() {
-  if (!motionEnabled()) return;
-  const meter = document.querySelector('.monitor__meter');
-  const gap = meter?.querySelector('.monitor__gap');
-  const [a, b] = document.querySelectorAll('.monitor__tick');
-  if (!gap || !a || !b) return;
-
-  const { gsap } = gsapReady();
-  // The fill (initMeter) draws the 57 on arrival. The gap is the argument,
-  // so it belongs to the reader's hand: scrubbed as the meter climbs the
-  // screen, so they open the distance themselves.
-  const tl = gsap.timeline({
-    scrollTrigger: { trigger: meter, start: 'top 80%', end: 'top 45%', scrub: SCRUB },
-  });
-  tl.to(a, { '--tick-o': 1, duration: 0.2, ease: 'none' }, 0);
-  tl.to(gap, { '--gap': 1, duration: 0.7, ease: 'none' }, 0.2);
-  tl.to(b, { '--tick-o': 1, duration: 0.2, ease: 'none' }, 0.75);
 }

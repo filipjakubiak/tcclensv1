@@ -18,41 +18,38 @@ async function wheelTo(page, sel, frac) {
 
 const state = (page) => page.evaluate(() => ({
   lit: [...document.querySelectorAll('.fork__points li')].map((li) => li.classList.contains('is-lit')),
-  wires: [...document.querySelectorAll('.aisle__wire')].map((w) => parseFloat(getComputedStyle(w).strokeDashoffset)),
+  rows: [...document.querySelectorAll('.fork__points li')].map((li) => +getComputedStyle(li).opacity),
+  seal: +getComputedStyle(document.querySelector('.aisle')).opacity,
   shift: new DOMMatrix(getComputedStyle(document.querySelector('.fork__panel--retail')).transform).m41,
+  wires: document.querySelectorAll('.aisle__wire, .aisle__spine').length,
 }));
 
-test('with motion off the aisle is wired and every promise is lit', async () => {
+test('with motion off the seal is set and every promise is present', async () => {
   const r = await withPage(async (page) => { await boot(page); return state(page); }, '?shot=1');
   assert.equal(r.lit.length, 6);
   assert.ok(r.lit.every(Boolean), `unlit promises: ${r.lit}`);
-  assert.equal(r.wires.length, 6);
-  assert.ok(r.wires.every((w) => w === 0), `wires not drawn: ${r.wires}`);
+  assert.ok(r.rows.every((o) => o === 1));
+  assert.equal(r.seal, 1);
   assert.equal(r.shift, 0);
+  assert.equal(r.wires, 0, 'the wire diagram is back');
 });
 
-test('the wires land on the bullets, not on the panel edge', async () => {
+test('the seal sits on the seam where the photos meet the copy', async () => {
   const r = await withPage(async (page) => {
     await boot(page);
     return page.evaluate(() => {
-      const grid = document.querySelector('.fork__grid').getBoundingClientRect();
-      return [...document.querySelectorAll('.aisle__wire')].map((w) => {
-        const end = w.getPointAtLength(w.getTotalLength());
-        // The nearest bullet to where this wire ends, in page pixels.
-        const d = Math.min(...[...document.querySelectorAll('.fork__points li')].map((li) => {
-          const b = li.getBoundingClientRect();
-          // Retail promises face the aisle, so their bullet is on the right.
-          const x = li.closest('.fork__panel--retail') ? b.right - 4 : b.left + 4;
-          return Math.hypot(grid.left + end.x - x, grid.top + end.y - (b.top + parseFloat(getComputedStyle(li).fontSize) * 0.5 + 4));
-        }));
-        return d;
-      });
+      const seal = document.querySelector('.aisle').getBoundingClientRect();
+      const img = document.querySelector('.fork__panel--retail .fork__img').getBoundingClientRect();
+      const l = document.querySelector('.fork__panel--retail').getBoundingClientRect();
+      const rt = document.querySelector('.fork__panel--brand').getBoundingClientRect();
+      return { dy: seal.top + seal.height / 2 - img.bottom, dx: seal.left + seal.width / 2 - (l.right + rt.left) / 2 };
     });
   }, '?shot=1');
-  assert.ok(r.every((d) => d < 6), `wires miss their bullets by ${r.map((d) => d.toFixed(1))}px`);
+  assert.ok(Math.abs(r.dy) < 2, `seal is ${r.dy}px off the seam vertically`);
+  assert.ok(Math.abs(r.dx) < 2, `seal is ${r.dx}px off the seam horizontally`);
 });
 
-test('scrolling parts the panels, wires the aisle, and reverses', async () => {
+test('scrolling parts the panels, sets the seal, lets the promises out, and reverses', async () => {
   const r = await withPage(async (page) => {
     await boot(page);
     await page.mouse.move(10, 10);
@@ -65,10 +62,11 @@ test('scrolling parts the panels, wires the aisle, and reverses', async () => {
     return { closed, open, back };
   });
   assert.ok(r.closed.shift > 10, `panels did not start closed together: ${r.closed.shift}px`);
-  assert.ok(r.closed.lit.every((l) => !l), 'promises lit before their wires');
+  assert.ok(r.closed.lit.every((l) => !l), 'promises out before the panels parted');
   assert.ok(Math.abs(r.open.shift) < 0.5, `panels did not part fully: ${r.open.shift}px`);
-  assert.ok(r.open.lit.every(Boolean), `not every promise lit: ${r.open.lit}`);
-  assert.ok(r.back.lit.every((l) => !l), 'scrolling back up left promises lit');
+  assert.ok(r.open.seal > 0.99, 'the seal never set');
+  assert.ok(r.open.lit.every(Boolean), `not every promise arrived: ${r.open.lit}`);
+  assert.ok(r.back.lit.every((l) => !l), 'scrolling back up left promises out');
 });
 
 test('narrow screens stack the panels with no aisle and no overflow', async () => {

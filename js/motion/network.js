@@ -441,6 +441,7 @@ export function initNetwork() {
 
   gsap.ticker.add(() => { if (dirty && visible) { draw(); dirty = false; } });
 
+  let countUp = () => {};
   const ST = window.ScrollTrigger;
   gsap.registerPlugin(ST);
   let wasDone = false;
@@ -456,6 +457,7 @@ export function initNetwork() {
         S.lat = 8 + (VIEW_HOME.lat - 8) * e;
       }
       root.classList.toggle('is-in', S.p >= 0.6);
+      if (S.p >= 0.6) countUp();
       const done = S.p >= 0.999;
       root.classList.toggle('is-settled', done);
       if (done !== wasDone) schedule();
@@ -465,15 +467,21 @@ export function initNetwork() {
     scrollTrigger: { trigger: stage, start: 'top 90%', end: 'center 50%', scrub: 0.6 },
   });
 
-  // The header figures count once, like every figure on the page.
-  root.querySelectorAll('[data-net-count]').forEach((n) => {
-    const to = Number(n.dataset.netCount);
-    const box = { v: 0 };
-    gsap.to(box, {
-      v: to, duration: 1.4, ease: 'power4.out',
-      onUpdate: () => { n.textContent = Math.round(box.v); },
-      onComplete: () => { n.textContent = to; },
-      scrollTrigger: { trigger: root, start: 'top 80%', once: true },
+  // The two big figures count up the moment they arrive with the tiles —
+  // once, like every figure on the page.
+  let counted = false;
+  countUp = () => {
+    if (counted) return;
+    counted = true;
+    root.querySelectorAll('[data-net-count]').forEach((n) => {
+      const to = Number(n.dataset.netCount);
+      const box = { v: 0 };
+      gsap.to(box, {
+        v: to, duration: 1.6, ease: 'power4.out',
+        onUpdate: () => { n.textContent = Math.round(box.v); },
+        onComplete: () => { n.textContent = to; },
+      });
     });
-  });
+  };
+
 }

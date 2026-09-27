@@ -169,7 +169,6 @@
       </h2>
       <p class="lead fork__intro" data-reveal>Loyalty is a partnership. Retailers need shoppers to choose them again tomorrow; brands need to reach those shoppers in a moment that actually means something. We sit between the two — designing campaigns that serve the retailer's numbers and the brand's story at the same time. Choose your path.</p>
       <div class="fork__grid">
-        <svg class="aisle__wires" aria-hidden="true" focusable="false"></svg>
         <article class="fork__panel fork__panel--retail card">
           <div class="fork__img">
             <picture>
@@ -237,20 +236,20 @@
         <span class="loop__node"></span><span class="loop__node"></span><span class="loop__node"></span>
         <span class="loop__dot"></span>
       </div>
-      <ol class="howworks__steps" data-surface-group>
-        <li class="howworks__step" data-lift>
+      <ol class="howworks__steps">
+        <li class="howworks__step">
           <span class="howworks__idx">01</span>
           <p class="eyebrow">The shop</p>
           <h3>Spend</h3>
           <p>It starts with something shoppers already do. Every visit, every basket, quietly earns them progress — no new habit required.</p>
         </li>
-        <li class="howworks__step" data-lift>
+        <li class="howworks__step">
           <span class="howworks__idx">02</span>
           <p class="eyebrow">The recognition</p>
           <h3>Reward</h3>
           <p>Progress becomes something real: a collectible, a game, a gift, a give-back. The moment they're recognised is the moment loyalty takes hold.</p>
         </li>
-        <li class="howworks__step" data-lift>
+        <li class="howworks__step">
           <span class="howworks__idx">03</span>
           <p class="eyebrow">The relationship</p>
           <h3>Return</h3>
@@ -375,21 +374,29 @@
         <span class="line"><span>Most shoppers say they're</span></span>
         <span class="line"><span>loyal. Most would still <span class="focus-word">switch.</span></span></span>
       </h2>
-      <div class="monitor__stage">
-        <div class="monitor__state monitor__state--a">
-          <span class="monitor__num" data-count-to="57" data-suffix="%">57%</span>
-          <p class="monitor__caption">of shoppers describe themselves as loyal to their supermarket.</p>
+      <div class="gauge">
+        <div class="monitor__stage">
+          <div class="monitor__state monitor__state--a">
+            <span class="monitor__num" data-gauge-to="57"><span class="sr-only">57%</span><span class="monitor__count" aria-hidden="true">57%</span></span>
+            <p class="monitor__caption">of shoppers describe themselves as loyal to their supermarket.</p>
+          </div>
+          <div class="monitor__state monitor__state--b">
+            <span class="monitor__num" data-gauge-to="76"><span class="sr-only">76%</span><span class="monitor__count" aria-hidden="true">76%</span></span>
+            <p class="monitor__caption">of them would switch stores for a better promotion.</p>
+          </div>
         </div>
-        <div class="monitor__state monitor__state--b">
-          <span class="monitor__num" data-count-to="76" data-suffix="%">76%</span>
-          <p class="monitor__caption">of them would switch stores for a better promotion.</p>
+        <svg class="gauge__leaders" aria-hidden="true" focusable="false"><path class="gauge__leader gauge__leader--a"/><path class="gauge__leader gauge__leader--b"/></svg>
+        <div class="gauge__track">
+          <div class="gauge__bracket" aria-hidden="true"><span class="gauge__label">19-point loyalty gap</span></div>
+          <div class="monitor__meter" role="img" aria-label="Loyalty gap: 57 percent say loyal, 76 percent would switch">
+            <span class="monitor__fill"></span>
+            <span class="monitor__gap"></span>
+          </div>
+          <span class="gauge__marker gauge__marker--a" aria-hidden="true"></span>
+          <span class="gauge__marker gauge__marker--b" aria-hidden="true"></span>
+          <div class="gauge__scale" aria-hidden="true"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
         </div>
       </div>
-      <div class="monitor__meter" role="img" aria-label="Loyalty gap: 57 percent say loyal, 76 percent would switch">
-        <span class="monitor__fill"></span>
-        <span class="monitor__gap"></span>
-      </div>
-      <div class="monitor__ticks" aria-hidden="true"><span class="monitor__tick monitor__tick--a">57%</span><span class="monitor__tick monitor__tick--b">76%</span></div>
       <p class="lead monitor__note">That distance between what shoppers feel and what they do is the loyalty gap — and closing it is the entire point of what we do. It isn't a problem to fear. It's the single biggest opportunity in grocery retail, and it's measurable.</p>
       <a class="btn btn--solid monitor__cta" data-magnetic href="https://www.tccglobal.com/loyaltymonitor" target="_blank" rel="noopener">Unlock the global report →</a>
     </div>
@@ -415,9 +422,20 @@
         </div>
       </div>
       <p class="clients__sub">And the brands shoppers love have chosen us to reach them — turned into rewards worth coming back for.</p>
-      <div class="partners">
-        <img src="assets/img/partners/netflix.png" alt="Netflix" width="144" height="40" loading="lazy" decoding="async"><img src="assets/img/partners/kappa.png" alt="Kappa" width="53" height="40" loading="lazy" decoding="async"><img src="assets/img/partners/masterchef.png" alt="MasterChef" width="30" height="40" loading="lazy" decoding="async"><img src="assets/img/partners/peanuts.png" alt="Peanuts" width="154" height="40" loading="lazy" decoding="async"><img src="assets/img/partners/the-smurfs.png" alt="The Smurfs" width="114" height="40" loading="lazy" decoding="async"><img src="assets/img/partners/wwf.png" alt="WWF" width="27" height="40" loading="lazy" decoding="async"><img src="assets/img/partners/chefclub.png" alt="Chefclub" width="116" height="40" loading="lazy" decoding="async"><img src="assets/img/partners/hey-clay.png" alt="Hey Clay" width="106" height="40" loading="lazy" decoding="async"><img src="assets/img/partners/bench.png" alt="Bench" width="161" height="36" loading="lazy" decoding="async"><img src="assets/img/partners/fissler.png" alt="Fissler" width="105" height="40" loading="lazy" decoding="async"><img src="assets/img/partners/schott-zwisel.png" alt="Schott Zwiesel" width="67" height="40" loading="lazy" decoding="async">
-      </div>
+      <!-- Reward partners as collectibles — the mechanic TCC runs for them. -->
+      <ul class="partners collect" aria-label="Brand partners">
+        <li class="collectible" style="--i:0"><span class="collectible__card"><span class="collectible__back" aria-hidden="true"></span><span class="collectible__front"><img src="assets/img/partners/netflix.png" alt="Netflix" width="144" height="40" loading="lazy" decoding="async"></span></span></li>
+        <li class="collectible" style="--i:1"><span class="collectible__card"><span class="collectible__back" aria-hidden="true"></span><span class="collectible__front"><img src="assets/img/partners/kappa.png" alt="Kappa" width="53" height="40" loading="lazy" decoding="async"></span></span></li>
+        <li class="collectible" style="--i:2"><span class="collectible__card"><span class="collectible__back" aria-hidden="true"></span><span class="collectible__front"><img src="assets/img/partners/masterchef.png" alt="MasterChef" width="30" height="40" loading="lazy" decoding="async"></span></span></li>
+        <li class="collectible" style="--i:3"><span class="collectible__card"><span class="collectible__back" aria-hidden="true"></span><span class="collectible__front"><img src="assets/img/partners/peanuts.png" alt="Peanuts" width="154" height="40" loading="lazy" decoding="async"></span></span></li>
+        <li class="collectible" style="--i:4"><span class="collectible__card"><span class="collectible__back" aria-hidden="true"></span><span class="collectible__front"><img src="assets/img/partners/the-smurfs.png" alt="The Smurfs" width="114" height="40" loading="lazy" decoding="async"></span></span></li>
+        <li class="collectible" style="--i:5"><span class="collectible__card"><span class="collectible__back" aria-hidden="true"></span><span class="collectible__front"><img src="assets/img/partners/wwf.png" alt="WWF" width="27" height="40" loading="lazy" decoding="async"></span></span></li>
+        <li class="collectible" style="--i:6"><span class="collectible__card"><span class="collectible__back" aria-hidden="true"></span><span class="collectible__front"><img src="assets/img/partners/chefclub.png" alt="Chefclub" width="116" height="40" loading="lazy" decoding="async"></span></span></li>
+        <li class="collectible" style="--i:7"><span class="collectible__card"><span class="collectible__back" aria-hidden="true"></span><span class="collectible__front"><img src="assets/img/partners/hey-clay.png" alt="Hey Clay" width="106" height="40" loading="lazy" decoding="async"></span></span></li>
+        <li class="collectible" style="--i:8"><span class="collectible__card"><span class="collectible__back" aria-hidden="true"></span><span class="collectible__front"><img src="assets/img/partners/bench.png" alt="Bench" width="161" height="36" loading="lazy" decoding="async"></span></span></li>
+        <li class="collectible" style="--i:9"><span class="collectible__card"><span class="collectible__back" aria-hidden="true"></span><span class="collectible__front"><img src="assets/img/partners/fissler.png" alt="Fissler" width="105" height="40" loading="lazy" decoding="async"></span></span></li>
+        <li class="collectible" style="--i:10"><span class="collectible__card"><span class="collectible__back" aria-hidden="true"></span><span class="collectible__front"><img src="assets/img/partners/schott-zwisel.png" alt="Schott Zwiesel" width="67" height="40" loading="lazy" decoding="async"></span></span></li>
+      </ul>
     </div>
   </section>
 
@@ -445,8 +463,11 @@
         <div class="orbit__side">
           <div class="orbit__bar" aria-hidden="true">
             <span class="orbit__live"><i></i>Network</span>
-            <span class="orbit__stat"><b data-net-count="20">20</b> offices <span class="orbit__sep"></span> <b data-net-count="300">300</b> people</span>
             <span class="orbit__utc">UTC <time>--:--</time></span>
+          </div>
+          <div class="orbit__figures">
+            <p class="orbit__figure"><b data-net-count="20">20</b><span>offices worldwide</span></p>
+            <p class="orbit__figure"><b data-net-count="300">300</b><span>people, one team</span></p>
           </div>
           <ul class="orbit__tiles" aria-label="Offices">
           <li style="--i:0"><button class="tile tile--hq" type="button" data-office="ams" aria-pressed="false"><span class="tile__city">Amsterdam</span><span class="tile__meta">Head office</span><span class="tile__clock" aria-hidden="true"><span class="tile__time">--:--</span> <span class="tile__off"></span></span><span class="tile__bar" aria-hidden="true"></span></button></li>
@@ -543,7 +564,8 @@
 
   <!-- ============ 13 · Contact + footer ============ -->
   <section id="contact" data-enter="settle" data-tint="core" data-fluid>
-    <div class="container">
+    <div class="container contact__grid">
+      <div class="contact__copy">
       <p class="eyebrow">Let's build something shoppers remember</p>
       <h2 class="heading" data-focus-pull>
         <span class="line"><span>Ready to inspire</span></span>
@@ -551,9 +573,41 @@
       </h2>
       <p class="lead contact__lede" data-reveal>Whether you're a retailer looking to win the next basket or a brand looking to reach the right shopper at the right moment, it starts with a conversation. Tell us where you want to grow — we'll show you how loyalty gets you there.</p>
       <div class="contact__row">
-        <a class="btn btn--solid" data-magnetic href="https://www.tccglobal.com/contact" target="_blank" rel="noopener">Start a conversation →</a>
         <p class="contact__address">Strawinskylaan 1725, 1077 XX Amsterdam<br>+31 20 570 3400</p>
       </div>
+      </div>
+      <aside class="planner" aria-labelledby="planner-title">
+        <p class="planner__kicker" id="planner-title">Build your programme</p>
+        <div class="planner__q">
+          <span class="planner__label" id="planner-who">I'm a</span>
+          <div class="planner__seg" role="radiogroup" aria-labelledby="planner-who">
+            <span class="planner__thumb" aria-hidden="true"></span>
+            <button class="planner__opt" type="button" role="radio" aria-checked="true" data-who="retailer">Retailer</button>
+            <button class="planner__opt" type="button" role="radio" aria-checked="false" data-who="brand">Brand</button>
+          </div>
+        </div>
+        <div class="planner__q">
+          <span class="planner__label" id="planner-want">I want</span>
+          <div class="planner__chips" data-for="retailer" role="group" aria-labelledby="planner-want">
+            <button class="planner__chip" type="button" data-goal="visits" aria-pressed="true">More visits</button><button class="planner__chip" type="button" data-goal="baskets" aria-pressed="false">Bigger baskets</button><button class="planner__chip" type="button" data-goal="lasting" aria-pressed="false">Loyalty that lasts</button>
+          </div>
+          <div class="planner__chips" data-for="brand" role="group" aria-labelledby="planner-want" hidden>
+            <button class="planner__chip" type="button" data-goal="placement" aria-pressed="true">Premium placement</button><button class="planner__chip" type="button" data-goal="engagement" aria-pressed="false">Real engagement</button><button class="planner__chip" type="button" data-goal="goodwill" aria-pressed="false">Genuine goodwill</button>
+          </div>
+        </div>
+        <div class="planner__out">
+          <span class="planner__label">Your programme</span>
+          <ul class="planner__stack">
+            <li class="planner__cap is-in" data-cap="quest" style="--i:0"><span class="planner__swatch" data-gradient="creativity"></span><span class="planner__name">LoyaltyQuest™</span><span class="planner__kind">Gamification</span><span class="planner__check" aria-hidden="true"></span></li>
+            <li class="planner__cap" data-cap="world" style="--i:1"><span class="planner__swatch" data-gradient="operational"></span><span class="planner__name">Loyalty World™</span><span class="planner__kind">Platform</span><span class="planner__check" aria-hidden="true"></span></li>
+            <li class="planner__cap is-in" data-cap="games" style="--i:2"><span class="planner__swatch" data-gradient="performance"></span><span class="planner__name">Games Hub</span><span class="planner__kind">Engagement</span><span class="planner__check" aria-hidden="true"></span></li>
+            <li class="planner__cap" data-cap="mobile" style="--i:3"><span class="planner__swatch" data-gradient="insight"></span><span class="planner__name">Mobile Loyalty</span><span class="planner__kind">Mobile</span><span class="planner__check" aria-hidden="true"></span></li>
+            <li class="planner__cap" data-cap="community" style="--i:4"><span class="planner__swatch" data-gradient="sustainability"></span><span class="planner__name">Community</span><span class="planner__kind">Local</span><span class="planner__check" aria-hidden="true"></span></li>
+          </ul>
+          <p class="planner__summary" aria-live="polite">For retailers who want more visits.</p>
+        </div>
+        <a class="btn btn--solid planner__cta" data-magnetic href="https://www.tccglobal.com/contact" target="_blank" rel="noopener">Start this conversation →</a>
+      </aside>
     </div>
   </section>
 

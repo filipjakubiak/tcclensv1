@@ -11,7 +11,6 @@ import { motionEnabled } from './reveal.js';
  *   insights  each photo develops up its frame, one after another
  *   contact   the closing headline's lines converge from either side as
  *             you arrive — the last cut pulls everything to the centre
- *   partners  the brand logos arrive as a wave, left to right
  *
  * All scrubbed pieces are reversible; one-shots play once. Under reduced
  * motion / ?shot=1 none of this runs and every element sits in place.
@@ -58,13 +57,4 @@ export function initScenes() {
       scrollTrigger: { trigger: '#contact', start: 'top bottom', end: 'top 35%', scrub: 0.5 },
     });
   });
-
-  // ---- partners --------------------------------------------------------------
-  const logos = gsap.utils.toArray('.partners img');
-  if (logos.length) {
-    gsap.fromTo(logos, { opacity: 0, y: 16 }, {
-      opacity: 0.8, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.05,
-      scrollTrigger: { trigger: '.partners', start: 'top 88%', once: true },
-    });
-  }
 }

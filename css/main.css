@@ -705,17 +705,6 @@ html.motion-on [data-reveal] { opacity: 0; transform: translateY(20px); }
 .monitor__state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; }
 .monitor__num { display: block; font-weight: 700; font-size: clamp(6rem, 18vw, 13rem); line-height: .9; letter-spacing: var(--track-display); }
 .monitor__caption { color: var(--support); font-size: var(--lead); max-width: 34ch; margin: 0; }
-.monitor__meter { width: min(520px, 80%); height: 4px; margin: 2.5rem auto 0; border-radius: var(--r-pill); background: var(--hairline-inv); overflow: clip; }
-html.motion-on .monitor__fill { --fill: 0; }
-/* Draws to its value on scroll. scaleX, not width — animating width would
-   relayout the bar every frame. Default --fill is 1, so with no JS or under
-   ?shot=1 the meter simply reads 57% as it always did. */
-.monitor__fill {
-  display: block; height: 100%; width: 57%; border-radius: inherit;
-  background-image: var(--grad-core);
-  transform: scaleX(var(--fill, 1));
-  transform-origin: left center;
-}
 .monitor__note { margin: 2rem auto 0; max-width: 54ch; }
 .monitor__cta { margin-top: 2.5rem; }
 
@@ -737,8 +726,6 @@ html.marquee-js .marquee__track { animation: none; }
 .marquee__group img { display: block; height: 28px; width: auto; }
 @keyframes marquee { to { transform: translateX(-50%); } }
 .clients__sub { color: var(--ink-2); margin: 3.5rem 0 1.5rem; font-size: .9375rem; }
-.partners { display: flex; align-items: center; flex-wrap: wrap; gap: 2.25rem 2.75rem; }
-.partners img { display: block; height: 24px; width: auto; opacity: .8; }
 
 /* ---- 10 · Global ---- */
 .global__grid { display: grid; grid-template-columns: 5fr 7fr; gap: 4rem; align-items: end; }
@@ -1240,23 +1227,6 @@ html.motion-on .loop__dot {
 html.motion-on .uplift__line { --draw: 1; }
 html.motion-on .uplift__window { --win: 0; }
 
-/* ---- Loyalty monitor: the gap between 57 and 76, opened by the scroll ---- */
-.monitor__meter { position: relative; height: 6px; }
-.monitor__gap {
-  position: absolute; top: 0; bottom: 0; left: 57%; width: 19%;
-  background: repeating-linear-gradient(90deg, var(--accent) 0 3px, transparent 3px 7px);
-  transform: scaleX(var(--gap, 1)); transform-origin: left center;
-}
-html.motion-on .monitor__gap { --gap: 0; }
-.monitor__ticks { position: relative; width: min(520px, 80%); height: 1.5rem; margin: .6rem auto 0; }
-.monitor__tick {
-  position: absolute; top: 0; transform: translateX(-50%);
-  font-size: var(--micro); font-weight: 600; letter-spacing: var(--track-micro);
-  color: var(--support); opacity: var(--tick-o, 1);
-}
-.monitor__tick--a { left: 57%; }
-.monitor__tick--b { left: 76%; color: var(--accent); }
-html.motion-on .monitor__tick { --tick-o: 0; }
 
 @media (max-width: 860px) {
   .howworks__loop { display: none; }
@@ -1353,10 +1323,7 @@ html.motion-on .film__word { color: color-mix(in srgb, var(--canvas) 12%, transp
   font-size: var(--micro); font-weight: 600; letter-spacing: var(--track-micro);
   text-transform: uppercase; color: var(--ink-2);
 }
-.orbit__stat { margin-left: auto; font-variant-numeric: tabular-nums; }
-.orbit__stat b { color: var(--ink); font-weight: 700; }
-.orbit__sep { display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: var(--ink-3); vertical-align: middle; margin-inline: .35rem; }
-.orbit__utc { font-variant-numeric: tabular-nums; color: var(--ink-3); }
+.orbit__utc { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--ink-3); }
 .orbit__live { display: inline-flex; align-items: center; gap: .5rem; color: var(--ink); }
 .orbit__live i { position: relative; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 html.motion-on .orbit.is-cycling .orbit__live i::after {
@@ -1420,66 +1387,46 @@ html.motion-on .orbit:not(.is-in) .orbit__bar { opacity: 0; }
 @media (max-width: 860px) {
   .orbit { grid-template-columns: 1fr; }
   .orbit__globe { max-width: 420px; width: 100%; margin-inline: auto; }
-  .orbit__stat { display: none; }
 }
 
 /* =====================================================================
-   #what-we-do — The Aisle (js/motion/aisle.js, 2026-09-27)
-   TCC sits in the aisle between the two panels; wires run from it to every
-   promise on both sides.
+   #what-we-do — two audiences, one craft (js/motion/aisle.js)
+   TCC is the seal on the seam between the two panels; the promises flow
+   out of that seam. --pt / --dir are set per row by the scroll.
    ===================================================================== */
-.fork__grid {
-  --aisle: clamp(72px, 8vw, 128px);
-  position: relative;
-  grid-template-columns: minmax(0, 1fr) var(--aisle) minmax(0, 1fr);
-  gap: 0;
-}
-.aisle { position: relative; display: flex; justify-content: center; padding-top: clamp(2rem, 6vh, 3.5rem); }
-.aisle__node {
+.fork__grid { position: relative; }
+.aisle {
   --in: 1;
-  position: relative; z-index: 2;
+  position: absolute; left: 50%; top: var(--seam-y, 40%); z-index: 3;
+  transform: translate(-50%, -50%) scale(calc(.7 + .3 * var(--in))) rotate(calc((1 - var(--in)) * -40deg));
+  opacity: var(--in); pointer-events: none;
+}
+.aisle__node {
   display: grid; place-items: center;
-  width: 56px; height: 56px; border-radius: 50%;
+  width: 64px; height: 64px; border-radius: 50%;
   background: var(--canvas);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent), 0 14px 30px -18px var(--accent-shadow);
-  opacity: var(--in); transform: scale(calc(.85 + .15 * var(--in)));
+  box-shadow:
+    0 0 0 6px color-mix(in srgb, var(--canvas) 70%, transparent),
+    0 0 0 7px color-mix(in srgb, var(--accent) 45%, transparent),
+    0 18px 36px -18px var(--accent-shadow);
 }
-.aisle__node img { width: 26px; height: auto; }
-.aisle__wires { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 1; }
-.aisle__spine, .aisle__wire {
-  fill: none; stroke-linecap: round;
-  stroke-dasharray: 1; stroke-dashoffset: var(--draw, 0);
+.aisle__node img { width: 28px; height: auto; }
+/* A promise arrives from the seam side: retail rows travel left out of it,
+   brand rows travel right. Default --pt is 1, so no JS reads whole. */
+html.motion-on .fork__points li {
+  opacity: var(--pt, 1);
+  transform: translateX(calc((1 - var(--pt, 1)) * var(--dir, 1) * -28px));
 }
-.aisle__spine { stroke: color-mix(in srgb, var(--accent) 70%, transparent); stroke-width: 1.5; }
-.aisle__wire { stroke: color-mix(in srgb, var(--accent) 55%, transparent); stroke-width: 1.25; }
-.aisle__joint { fill: var(--accent); opacity: var(--on, 1); transition: opacity 200ms ease; }
-.aisle__port {
-  fill: var(--canvas); stroke: var(--accent); stroke-width: 1.5;
-  opacity: var(--on, 1); transition: opacity 200ms ease;
-}
-.aisle__pulse { fill: var(--accent); opacity: var(--on, 0); }
-
-/* A promise lights when its wire lands. Default is lit, so no JS reads whole. */
-.fork__points li::before { transition: background-color var(--dur-ui) ease, box-shadow 420ms var(--ease-out-strong); }
-html.motion-on .fork__points li:not(.is-lit)::before { background: var(--support); }
+.fork__points li::before { transition: box-shadow 420ms var(--ease-out-strong); }
 .fork__points li.is-lit::before { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); }
+@media (max-width: 860px) { .aisle { display: none; } }
 
-@media (max-width: 860px) {
-  .fork__grid { grid-template-columns: 1fr; gap: 1.25rem; }
-  .aisle, .aisle__wires { display: none; }
-}
 /* The photos were rendering at their natural 2:3 height: an aspect-ratio box
    still takes its content's automatic minimum height, so 16/7 never bound.
    min-height:0 lets the ratio win (the "images are really long" item). */
 .fork__img { min-height: 0; }
 .fork__img picture { display: block; height: 100%; }
 
-/* The retail promises face the aisle: bullet on the aisle side, so the wire
-   that lights each one lands on it instead of stopping at the panel edge. */
-@media (min-width: 861px) {
-  .fork__panel--retail .fork__points li { text-align: right; padding-left: 0; padding-right: 1.4rem; }
-  .fork__panel--retail .fork__points li::before { left: auto; right: 0; }
-}
 
 /* Kinetic headlines (js/motion/kinetic.js): letters are inline-blocks only
    while they are arriving; the original markup returns when they land. */
@@ -1717,3 +1664,300 @@ html.motion-on .film__frame { clip-path: circle(var(--iris, 75%) at 50% 50%); }
 
 /* Insights: each photo develops up its frame. */
 .insight__img { overflow: clip; }
+
+/* =====================================================================
+   #loyalty-monitor — the gauge (js/motion/monitor.js, 2026-09-27)
+   The loyalty gap is the section's whole argument, so the bar that shows it
+   is the centrepiece: full width, thick, on a 0-100 scale, with the two
+   figures above and leader lines down to where each one lands.
+   Default state = the finished gauge; html.motion-on parks the start.
+   ===================================================================== */
+.gauge { position: relative; margin-top: clamp(2rem, 6vh, 3.5rem); }
+.monitor__stage {
+  display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1rem, 4vw, 4rem);
+  margin-top: 0;
+}
+.monitor__num { font-size: clamp(4.5rem, 11vw, 10rem); font-variant-numeric: tabular-nums; }
+.monitor__state--b .monitor__num { color: var(--accent); }
+.monitor__caption { font-size: clamp(1rem, 1.3vw, 1.125rem); }
+.gauge__leaders { display: block; width: 100%; height: clamp(3rem, 8vh, 5rem); overflow: visible; }
+.gauge__leader { fill: none; stroke: color-mix(in srgb, var(--canvas) 40%, transparent); stroke-width: 1; stroke-dasharray: 2 5; }
+.gauge__leader--b { stroke: color-mix(in srgb, var(--accent) 70%, transparent); }
+
+.gauge__track { position: relative; padding-top: 3.25rem; }
+.monitor__meter {
+  position: relative; width: 100%; height: clamp(22px, 3vw, 36px); margin: 0;
+  border-radius: var(--r-pill); overflow: hidden;
+  background: color-mix(in srgb, var(--canvas) 8%, transparent);
+  box-shadow: inset 0 0 0 1px var(--hairline-inv);
+}
+.monitor__fill {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 57%;
+  background-image: var(--grad-core);
+  transform: scaleX(var(--fill, 1)); transform-origin: left center;
+}
+.monitor__gap {
+  position: absolute; top: 0; bottom: 0; left: 57%; width: 19%;
+  background: repeating-linear-gradient(-45deg, var(--accent) 0 6px, color-mix(in srgb, var(--accent) 25%, transparent) 6px 12px);
+  background-size: 34px 34px;
+  transform: scaleX(var(--gap, 1)); transform-origin: left center;
+}
+/* The gap is live: its hatching drifts while the section is on screen. */
+html.motion-on .gauge.is-live .monitor__gap { animation: gauge-drift 1.6s linear infinite; }
+@keyframes gauge-drift { to { background-position: 34px 0; } }
+
+.gauge__marker {
+  position: absolute; top: calc(3.25rem - 9px); width: 2px; height: calc(clamp(22px, 3vw, 36px) + 18px);
+  transform: translateX(-50%); background: var(--canvas); border-radius: 2px;
+  opacity: var(--m, 1);
+}
+.gauge__marker::before { content: ''; position: absolute; top: -5px; left: 50%; width: 10px; height: 10px; border-radius: 50%; transform: translateX(-50%); background: inherit; }
+.gauge__marker--a { left: 57%; }
+.gauge__marker--b { left: 76%; background: var(--accent); }
+
+/* The bracket names the distance between the two. */
+.gauge__bracket {
+  position: absolute; top: 0; left: 57%; width: 19%; height: 2.4rem;
+  border: 1.5px solid var(--accent); border-bottom: 0; border-radius: 6px 6px 0 0;
+  transform-origin: center bottom;
+  transform: scaleX(var(--br, 1)); opacity: var(--br, 1);
+}
+.gauge__label {
+  position: absolute; left: 50%; top: 0; transform: translate(-50%, -115%);
+  white-space: nowrap; font-size: var(--micro); font-weight: 700; letter-spacing: var(--track-micro); text-transform: uppercase;
+  color: var(--accent); padding: .3rem .65rem; border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.gauge__scale { display: flex; justify-content: space-between; margin-top: .75rem; font-size: var(--micro); color: var(--support); font-variant-numeric: tabular-nums; }
+
+html.motion-on .monitor__fill { --fill: 0; }
+html.motion-on .monitor__gap { --gap: 0; }
+html.motion-on .gauge__marker { --m: 0; }
+html.motion-on .gauge__bracket { --br: 0; }
+
+@media (max-width: 860px) {
+  .monitor__stage { grid-template-columns: 1fr 1fr; }
+  .monitor__num { font-size: clamp(3.25rem, 16vw, 5rem); }
+  .gauge__label { font-size: .625rem; }
+}
+
+/* =====================================================================
+   #clients — brand partners as collectibles (js/motion/collect.js)
+   Collectible rewards are the mechanic TCC runs for these brands, so the
+   brands arrive the way a collectible does: face down, then turned over.
+   Default = every card face up; html.motion-on parks them face down.
+   ===================================================================== */
+.collect {
+  list-style: none; margin: clamp(1.5rem, 4vh, 2.5rem) 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(112px, 12vw, 150px), 1fr));
+  gap: clamp(.6rem, 1.2vw, 1rem);
+}
+.collectible { perspective: 900px; }
+.collectible__card {
+  --flip: 0; --rx: 0deg; --ry: 0deg;
+  position: relative; display: block; aspect-ratio: 3 / 4;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rx)) rotateY(calc(var(--flip) * 180deg + var(--ry)));
+  transition: transform 180ms var(--ease-out-strong);
+}
+.collectible__front, .collectible__back {
+  position: absolute; inset: 0; border-radius: 14px; backface-visibility: hidden;
+  display: grid; place-items: center; overflow: hidden;
+}
+.collectible__front {
+  background: color-mix(in srgb, var(--canvas) 94%, transparent);
+  box-shadow: inset 0 0 0 1px var(--hairline), 0 14px 30px -24px var(--accent-shadow);
+}
+.collectible__front img { width: 62%; height: auto; max-height: 34%; object-fit: contain; }
+/* The glare follows the pointer (--gx/--gy), like light on a foil card. */
+.collectible__front::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), color-mix(in srgb, var(--canvas) 70%, transparent), transparent 55%);
+  opacity: var(--glare, 0); transition: opacity 220ms ease;
+}
+.collectible__back {
+  transform: rotateY(180deg);
+  background:
+    url('../assets/img/logo-icon.svg') center / 30% auto no-repeat,
+    var(--grad-core);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--canvas) 40%, transparent);
+}
+.collectible__back::before {
+  content: ''; position: absolute; inset: 8px; border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--canvas) 55%, transparent);
+}
+html.motion-on .collect:not(.is-dealt) .collectible__card { --flip: 1; }
+html.motion-on .collect .collectible__card { transition: transform 820ms var(--ease-out-strong); transition-delay: calc(var(--i, 0) * 70ms); }
+html.motion-on .collect.is-dealt .collectible__card.is-tilting { transition: transform 180ms var(--ease-out-strong); transition-delay: 0ms; }
+@media (hover: hover) and (pointer: fine) {
+  .collectible__card.is-tilting .collectible__front::after { --glare: 1; }
+}
+
+/* The network's two figures, at the size the claim deserves. */
+.orbit__figures { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: .25rem 0 1.25rem; }
+.orbit__figure { margin: 0; display: grid; gap: .35rem; }
+.orbit__figure b {
+  font-weight: 700; line-height: .86; letter-spacing: var(--track-display);
+  font-size: clamp(3.5rem, 7vw, 6.5rem); font-variant-numeric: tabular-nums;
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .orbit__figure b { background-image: var(--grad-core); -webkit-background-clip: text; background-clip: text; color: transparent; }
+}
+.orbit__figure span { font-size: .9375rem; font-weight: 600; color: var(--ink-2); }
+html.motion-on .orbit__figures { transition: opacity 500ms var(--ease-out-strong), transform 600ms var(--ease-out-strong); }
+html.motion-on .orbit:not(.is-in) .orbit__figures { opacity: 0; transform: translateY(16px); }
+
+/* =====================================================================
+   #careers — the value roller (js/motion/values.js, 2026-09-27)
+   Built from .careers__values, which it replaces only when motion runs.
+   ===================================================================== */
+.careers__values.is-replaced { display: none; }
+.values { margin: 0 0 2.75rem; }
+.values__stage { position: relative; min-height: clamp(9rem, 17vw, 13rem); }
+.values__index {
+  display: block; margin-bottom: .5rem;
+  font-size: var(--micro); font-weight: 700; letter-spacing: var(--track-micro); color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.values__word {
+  margin: 0; overflow: hidden; padding: .04em 0 .12em;
+  font-weight: 700; line-height: .95; letter-spacing: var(--track-display);
+  font-size: clamp(3.25rem, 7.5vw, 7rem);
+}
+.values__letters { display: inline-block; }
+.values__l { display: inline-block; will-change: transform, opacity; }
+.values__dot { display: inline-block; color: var(--accent-strong); }
+.values__line {
+  margin: .9rem 0 0; max-width: 44ch; color: var(--ink-2); font-size: 1.0625rem;
+  transition: opacity 200ms ease, filter 200ms ease;
+}
+.values__line.is-swapping { opacity: 0; filter: blur(4px); }
+
+.values__tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; margin-top: 1.5rem; }
+.values__tab {
+  display: grid; gap: .6rem; padding: .5rem 0; text-align: left;
+  font: inherit; color: var(--ink-3); background: none; border: 0; cursor: pointer;
+  transition: color var(--dur-ui) ease;
+}
+.values__tab:hover, .values__tab[aria-selected='true'] { color: var(--ink); }
+.values__tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+.values__name { font-size: .8125rem; font-weight: 600; letter-spacing: var(--track-micro); text-transform: uppercase; }
+.values__bar { position: relative; display: block; height: 3px; border-radius: var(--r-pill); background: var(--hairline); overflow: hidden; }
+.values__bar i { position: absolute; inset: 0; background-image: var(--grad-core); transform: scaleX(0); transform-origin: left center; }
+.careers__img picture { display: block; height: 100%; transform-origin: 50% 50%; }
+@media (max-width: 860px) {
+  .values__tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* =====================================================================
+   #contact — Build your programme (js/motion/planner.js, 2026-09-27)
+   ===================================================================== */
+.contact__grid {
+  display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: clamp(2rem, 5vw, 5rem); align-items: center;
+}
+.planner {
+  display: grid; gap: 1.25rem; padding: clamp(1.25rem, 2.4vw, 2rem);
+  border: 1px solid var(--hairline); border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--canvas) 90%, transparent);
+  box-shadow: 0 30px 60px -40px var(--accent-shadow);
+}
+.planner__kicker { margin: 0; font-size: var(--eyebrow); font-weight: 700; text-transform: uppercase; letter-spacing: var(--track-micro); color: var(--ink); }
+.planner__q { display: grid; gap: .55rem; }
+.planner__label { font-size: var(--micro); font-weight: 600; letter-spacing: var(--track-micro); text-transform: uppercase; color: var(--ink-2); }
+
+/* Segmented control: the thumb slides, the labels stay put. */
+.planner__seg {
+  position: relative; display: grid; grid-template-columns: 1fr 1fr;
+  padding: 4px; border-radius: var(--r-pill); background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+.planner__thumb {
+  position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px);
+  border-radius: var(--r-pill); background: var(--canvas);
+  box-shadow: 0 1px 0 var(--hairline), 0 6px 16px -10px var(--accent-shadow);
+  transition: transform 260ms var(--ease-out-strong);
+}
+.planner[data-who='brand'] .planner__thumb { transform: translateX(100%); }
+.planner__opt {
+  position: relative; z-index: 1; padding: .6rem 1rem; border: 0; background: none; cursor: pointer;
+  font: inherit; font-weight: 600; font-size: .9375rem; color: var(--ink-2);
+  border-radius: var(--r-pill); transition: color 200ms ease;
+}
+.planner__opt[aria-checked='true'] { color: var(--ink); }
+.planner__opt:focus-visible, .planner__chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.planner__chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.planner__chips[hidden] { display: none; }
+.planner__chip {
+  padding: .5rem .9rem; border-radius: var(--r-pill); cursor: pointer;
+  font: inherit; font-size: .875rem; font-weight: 600; color: var(--ink-2);
+  background: transparent; border: 1px solid var(--hairline);
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, transform var(--dur-press) var(--ease-out-strong);
+}
+.planner__chip:active { transform: scale(.97); }
+.planner__chip[aria-pressed='true'] { color: var(--ink); border-color: transparent; background-image: var(--grad-core); }
+/* The last goal cannot be switched off: a small no, not a silent one. */
+.planner__chip.is-refused { animation: planner-no 320ms var(--ease-out-strong); }
+@keyframes planner-no { 25% { transform: translateX(-3px); } 50% { transform: translateX(3px); } 75% { transform: translateX(-2px); } }
+
+.planner__out { display: grid; gap: .55rem; }
+.planner__stack { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
+.planner__cap {
+  display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: .7rem;
+  padding: .55rem .7rem; border-radius: 12px; border: 1px solid transparent;
+  transition: background-color 260ms ease, border-color 260ms ease;
+  transition-delay: calc(var(--order, 0) * 70ms);
+}
+.planner__swatch {
+  width: 22px; height: 22px; border-radius: 7px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  transition: transform 360ms var(--ease-out-strong); transition-delay: inherit;
+}
+.planner__cap.is-in .planner__swatch[data-gradient='creativity'] { background: var(--grad-creativity); }
+.planner__cap.is-in .planner__swatch[data-gradient='operational'] { background: var(--grad-operational); }
+.planner__cap.is-in .planner__swatch[data-gradient='performance'] { background: var(--grad-performance); }
+.planner__cap.is-in .planner__swatch[data-gradient='insight'] { background: var(--grad-insight); }
+.planner__cap.is-in .planner__swatch[data-gradient='sustainability'] { background: var(--grad-sustainability); }
+.planner__name { font-weight: 600; font-size: .9375rem; }
+.planner__kind { font-size: .75rem; color: var(--ink-2); }
+.planner__check {
+  width: 18px; height: 18px; border-radius: 50%; position: relative;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  transition: background-color 260ms ease, box-shadow 260ms ease; transition-delay: inherit;
+}
+.planner__check::after {
+  content: ''; position: absolute; left: 6px; top: 3px; width: 4px; height: 8px;
+  border: solid var(--canvas); border-width: 0 2px 2px 0; transform: rotate(45deg) scale(0);
+  transition: transform 300ms var(--ease-out-strong); transition-delay: inherit;
+}
+.planner__cap.is-in { background: var(--canvas); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.planner__cap.is-in .planner__swatch { transform: rotate(-8deg) scale(1.08); }
+.planner__cap.is-in .planner__check { background: var(--accent-strong); box-shadow: none; }
+.planner__cap.is-in .planner__check::after { transform: rotate(45deg) scale(1); }
+.planner__summary { margin: .2rem 0 0; font-size: .9375rem; color: var(--ink-2); min-height: 1.5em; }
+.planner__cta { justify-self: start; }
+
+@media (prefers-reduced-motion: reduce) {
+  .planner__thumb, .planner__cap, .planner__swatch, .planner__check, .planner__check::after, .planner__chip { transition: none; }
+  .planner__chip.is-refused { animation: none; }
+}
+@media (max-width: 860px) {
+  .contact__grid { grid-template-columns: 1fr; }
+}
+/* Refinements after review: figures share a top line; cards read as
+   numbered collectibles rather than blank tiles. */
+.monitor__stage { align-items: start; }
+.collect { counter-reset: card; grid-template-columns: repeat(auto-fill, minmax(clamp(120px, 11vw, 160px), 1fr)); }
+.collectible { counter-increment: card; }
+.collectible__card { aspect-ratio: 4 / 5; }
+.collectible__front::before {
+  content: 'No. ' counter(card, decimal-leading-zero);
+  position: absolute; top: .7rem; left: .8rem;
+  font-size: .625rem; font-weight: 700; letter-spacing: var(--track-micro); color: var(--ink-3);
+}
+
+/* Text for assistive tech only (used where a visible figure is animated). */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}

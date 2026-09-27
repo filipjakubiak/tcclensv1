@@ -104,21 +104,20 @@ test('the careers photo settles sharp and opaque once it has arrived', async () 
   assert.ok(blurOf(s.filter) < 0.5, `the photo is still out of focus after arriving: ${s.filter}`);
 });
 
-test('the four value rules draw in', async () => {
+test('with motion, the four values play as a roller that replaces the list', async () => {
+  // The rules-drawing list is the no-motion fallback now (2026-09-27); with
+  // motion it is swapped for js/motion/values.js and must not show twice.
   const r = await withPage(async (page) => {
     await page.waitForFunction(() => window.__tccReady, null, { timeout: 15000 });
-    // Before the section is anywhere near view.
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await page.waitForTimeout(200);
-    const before = await ruleScales(page);
-    await scrollThrough(page, 0.55);
-    await page.waitForTimeout(1600); // 0.7s each plus 0.12s stagger across four
-    return { before, after: await ruleScales(page) };
+    return page.evaluate(() => ({
+      list: getComputedStyle(document.querySelector('.careers__values')).display,
+      tabs: [...document.querySelectorAll('.values__tab .values__name')].map((n) => n.textContent),
+      role: document.querySelector('.values__tabs')?.getAttribute('role'),
+    }));
   });
-
-  assert.equal(r.before.length, 4, 'expected four values in #careers');
-  assert.ok(r.before.every((v) => v === 0), `rules should start retracted, got ${r.before}`);
-  assert.ok(r.after.every((v) => v === 1), `rules should finish drawn, got ${r.after}`);
+  assert.equal(r.list, 'none', 'the plain list still shows beside the roller');
+  assert.deepEqual(r.tabs, ['Respect', 'Collaboration', 'Care', 'Truth']);
+  assert.equal(r.role, 'tablist');
 });
 
 test('?shot=1 leaves careers settled — rules drawn, photo sharp, no drift', async () => {
