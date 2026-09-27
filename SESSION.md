@@ -316,3 +316,23 @@ Full suite **120/121** — only the known marquee instrument failure (see above)
   ripple a dot, and a figure counting through the millions to "1B+".
 - Both inits are try/catch-guarded in main.js — they run before the WebGL stage boots.
 - Suite **123/124** — only the known marquee instrument failure.
+
+## ▶ 2026-09-27 (4) — optics, globe, the aisle
+
+- **Optics** (`js/motion/optics.js`): headline colour split converging on arrival (`--disp`) and
+  opening with scroll speed (`--vel`, time-based decay — per-frame decay lingered at low fps);
+  focal-plane word reveal on pull quotes + film quote ("seen." is now a focus-word); eyebrow
+  calibration (overlay on the real text's own box); "Recognise" swept by focus; **the cursor is a
+  light** on headlines. The hover MAGNIFIER was built and then removed at the user's request —
+  it covered the words it showed. `window.__tccOptics.kick(v)` is a test hook.
+- **#global**: the flat map is gone. `.orbit` = Fibonacci-dot globe on canvas (forms, spins in
+  from the Pacific, arcs lift off the limb) + 8 office **tiles** (`<button>`, aria-pressed)
+  that REPLACED `.global__offices` — `initOffices`/`initOfficeRows` deleted. Autoplay tour,
+  tile ↔ globe sync, drag with momentum. Land data now includes the Arctic.
+- **#what-we-do "The Aisle"** (`js/motion/aisle.js`): panels start closed and part; TCC node +
+  spine in a middle grid column; wires to every promise on both sides (retail promises mirrored
+  to face the aisle); pulses to both sides at once when settled. Panels lost `data-reveal` —
+  the aisle owns their transform.
+- The old open item "fork images are really long" is FIXED: `.fork__img { min-height: 0 }` —
+  aspect-ratio was losing to the automatic minimum height.
+- Suite **133/134** — only the known marquee instrument failure.

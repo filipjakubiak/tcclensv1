@@ -1442,3 +1442,61 @@ html.motion-on .orbit:not(.is-in) .orbit__bar { opacity: 0; }
   .orbit__globe { max-width: 420px; width: 100%; margin-inline: auto; }
   .orbit__stat { display: none; }
 }
+
+/* =====================================================================
+   #what-we-do — The Aisle (js/motion/aisle.js, 2026-09-27)
+   TCC sits in the aisle between the two panels; wires run from it to every
+   promise on both sides.
+   ===================================================================== */
+.fork__grid {
+  --aisle: clamp(72px, 8vw, 128px);
+  position: relative;
+  grid-template-columns: minmax(0, 1fr) var(--aisle) minmax(0, 1fr);
+  gap: 0;
+}
+.aisle { position: relative; display: flex; justify-content: center; padding-top: clamp(2rem, 6vh, 3.5rem); }
+.aisle__node {
+  --in: 1;
+  position: relative; z-index: 2;
+  display: grid; place-items: center;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--canvas);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent), 0 14px 30px -18px var(--accent-shadow);
+  opacity: var(--in); transform: scale(calc(.85 + .15 * var(--in)));
+}
+.aisle__node img { width: 26px; height: auto; }
+.aisle__wires { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 1; }
+.aisle__spine, .aisle__wire {
+  fill: none; stroke-linecap: round;
+  stroke-dasharray: 1; stroke-dashoffset: var(--draw, 0);
+}
+.aisle__spine { stroke: color-mix(in srgb, var(--accent) 70%, transparent); stroke-width: 1.5; }
+.aisle__wire { stroke: color-mix(in srgb, var(--accent) 55%, transparent); stroke-width: 1.25; }
+.aisle__joint { fill: var(--accent); opacity: var(--on, 1); transition: opacity 200ms ease; }
+.aisle__port {
+  fill: var(--canvas); stroke: var(--accent); stroke-width: 1.5;
+  opacity: var(--on, 1); transition: opacity 200ms ease;
+}
+.aisle__pulse { fill: var(--accent); opacity: var(--on, 0); }
+
+/* A promise lights when its wire lands. Default is lit, so no JS reads whole. */
+.fork__points li::before { transition: background-color var(--dur-ui) ease, box-shadow 420ms var(--ease-out-strong); }
+html.motion-on .fork__points li:not(.is-lit)::before { background: var(--support); }
+.fork__points li.is-lit::before { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); }
+
+@media (max-width: 860px) {
+  .fork__grid { grid-template-columns: 1fr; gap: 1.25rem; }
+  .aisle, .aisle__wires { display: none; }
+}
+/* The photos were rendering at their natural 2:3 height: an aspect-ratio box
+   still takes its content's automatic minimum height, so 16/7 never bound.
+   min-height:0 lets the ratio win (the "images are really long" item). */
+.fork__img { min-height: 0; }
+.fork__img picture { display: block; height: 100%; }
+
+/* The retail promises face the aisle: bullet on the aisle side, so the wire
+   that lights each one lands on it instead of stopping at the panel edge. */
+@media (min-width: 861px) {
+  .fork__panel--retail .fork__points li { text-align: right; padding-left: 0; padding-right: 1.4rem; }
+  .fork__panel--retail .fork__points li::before { left: auto; right: 0; }
+}
