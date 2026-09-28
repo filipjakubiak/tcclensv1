@@ -390,3 +390,16 @@ The page is framed as a SHOWREEL of what TCC does (user). Added:
   pull quotes are ALSO not in TCC's material (unattributed brand-voice lines) — flagged to user.
 - **#contact** calmer: no `data-fluid`, veil 62% → 88%.
 - Suite green except the known marquee instrument failure.
+
+## ▶ 2026-09-28 — calmer hero type, one pair of figures in #global
+
+- **Hero headline** (`js/motion/hero-text.js`): letters no longer scatter in depth. On load they
+  rise through the line mask one by one; the scan bar stays as it was; on scroll the two lines
+  drift apart (line 1 left, line 2 right) and fade. User: "the scanner is fine, the letters
+  don't need to fall apart — simple kinetic typography". `#hero .line` is masked again.
+- **#global figures** (`js/motion/global-stats.js`): 20 / 300 are shown ONCE, side by side at
+  the top of the section, as odometer wheels (one per digit, window measured from the live
+  font via `--gt/--gh`), labels rise after. The duplicate `.orbit__figures` next to the globe
+  and network.js's countUp are gone.
+- Suite 147: 144 pass. Fails under concurrency: marquee (known), plus careers photo and
+  hero drift — both pass in isolation (load flake). Not committed.

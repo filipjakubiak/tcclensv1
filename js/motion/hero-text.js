@@ -1,35 +1,26 @@
 import { motionEnabled } from './reveal.js';
 
 /**
- * The hero headline — light through a lens, in type.
+ * The hero headline — kinetic type with a scan.
  *
- * The page's whole idea is a lens: light enters scattered and comes into
- * focus. The headline now does that literally, then undoes it:
- *
- *   ASSEMBLE (on load)  every letter starts scattered in depth — thrown
- *       toward the viewer, tumbled, blurred, its colour split into the brand's
- *       two lights either side of it — and converges into place, centre
- *       letters first. The split closes as each letter lands, so the line
- *       literally focuses.
+ *   RISE (on load)  every letter rises through its line's mask, one after
+ *       another, the second line picking up where the first ends. The words
+ *       stay whole: nothing is thrown, tumbled or blurred.
  *   SCAN  a bar of light crosses the settled headline once, and each letter
- *       flashes its split as the bar passes — the lens calibrating.
- *   DISPERSE (on scroll, scrubbed)  as the curtain parts, the letters leave
- *       through the lens again: centre letters first, each flying out on
- *       its own side of the split, toward the viewer, its colour separating
- *       as it goes. Scroll back up and it re-assembles.
+ *       flashes the brand's two lights as the bar passes — the lens
+ *       calibrating.
+ *   DRIFT (on scroll, scrubbed)  as the curtain parts, the two lines slide
+ *       apart — the first to the left, the second to the right — and fade.
+ *       Scroll back up and they return.
  *
  * Each letter is two nested spans so the two motions never share a
- * transform: the inner one assembles, the outer one disperses. The split is
- * one text-shadow fed by both (--ax from the inner, --dx inherited from the
- * outer). The heading carries an aria-label with its own words, so assistive
- * tech reads a sentence, not letters.
+ * transform: the outer one rises, the inner one carries the scan's colour
+ * split (a text-shadow fed by --ax/--sa). The heading carries an aria-label
+ * with its own words, so assistive tech reads a sentence, not letters.
  *
  * Motion off (reduced motion, ?shot=1): nothing is split; the headline sits
  * sharp and whole.
  */
-
-// Deterministic scatter, so the choreography is the same on every visit.
-const rnd = (i, s) => { const x = Math.sin(i * 91.7 + s * 47.3) * 43758.5453; return x - Math.floor(x); };
 
 export function initHeroText() {
   const hero = document.getElementById('hero');
@@ -72,48 +63,18 @@ export function initHeroText() {
   gsap.set(h1, { opacity: 1, filter: 'none', scale: 1 });
   gsap.set(lines, { y: '0%', x: 0 });
 
-  // Each letter's distance from the headline's centre, for ordering.
-  const measure = () => {
-    const box = h1.getBoundingClientRect();
-    const cx = box.left + box.width / 2;
-    chars.forEach((c) => {
-      const r = c.outer.getBoundingClientRect();
-      c.side = r.left + r.width / 2 < cx ? -1 : 1;
-      c.dist = Math.abs(r.left + r.width / 2 - cx) / (box.width / 2);
-    });
-  };
-  measure();
-
-  // ---- assemble ---------------------------------------------------------------
+  // ---- rise ------------------------------------------------------------------
   const tl = gsap.timeline({ delay: 0.25 });
-  chars.forEach((c, i) => {
-    const sx = (rnd(i, 1) - 0.5) * 2;
-    tl.fromTo(c.inner, {
-      x: (rnd(i, 2) - 0.5) * 520,
-      y: (rnd(i, 3) - 0.5) * 360,
-      z: 180 + rnd(i, 4) * 380,
-      rotationX: (rnd(i, 5) - 0.5) * 140,
-      rotationY: (rnd(i, 6) - 0.5) * 110,
-      rotationZ: (rnd(i, 7) - 0.5) * 50,
-      opacity: 0,
-      filter: 'blur(14px)',
-      '--ax': sx * 34,
-      '--ay': (rnd(i, 8) - 0.5) * 16,
-      '--sa': 1,
-      transformPerspective: 900,
-    }, {
-      x: 0, y: 0, z: 0, rotationX: 0, rotationY: 0, rotationZ: 0,
-      opacity: 1, filter: 'blur(0px)', '--ax': 0, '--ay': 0, '--sa': 0,
-      duration: 2.1, ease: 'expo.out',
-    }, 0.06 + c.dist * 0.6 + rnd(i, 9) * 0.14);
-  });
+  tl.fromTo(chars.map((c) => c.outer), { yPercent: 115 }, {
+    yPercent: 0, duration: 1.05, ease: 'expo.out', stagger: 0.028,
+  }, 0);
 
   // ---- scan -----------------------------------------------------------------------
   const bar = document.createElement('span');
   bar.className = 'hero__scan';
   bar.setAttribute('aria-hidden', 'true');
   h1.append(bar);
-  tl.addLabel('scan', '>-0.35');
+  tl.addLabel('scan', '>-0.45');
   // The h1 is as wide as its container; the scan ends on the last letter.
   const textRight = () => {
     const h = h1.getBoundingClientRect().left;
@@ -129,28 +90,17 @@ export function initHeroText() {
       `scan+=${0.15 + (i / byX.length) * 0.85}`);
   });
   tl.eventCallback('onComplete', () => {
-    chars.forEach((c) => { c.inner.style.filter = ''; c.inner.style.willChange = 'auto'; });
     h1.dataset.assembled = '1'; // for tests, and anything that should wait for the landing
   });
 
-  // ---- disperse (scrubbed with the curtain) ----------------------------------------------
-  const scatter = gsap.timeline({
+  // ---- drift (scrubbed with the curtain) ------------------------------------------
+  const drift = gsap.timeline({
     scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom 20%', scrub: 0.6, invalidateOnRefresh: true },
   });
-  chars.forEach((c, i) => {
-    // Centre letters leave first — the curtain parts from the centre.
-    scatter.to(c.outer, {
-      x: () => c.side * (80 + rnd(i, 11) * 360) * (0.6 + c.dist),
-      y: () => (rnd(i, 12) - 0.35) * 260, // mostly outward and down — clear of the nav
-      z: () => 120 + rnd(i, 13) * 420,
-      rotationY: c.side * (20 + rnd(i, 14) * 60),
-      rotationX: (rnd(i, 15) - 0.5) * 90,
-      opacity: 0,
-      '--dx': c.side * (14 + rnd(i, 16) * 26),
-      '--ds': 1,
-      transformPerspective: 900,
-      ease: 'power2.in', duration: 1,
-    }, (1 - c.dist) * 0.35);
+  [...h1.querySelectorAll('.line')].forEach((row, i) => {
+    drift.fromTo(row, { xPercent: 0, opacity: 1 }, {
+      xPercent: i % 2 ? 14 : -14, opacity: 0, ease: 'power1.in', duration: 1, immediateRender: false,
+    }, 0);
   });
   // The lead and the buttons step back out of the way first.
   // fromTo, not to: a scrubbed .to() records its start value when first
@@ -158,11 +108,9 @@ export function initHeroText() {
   // would then scroll them back to invisible.
   const out = (sel, y, d) => {
     const el = hero.querySelector(sel);
-    if (el) scatter.fromTo(el, { y: 0, opacity: 1 }, { y, opacity: 0, ease: 'power1.in', duration: d, immediateRender: false }, 0);
+    if (el) drift.fromTo(el, { y: 0, opacity: 1 }, { y, opacity: 0, ease: 'power1.in', duration: d, immediateRender: false }, 0);
   };
   out('.lead', -40, 0.6);
   out('.hero__ctas', -30, 0.5);
   out('.eyebrow', -20, 0.5);
-
-  window.addEventListener('resize', () => { measure(); ScrollTrigger.refresh(); });
 }

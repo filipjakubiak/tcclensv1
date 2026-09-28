@@ -25,7 +25,7 @@ test('with motion off every reworked section shows its finished state', async ()
       fill: getComputedStyle(document.querySelector('.monitor__fill')).transform,
       bracket: getComputedStyle(document.querySelector('.gauge__bracket')).opacity,
       cards: [...document.querySelectorAll('.collectible__card')].map((c) => getComputedStyle(c).transform),
-      figures: [...document.querySelectorAll('.orbit__figure b')].map((b) => b.textContent),
+      figures: [...document.querySelectorAll('#global .gstat__num')].map((b) => b.textContent),
       valuesList: getComputedStyle(document.querySelector('.careers__values')).display,
       roller: document.querySelectorAll('.values').length,
     }));

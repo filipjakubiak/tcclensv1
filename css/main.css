@@ -729,8 +729,21 @@ html.marquee-js .marquee__track { animation: none; }
 
 /* ---- 10 · Global ---- */
 .global__grid { display: grid; grid-template-columns: 5fr 7fr; gap: 4rem; align-items: end; }
-.global__num { display: block; font-weight: 700; font-size: clamp(8rem, 20vw, 16rem); line-height: .85; letter-spacing: var(--track-display); margin-top: 1rem; }
-.global__label { font-size: var(--lead); font-weight: 600; color: var(--ink-2); margin-top: 1rem; }
+/* The two figures, once: an odometer wheel per digit (js/motion/global-stats.js). */
+.global__stats { display: flex; flex-wrap: wrap; gap: 1.5rem clamp(2rem, 4vw, 3.5rem); margin-top: 1.25rem; }
+.gstat { display: grid; gap: .75rem; }
+.gstat__num {
+  display: block; font-weight: 700; font-size: clamp(4.5rem, 9vw, 8.5rem); line-height: .8;
+  letter-spacing: var(--track-display); font-variant-numeric: tabular-nums;
+}
+.gstat__label { display: block; overflow: hidden; font-size: var(--lead); font-weight: 600; color: var(--ink-2); line-height: 1.25; padding-bottom: .1em; }
+.gstat__label > span { display: block; }
+/* The window is exactly one digit tall (--gt / --gh are measured from the
+   font in global-stats.js), so a wheel never shows its neighbours. */
+.gstat__wheel { display: inline-block; height: var(--gh, 1em); overflow: hidden; vertical-align: top; }
+.gstat__strip { display: flex; flex-direction: column; margin-top: calc(var(--gt, 0em) * -1); }
+.gstat__strip > span { display: block; height: 1em; line-height: 1; }
+html.motion-on .gstat__label > span { transform: translateY(110%); }
 .global__para { margin-bottom: clamp(2rem, 5vh, 3rem); }
 
 /* ---- 11 · Insights ---- */
@@ -1795,19 +1808,6 @@ html.motion-on .collect.is-dealt .collectible__card.is-tilting { transition: tra
   .collectible__card.is-tilting .collectible__front::after { --glare: 1; }
 }
 
-/* The network's two figures, at the size the claim deserves. */
-.orbit__figures { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: .25rem 0 1.25rem; }
-.orbit__figure { margin: 0; display: grid; gap: .35rem; }
-.orbit__figure b {
-  font-weight: 700; line-height: .86; letter-spacing: var(--track-display);
-  font-size: clamp(3.5rem, 7vw, 6.5rem); font-variant-numeric: tabular-nums;
-}
-@supports (background-clip: text) or (-webkit-background-clip: text) {
-  .orbit__figure b { background-image: var(--grad-core); -webkit-background-clip: text; background-clip: text; color: transparent; }
-}
-.orbit__figure span { font-size: .9375rem; font-weight: 600; color: var(--ink-2); }
-html.motion-on .orbit__figures { transition: opacity 500ms var(--ease-out-strong), transform 600ms var(--ease-out-strong); }
-html.motion-on .orbit:not(.is-in) .orbit__figures { opacity: 0; transform: translateY(16px); }
 
 /* =====================================================================
    #careers — the value roller (js/motion/values.js, 2026-09-27)
@@ -2037,18 +2037,17 @@ html.motion-on .ceo__quote .ceo__w.is-now { text-decoration: underline 2px color
 }
 
 /* =====================================================================
-   Hero headline — light through a lens (js/motion/hero-text.js)
-   Two spans per letter: .hc disperses on scroll, .hc__in assembles on load.
-   The colour split is one text-shadow fed by both; its alpha rides the
-   same variables, so at rest there is no fringe at all.
+   Hero headline — kinetic type with a scan (js/motion/hero-text.js)
+   Two spans per letter: .hc rises through the line mask, .hc__in carries
+   the scan's colour split. The split's alpha rides the same variable, so
+   at rest there is no fringe at all.
    ===================================================================== */
 #hero .display { position: relative; }
-html.motion-on #hero .line { overflow: visible; }
 #hero .display.is-split .hw { display: inline-block; white-space: nowrap; }
 #hero .display.is-split .hc, #hero .display.is-split .hc__in { display: inline-block; }
 #hero .display.is-split .hc__in {
-  --split: calc(var(--ax, 0) + var(--dx, 0));
-  --alpha: min(90%, calc((var(--sa, 0) + var(--ds, 0)) * 90%));
+  --split: var(--ax, 0);
+  --alpha: min(90%, calc(var(--sa, 0) * 90%));
   text-shadow:
     calc(var(--split) * -1px) calc(var(--ay, 0) * 1px) 0 color-mix(in srgb, var(--accent) var(--alpha), transparent),
     calc(var(--split) * 1px) calc(var(--ay, 0) * -1px) 0 color-mix(in srgb, var(--support) var(--alpha), transparent);
